@@ -1,0 +1,286 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Experimentos y Resultados}{20}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{chap:experiments}{{4}{20}{Experimentos y Resultados}{chapter.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Configuración Experimental General}{20}{section.4.1}\protected@file@percent }
+\newlabel{sec:exp:setup}{{4.1}{20}{Configuración Experimental General}{section.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}Entorno de Ejecución}{20}{subsection.4.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}Dataset: MalImg}{20}{subsection.4.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.3}Partición de Datos}{20}{subsection.4.1.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.1}{\ignorespaces Distribución de familias en el dataset MalImg}}{21}{table.caption.16}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:malimg-distribution}{{4.1}{21}{Distribución de familias en el dataset MalImg}{table.caption.16}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Experimento 1: Comparación de Arquitecturas (H1)}{21}{section.4.2}\protected@file@percent }
+\newlabel{sec:exp:h1}{{4.2}{21}{Experimento 1: Comparación de Arquitecturas (H1)}{section.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Objetivo}{21}{subsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Configuración de Modelos}{21}{subsection.4.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Conventional CNN (Baseline)}{21}{subsubsection*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{VGG-Mini-H1 (5 bloques)}{21}{subsubsection*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{ResNet50 (Fine-tuning)}{21}{subsubsection*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Vision Transformer (ViT-Small)}{22}{subsubsection*.20}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces Comparación de rendimiento entre arquitecturas (Experimento H1)}}{22}{table.caption.21}\protected@file@percent }
+\newlabel{tab:h1-results}{{4.2}{22}{Comparación de rendimiento entre arquitecturas (Experimento H1)}{table.caption.21}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.3}{\ignorespaces Hiperparámetros de entrenamiento para Experimento H1}}{22}{table.caption.22}\protected@file@percent }
+\newlabel{tab:h1-hyperparams}{{4.3}{22}{Hiperparámetros de entrenamiento para Experimento H1}{table.caption.22}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.4}{\ignorespaces Métricas detalladas de ResNet50 Fine-tuned (mejor modelo)}}{22}{table.caption.23}\protected@file@percent }
+\newlabel{tab:h1-resnet-metrics}{{4.4}{22}{Métricas detalladas de ResNet50 Fine-tuned (mejor modelo)}{table.caption.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Curvas de Entrenamiento}{22}{subsection.4.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.4}Análisis de Resultados}{22}{subsection.4.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{ResNet50: Superioridad del Transfer Learning}{22}{subsubsection*.28}\protected@file@percent }
+\newlabel{fig:h1-resnet-loss}{{4.1a}{23}{Loss: Train vs Validation}{figure.caption.24}{}}
+\newlabel{sub@fig:h1-resnet-loss}{{a}{23}{Loss: Train vs Validation}{figure.caption.24}{}}
+\newlabel{fig:h1-resnet-acc}{{4.1b}{23}{Accuracy: Train vs Validation}{figure.caption.24}{}}
+\newlabel{sub@fig:h1-resnet-acc}{{b}{23}{Accuracy: Train vs Validation}{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces Curvas de entrenamiento de ResNet50 Fine-tuned. Se observa convergencia rápida (mejor época: 6) y gap train-val controlado ($\sim $1\%), indicando buena generalización.}}{23}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:h1-resnet-curves}{{4.1}{23}{Curvas de entrenamiento de ResNet50 Fine-tuned. Se observa convergencia rápida (mejor época: 6) y gap train-val controlado ($\sim $1\%), indicando buena generalización}{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces Evolución de Precision, Recall y F1-Score durante el entrenamiento de ResNet50. Las tres métricas convergen a valores superiores al 95\%.}}{23}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:h1-resnet-prf1}{{4.2}{23}{Evolución de Precision, Recall y F1-Score durante el entrenamiento de ResNet50. Las tres métricas convergen a valores superiores al 95\%}{figure.caption.25}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces Matriz de confusión de ResNet50 sobre el conjunto de prueba. Los valores en la diagonal representan clasificaciones correctas por familia de malware.}}{24}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:h1-confusion-matrix}{{4.3}{24}{Matriz de confusión de ResNet50 sobre el conjunto de prueba. Los valores en la diagonal representan clasificaciones correctas por familia de malware}{figure.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces Curvas de entrenamiento del modelo baseline (Conventional CNN) para comparación.}}{24}{figure.caption.27}\protected@file@percent }
+\newlabel{fig:h1-baseline-curves}{{4.4}{24}{Curvas de entrenamiento del modelo baseline (Conventional CNN) para comparación}{figure.caption.27}{}}
+\@writefile{toc}{\contentsline {subsubsection}{ViT-Small: Limitaciones con Datasets Pequeños}{25}{subsubsection*.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{CNN de 5 Bloques: Hallazgo Inesperado}{25}{subsubsection*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Baseline Convencional como Referencia}{25}{subsubsection*.31}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.5}Verificación de Hipótesis H1}{26}{subsection.4.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Análisis de Resultados por Arquitectura}{26}{subsubsection*.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Implicaciones Prácticas}{26}{subsubsection*.33}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Experimento 2: Impacto de Data Augmentation (H2)}{27}{section.4.3}\protected@file@percent }
+\newlabel{sec:exp:h2}{{4.3}{27}{Experimento 2: Impacto de Data Augmentation (H2)}{section.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Objetivo}{27}{subsection.4.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Configuración}{27}{subsection.4.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.5}{\ignorespaces Impacto de data augmentation en métricas globales}}{27}{table.caption.34}\protected@file@percent }
+\newlabel{tab:h2-results}{{4.5}{27}{Impacto de data augmentation en métricas globales}{table.caption.34}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.6}{\ignorespaces Recall por clase minoritaria antes y después de augmentation}}{27}{table.caption.35}\protected@file@percent }
+\newlabel{tab:h2-per-class}{{4.6}{27}{Recall por clase minoritaria antes y después de augmentation}{table.caption.35}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.7}{\ignorespaces Configuración de data augmentation aplicada}}{27}{table.caption.36}\protected@file@percent }
+\newlabel{tab:h2-augmentation-config}{{4.7}{27}{Configuración de data augmentation aplicada}{table.caption.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}Visualización de Resultados}{27}{subsection.4.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}Análisis de Resultados}{27}{subsection.4.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Mejora en Clases Minoritarias}{27}{subsubsection*.39}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces Comparación de curvas de entrenamiento con y sin data augmentation. Se observa [TODO: describir diferencias en convergencia y overfitting].}}{28}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:h2-augmentation-comparison}{{4.5}{28}{Comparación de curvas de entrenamiento con y sin data augmentation. Se observa [TODO: describir diferencias en convergencia y overfitting]}{figure.caption.37}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.6}{\ignorespaces Comparación de recall por clase minoritaria. Las barras azules representan el modelo sin augmentation; las verdes, con augmentation moderada.}}{28}{figure.caption.38}\protected@file@percent }
+\newlabel{fig:h2-minority-recall}{{4.6}{28}{Comparación de recall por clase minoritaria. Las barras azules representan el modelo sin augmentation; las verdes, con augmentation moderada}{figure.caption.38}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Impacto en Rendimiento Global}{28}{subsubsection*.40}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Observaciones sobre el Entrenamiento}{28}{subsubsection*.41}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.5}Verificación de Hipótesis H2}{28}{subsection.4.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Implicaciones Prácticas}{28}{subsubsection*.42}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Experimento 3: Efecto de la Profundidad en CNN (H3)}{29}{section.4.4}\protected@file@percent }
+\newlabel{sec:exp:h3}{{4.4}{29}{Experimento 3: Efecto de la Profundidad en CNN (H3)}{section.4.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Objetivo}{29}{subsection.4.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}Configuración de Arquitecturas}{29}{subsection.4.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.8}{\ignorespaces Comparación CNN-3 vs CNN-5 bloques}}{29}{table.caption.43}\protected@file@percent }
+\newlabel{tab:h3-results}{{4.8}{29}{Comparación CNN-3 vs CNN-5 bloques}{table.caption.43}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.9}{\ignorespaces Configuración de arquitecturas CNN-3 y CNN-5}}{29}{table.caption.44}\protected@file@percent }
+\newlabel{tab:h3-architectures}{{4.9}{29}{Configuración de arquitecturas CNN-3 y CNN-5}{table.caption.44}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}Curvas de Entrenamiento}{29}{subsection.4.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.7}{\ignorespaces Comparación de curvas de entrenamiento entre CNN-3 y CNN-5. (a) Validation accuracy por época. (b) Validation loss por época. Se observa [TODO: describir diferencias].}}{29}{figure.caption.45}\protected@file@percent }
+\newlabel{fig:h3-depth-comparison}{{4.7}{29}{Comparación de curvas de entrenamiento entre CNN-3 y CNN-5. (a) Validation accuracy por época. (b) Validation loss por época. Se observa [TODO: describir diferencias]}{figure.caption.45}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.4}Análisis de Resultados}{29}{subsection.4.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Mejora en Rendimiento}{29}{subsubsection*.46}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Costo Computacional}{30}{subsubsection*.47}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Análisis del Trade-off}{30}{subsubsection*.48}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.5}Verificación de Hipótesis H3}{30}{subsection.4.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Implicaciones Prácticas}{30}{subsubsection*.49}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.8}{\ignorespaces Matriz de confusión de ResNet50 (mejor modelo) sobre el conjunto de prueba. Los valores en la diagonal representan clasificaciones correctas.}}{31}{figure.caption.50}\protected@file@percent }
+\newlabel{fig:confusion-matrix}{{4.8}{31}{Matriz de confusión de ResNet50 (mejor modelo) sobre el conjunto de prueba. Los valores en la diagonal representan clasificaciones correctas}{figure.caption.50}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Análisis Complementario}{31}{section.4.5}\protected@file@percent }
+\newlabel{sec:exp:complementary}{{4.5}{31}{Análisis Complementario}{section.4.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Matriz de Confusión del Mejor Modelo}{31}{subsection.4.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}Visualización de Características Aprendidas}{31}{subsection.4.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.9}{\ignorespaces Visualización t-SNE de los embeddings de la penúltima capa de ResNet50. Cada color representa una familia de malware. Se observa clara separación entre la mayoría de clusters.}}{31}{figure.caption.51}\protected@file@percent }
+\newlabel{fig:tsne}{{4.9}{31}{Visualización t-SNE de los embeddings de la penúltima capa de ResNet50. Cada color representa una familia de malware. Se observa clara separación entre la mayoría de clusters}{figure.caption.51}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}Mapas de Activación (Grad-CAM)}{31}{subsection.4.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4.10}{\ignorespaces Mapas de activación Grad-CAM para muestras representativas de 4 familias. Las regiones rojas indican áreas de mayor importancia para la clasificación.}}{31}{figure.caption.52}\protected@file@percent }
+\newlabel{fig:gradcam}{{4.10}{31}{Mapas de activación Grad-CAM para muestras representativas de 4 familias. Las regiones rojas indican áreas de mayor importancia para la clasificación}{figure.caption.52}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Resumen de Resultados}{31}{section.4.6}\protected@file@percent }
+\newlabel{sec:exp:summary}{{4.6}{31}{Resumen de Resultados}{section.4.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.10}{\ignorespaces Resumen de verificación de hipótesis}}{32}{table.caption.53}\protected@file@percent }
+\newlabel{tab:summary-hypotheses}{{4.10}{32}{Resumen de verificación de hipótesis}{table.caption.53}{}}
+\@setckpt{Chapters/04-Experiments-Results}{
+\setcounter{page}{33}
+\setcounter{equation}{0}
+\setcounter{enumi}{4}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{0}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{4}
+\setcounter{section}{6}
+\setcounter{subsection}{0}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{10}
+\setcounter{table}{10}
+\setcounter{caption@flags}{2}
+\setcounter{continuedfloat}{0}
+\setcounter{subfigure}{0}
+\setcounter{subtable}{0}
+\setcounter{LT@tables}{0}
+\setcounter{LT@chunks}{0}
+\setcounter{parentequation}{0}
+\setcounter{tcbbreakpart}{1}
+\setcounter{tcblayer}{0}
+\setcounter{tcolorbox@number}{3}
+\setcounter{@pps}{0}
+\setcounter{@ppsavesec}{0}
+\setcounter{@ppsaveapp}{0}
+\setcounter{section@level}{0}
+\setcounter{Item}{40}
+\setcounter{Hfootnote}{0}
+\setcounter{bookmark@seq@number}{96}
+\setcounter{FancyVerbLine}{0}
+\setcounter{linenumber}{1}
+\setcounter{LN@truepage}{51}
+\setcounter{FancyVerbWriteLine}{0}
+\setcounter{FancyVerbBufferLine}{0}
+\setcounter{FV@TrueTabGroupLevel}{0}
+\setcounter{FV@TrueTabCounter}{0}
+\setcounter{FV@HighlightLinesStart}{0}
+\setcounter{FV@HighlightLinesStop}{0}
+\setcounter{FancyVerbLineBreakLast}{0}
+\setcounter{FV@BreakBufferDepth}{0}
+\setcounter{minted@FancyVerbLineTemp}{0}
+\setcounter{listing}{0}
+\setcounter{sublisting}{0}
+\setcounter{blindtext}{1}
+\setcounter{Blindtext}{5}
+\setcounter{blind@countparstart}{0}
+\setcounter{blindlist}{0}
+\setcounter{blindlistlevel}{0}
+\setcounter{blindlist@level}{0}
+\setcounter{blind@listcount}{0}
+\setcounter{blind@levelcount}{0}
+\setcounter{blind@randomcount}{0}
+\setcounter{blind@randommax}{0}
+\setcounter{blind@pangramcount}{0}
+\setcounter{blind@pangrammax}{0}
+\setcounter{tcbrastercolumn}{1}
+\setcounter{tcbrasterrow}{1}
+\setcounter{tcbrasternum}{1}
+\setcounter{tcbraster}{0}
+\setcounter{lstnumber}{1}
+\setcounter{tcblisting}{0}
+\setcounter{tabx@nest}{0}
+\setcounter{listtotal}{0}
+\setcounter{listcount}{0}
+\setcounter{liststart}{0}
+\setcounter{liststop}{0}
+\setcounter{citecount}{0}
+\setcounter{citetotal}{0}
+\setcounter{multicitecount}{0}
+\setcounter{multicitetotal}{0}
+\setcounter{instcount}{3}
+\setcounter{maxnames}{1}
+\setcounter{minnames}{1}
+\setcounter{maxitems}{3}
+\setcounter{minitems}{1}
+\setcounter{citecounter}{0}
+\setcounter{maxcitecounter}{0}
+\setcounter{savedcitecounter}{0}
+\setcounter{uniquelist}{0}
+\setcounter{uniquename}{0}
+\setcounter{refsection}{0}
+\setcounter{refsegment}{0}
+\setcounter{maxextratitle}{0}
+\setcounter{maxextratitleyear}{0}
+\setcounter{maxextraname}{0}
+\setcounter{maxextradate}{0}
+\setcounter{maxextraalpha}{0}
+\setcounter{abbrvpenalty}{50}
+\setcounter{highnamepenalty}{50}
+\setcounter{lownamepenalty}{25}
+\setcounter{maxparens}{3}
+\setcounter{parenlevel}{0}
+\setcounter{blx@maxsection}{0}
+\setcounter{mincomprange}{10}
+\setcounter{maxcomprange}{100000}
+\setcounter{mincompwidth}{1}
+\setcounter{afterword}{0}
+\setcounter{savedafterword}{0}
+\setcounter{annotator}{0}
+\setcounter{savedannotator}{0}
+\setcounter{author}{0}
+\setcounter{savedauthor}{0}
+\setcounter{bookauthor}{0}
+\setcounter{savedbookauthor}{0}
+\setcounter{commentator}{0}
+\setcounter{savedcommentator}{0}
+\setcounter{editor}{0}
+\setcounter{savededitor}{0}
+\setcounter{editora}{0}
+\setcounter{savededitora}{0}
+\setcounter{editorb}{0}
+\setcounter{savededitorb}{0}
+\setcounter{editorc}{0}
+\setcounter{savededitorc}{0}
+\setcounter{foreword}{0}
+\setcounter{savedforeword}{0}
+\setcounter{holder}{0}
+\setcounter{savedholder}{0}
+\setcounter{introduction}{0}
+\setcounter{savedintroduction}{0}
+\setcounter{namea}{0}
+\setcounter{savednamea}{0}
+\setcounter{nameb}{0}
+\setcounter{savednameb}{0}
+\setcounter{namec}{0}
+\setcounter{savednamec}{0}
+\setcounter{translator}{0}
+\setcounter{savedtranslator}{0}
+\setcounter{shortauthor}{0}
+\setcounter{savedshortauthor}{0}
+\setcounter{shorteditor}{0}
+\setcounter{savedshorteditor}{0}
+\setcounter{labelname}{0}
+\setcounter{savedlabelname}{0}
+\setcounter{institution}{0}
+\setcounter{savedinstitution}{0}
+\setcounter{lista}{0}
+\setcounter{savedlista}{0}
+\setcounter{listb}{0}
+\setcounter{savedlistb}{0}
+\setcounter{listc}{0}
+\setcounter{savedlistc}{0}
+\setcounter{listd}{0}
+\setcounter{savedlistd}{0}
+\setcounter{liste}{0}
+\setcounter{savedliste}{0}
+\setcounter{listf}{0}
+\setcounter{savedlistf}{0}
+\setcounter{location}{0}
+\setcounter{savedlocation}{0}
+\setcounter{organization}{0}
+\setcounter{savedorganization}{0}
+\setcounter{origlocation}{0}
+\setcounter{savedoriglocation}{0}
+\setcounter{origpublisher}{0}
+\setcounter{savedorigpublisher}{0}
+\setcounter{publisher}{0}
+\setcounter{savedpublisher}{0}
+\setcounter{language}{0}
+\setcounter{savedlanguage}{0}
+\setcounter{origlanguage}{0}
+\setcounter{savedoriglanguage}{0}
+\setcounter{pageref}{0}
+\setcounter{savedpageref}{0}
+\setcounter{textcitecount}{0}
+\setcounter{textcitetotal}{0}
+\setcounter{textcitemaxnames}{0}
+\setcounter{biburlbigbreakpenalty}{100}
+\setcounter{biburlbreakpenalty}{200}
+\setcounter{biburlnumpenalty}{0}
+\setcounter{biburlucpenalty}{0}
+\setcounter{biburllcpenalty}{0}
+\setcounter{smartand}{1}
+\setcounter{bbx:relatedcount}{0}
+\setcounter{bbx:relatedtotal}{0}
+\setcounter{tcb@cnt@block}{0}
+\setcounter{lstlisting}{0}
+}

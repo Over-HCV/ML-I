@@ -1,0 +1,174 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {frontmatter}{\'{I}ndice de figuras}{\es@scroman {xiii}}{listoffigures}%
+\contentsline {frontmatter}{\'{I}ndice de cuadros}{\es@scroman {xvi}}{listoftables}%
+\contentsline {frontmatter}{Siglas}{\es@scroman {xix}}{acronym}%
+\contentsline {chapter}{\numberline {1}Introducción}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Contexto y Motivación}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Problema de Investigación}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Hipótesis de Investigación}{2}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}H1: Comparación de Arquitecturas de Deep Learning}{2}{subsection.1.3.1}%
+\contentsline {subsection}{\numberline {1.3.2}H2: Impacto de Data Augmentation en Clases Minoritarias}{2}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}H3: Efecto de la Profundidad en CNN Custom}{2}{subsection.1.3.3}%
+\contentsline {section}{\numberline {1.4}Objetivos}{3}{section.1.4}%
+\contentsline {subsection}{\numberline {1.4.1}Objetivo General}{3}{subsection.1.4.1}%
+\contentsline {subsection}{\numberline {1.4.2}Objetivos Específicos}{3}{subsection.1.4.2}%
+\contentsline {section}{\numberline {1.5}Justificación}{3}{section.1.5}%
+\contentsline {section}{\numberline {1.6}Alcance y Limitaciones}{4}{section.1.6}%
+\contentsline {subsection}{\numberline {1.6.1}Alcance}{4}{subsection.1.6.1}%
+\contentsline {subsection}{\numberline {1.6.2}Limitaciones}{4}{subsection.1.6.2}%
+\contentsline {section}{\numberline {1.7}Estructura del Documento}{4}{section.1.7}%
+\contentsline {chapter}{\numberline {2}Trabajo Relacionado}{6}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Métodos Tradicionales de Detección de Malware}{6}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Detección Basada en Firmas}{6}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Análisis Heurístico}{6}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Análisis Dinámico (Sandboxing)}{6}{subsection.2.1.3}%
+\contentsline {section}{\numberline {2.2}Machine Learning en Detección de Malware}{7}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Enfoques Tradicionales de ML}{7}{subsection.2.2.1}%
+\contentsline {section}{\numberline {2.3}Deep Learning para Análisis de Malware}{7}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Ventajas del Deep Learning}{7}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Trabajos Previos con Deep Learning}{7}{subsection.2.3.2}%
+\contentsline {section}{\numberline {2.4}Análisis Visual de Malware}{8}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Conversión de Binarios a Imágenes}{8}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Características Visuales Discriminativas}{8}{subsection.2.4.2}%
+\contentsline {section}{\numberline {2.5}Trabajos con CNN para Clasificación de Malware}{8}{section.2.5}%
+\contentsline {subsection}{\numberline {2.5.1}Arquitecturas CNN Aplicadas}{8}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2}Resultados Reportados en Literatura}{8}{subsection.2.5.2}%
+\contentsline {section}{\numberline {2.6}Datasets Públicos de Malware}{9}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}Descripción de Datasets Relevantes}{9}{subsection.2.6.1}%
+\contentsline {section}{\numberline {2.7}Brechas en la Literatura y Motivación del Proyecto}{9}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Resumen}{9}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Metodología}{11}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Visión General del Proceso}{11}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Datasets de Malware}{11}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Descripción de Datasets Utilizados}{11}{subsection.3.2.1}%
+\contentsline {subsubsection}{MalImg Dataset}{11}{subsubsection*.8}%
+\contentsline {subsubsection}{Malevis Dataset}{12}{subsubsection*.9}%
+\contentsline {subsubsection}{Blended Malware Image Dataset}{12}{subsubsection*.10}%
+\contentsline {subsection}{\numberline {3.2.2}Distribución de Familias de Malware}{12}{subsection.3.2.2}%
+\contentsline {section}{\numberline {3.3}Preprocesamiento de Datos}{12}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Conversión de Ejecutables a Imágenes}{12}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Normalización y Redimensionamiento}{13}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Aumento de Datos (Data Augmentation)}{13}{subsection.3.3.3}%
+\contentsline {subsubsection}{Transformaciones Sin Pérdida}{13}{subsubsection*.11}%
+\contentsline {subsubsection}{Técnicas de Augmentation Aplicadas}{13}{subsubsection*.12}%
+\contentsline {section}{\numberline {3.4}División de Datos}{14}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Arquitecturas de Redes Neuronales Convolucionales}{14}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Arquitectura CNN Personalizada}{14}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Modelos Preentrenados con Transfer Learning}{15}{subsection.3.5.2}%
+\contentsline {subsubsection}{VGG16/VGG19}{15}{subsubsection*.13}%
+\contentsline {subsubsection}{ResNet50/ResNet101}{15}{subsubsection*.14}%
+\contentsline {subsubsection}{InceptionV3}{15}{subsubsection*.15}%
+\contentsline {section}{\numberline {3.6}Configuración de Entrenamiento}{15}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Hiperparámetros}{15}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Estrategias de Optimización}{16}{subsection.3.6.2}%
+\contentsline {subsection}{\numberline {3.6.3}Manejo de Desbalance de Clases}{16}{subsection.3.6.3}%
+\contentsline {section}{\numberline {3.7}Entorno Experimental}{16}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Hardware y Software}{16}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Implementación}{17}{subsection.3.7.2}%
+\contentsline {section}{\numberline {3.8}Métricas de Evaluación}{17}{section.3.8}%
+\contentsline {subsection}{\numberline {3.8.1}Métricas Principales}{17}{subsection.3.8.1}%
+\contentsline {subsection}{\numberline {3.8.2}Métricas Multi-Clase}{18}{subsection.3.8.2}%
+\contentsline {subsection}{\numberline {3.8.3}Matriz de Confusión}{18}{subsection.3.8.3}%
+\contentsline {subsection}{\numberline {3.8.4}Curvas ROC y AUC}{18}{subsection.3.8.4}%
+\contentsline {section}{\numberline {3.9}Validación Cruzada y Análisis de Robustez}{18}{section.3.9}%
+\contentsline {section}{\numberline {3.10}Consideraciones Éticas y de Seguridad}{18}{section.3.10}%
+\contentsline {section}{\numberline {3.11}Resumen de la Metodología}{19}{section.3.11}%
+\contentsline {chapter}{\numberline {4}Experimentos y Resultados}{20}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Configuración Experimental General}{20}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Entorno de Ejecución}{20}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Dataset: MalImg}{20}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Partición de Datos}{20}{subsection.4.1.3}%
+\contentsline {section}{\numberline {4.2}Experimento 1: Comparación de Arquitecturas (H1)}{21}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Objetivo}{21}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Configuración de Modelos}{21}{subsection.4.2.2}%
+\contentsline {subsubsection}{Conventional CNN (Baseline)}{21}{subsubsection*.17}%
+\contentsline {subsubsection}{VGG-Mini-H1 (5 bloques)}{21}{subsubsection*.18}%
+\contentsline {subsubsection}{ResNet50 (Fine-tuning)}{21}{subsubsection*.19}%
+\contentsline {subsubsection}{Vision Transformer (ViT-Small)}{22}{subsubsection*.20}%
+\contentsline {subsection}{\numberline {4.2.3}Curvas de Entrenamiento}{22}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Análisis de Resultados}{22}{subsection.4.2.4}%
+\contentsline {subsubsection}{ResNet50: Superioridad del Transfer Learning}{22}{subsubsection*.28}%
+\contentsline {subsubsection}{ViT-Small: Limitaciones con Datasets Pequeños}{25}{subsubsection*.29}%
+\contentsline {subsubsection}{CNN de 5 Bloques: Hallazgo Inesperado}{25}{subsubsection*.30}%
+\contentsline {subsubsection}{Baseline Convencional como Referencia}{25}{subsubsection*.31}%
+\contentsline {subsection}{\numberline {4.2.5}Verificación de Hipótesis H1}{26}{subsection.4.2.5}%
+\contentsline {subsubsection}{Análisis de Resultados por Arquitectura}{26}{subsubsection*.32}%
+\contentsline {subsubsection}{Implicaciones Prácticas}{26}{subsubsection*.33}%
+\contentsline {section}{\numberline {4.3}Experimento 2: Impacto de Data Augmentation (H2)}{27}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Objetivo}{27}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Configuración}{27}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Visualización de Resultados}{27}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}Análisis de Resultados}{27}{subsection.4.3.4}%
+\contentsline {subsubsection}{Mejora en Clases Minoritarias}{27}{subsubsection*.39}%
+\contentsline {subsubsection}{Impacto en Rendimiento Global}{28}{subsubsection*.40}%
+\contentsline {subsubsection}{Observaciones sobre el Entrenamiento}{28}{subsubsection*.41}%
+\contentsline {subsection}{\numberline {4.3.5}Verificación de Hipótesis H2}{28}{subsection.4.3.5}%
+\contentsline {subsubsection}{Implicaciones Prácticas}{28}{subsubsection*.42}%
+\contentsline {section}{\numberline {4.4}Experimento 3: Efecto de la Profundidad en CNN (H3)}{29}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Objetivo}{29}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Configuración de Arquitecturas}{29}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Curvas de Entrenamiento}{29}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Análisis de Resultados}{29}{subsection.4.4.4}%
+\contentsline {subsubsection}{Mejora en Rendimiento}{29}{subsubsection*.46}%
+\contentsline {subsubsection}{Costo Computacional}{30}{subsubsection*.47}%
+\contentsline {subsubsection}{Análisis del Trade-off}{30}{subsubsection*.48}%
+\contentsline {subsection}{\numberline {4.4.5}Verificación de Hipótesis H3}{30}{subsection.4.4.5}%
+\contentsline {subsubsection}{Implicaciones Prácticas}{30}{subsubsection*.49}%
+\contentsline {section}{\numberline {4.5}Análisis Complementario}{31}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Matriz de Confusión del Mejor Modelo}{31}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Visualización de Características Aprendidas}{31}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Mapas de Activación (Grad-CAM)}{31}{subsection.4.5.3}%
+\contentsline {section}{\numberline {4.6}Resumen de Resultados}{31}{section.4.6}%
+\contentsline {chapter}{\numberline {5}Conclusiones y Trabajo Futuro}{33}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Resumen del Proyecto}{33}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Principales Hallazgos}{34}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}H1: Transfer Learning es Superior para Datasets de Tamaño Moderado}{34}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}H2: Data Augmentation Mejora Equidad sin Sacrificar Rendimiento Global}{34}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}H3: Rendimientos Decrecientes con la Profundidad}{34}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}Características Discriminativas}{34}{subsection.5.2.4}%
+\contentsline {section}{\numberline {5.3}Verificación de Hipótesis}{35}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}H1: Comparación de Arquitecturas de Deep Learning}{35}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}H2: Impacto de Data Augmentation en Clases Minoritarias}{35}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}H3: Efecto de la Profundidad en CNN Custom}{36}{subsection.5.3.3}%
+\contentsline {subsection}{\numberline {5.3.4}Resumen de Verificación}{36}{subsection.5.3.4}%
+\contentsline {section}{\numberline {5.4}Contribuciones del Proyecto}{36}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}Contribuciones Técnicas}{36}{subsection.5.4.1}%
+\contentsline {subsection}{\numberline {5.4.2}Contribuciones Prácticas}{36}{subsection.5.4.2}%
+\contentsline {section}{\numberline {5.5}Limitaciones del Estudio}{37}{section.5.5}%
+\contentsline {subsection}{\numberline {5.5.1}Limitaciones de Datasets}{37}{subsection.5.5.1}%
+\contentsline {subsection}{\numberline {5.5.2}Limitaciones Metodológicas}{37}{subsection.5.5.2}%
+\contentsline {subsection}{\numberline {5.5.3}Limitaciones de Interpretabilidad}{37}{subsection.5.5.3}%
+\contentsline {section}{\numberline {5.6}Trabajo Futuro}{37}{section.5.6}%
+\contentsline {subsection}{\numberline {5.6.1}Extensiones Metodológicas}{37}{subsection.5.6.1}%
+\contentsline {subsubsection}{Enfoques Híbridos}{37}{subsubsection*.55}%
+\contentsline {subsubsection}{Arquitecturas Avanzadas}{38}{subsubsection*.56}%
+\contentsline {subsubsection}{Técnicas de Few-Shot Learning}{38}{subsubsection*.57}%
+\contentsline {subsection}{\numberline {5.6.2}Mejoras en Robustez}{38}{subsection.5.6.2}%
+\contentsline {subsubsection}{Defensa Adversarial}{38}{subsubsection*.58}%
+\contentsline {subsubsection}{Detección de Out-of-Distribution}{38}{subsubsection*.59}%
+\contentsline {subsection}{\numberline {5.6.3}Ampliación de Datasets}{38}{subsection.5.6.3}%
+\contentsline {subsubsection}{Datasets Multi-Plataforma}{38}{subsubsection*.60}%
+\contentsline {subsubsection}{Datasets Dinámicos}{39}{subsubsection*.61}%
+\contentsline {subsection}{\numberline {5.6.4}Aplicaciones Prácticas}{39}{subsection.5.6.4}%
+\contentsline {subsubsection}{Sistema de Detección en Tiempo Real}{39}{subsubsection*.62}%
+\contentsline {subsubsection}{Análisis Forense}{39}{subsubsection*.63}%
+\contentsline {subsection}{\numberline {5.6.5}Investigación en Interpretabilidad}{39}{subsection.5.6.5}%
+\contentsline {subsubsection}{Explicabilidad Mejorada}{39}{subsubsection*.64}%
+\contentsline {subsubsection}{Extracción de Conocimiento Experto}{39}{subsubsection*.65}%
+\contentsline {subsection}{\numberline {5.6.6}Benchmarking y Estandarización}{40}{subsection.5.6.6}%
+\contentsline {subsubsection}{Protocolo de Evaluación Estándar}{40}{subsubsection*.66}%
+\contentsline {subsubsection}{Challenge y Competición}{40}{subsubsection*.67}%
+\contentsline {section}{\numberline {5.7}Implicaciones para la Ciberseguridad}{40}{section.5.7}%
+\contentsline {subsection}{\numberline {5.7.1}Para Profesionales de Seguridad}{40}{subsection.5.7.1}%
+\contentsline {subsection}{\numberline {5.7.2}Para Desarrolladores de Soluciones de Seguridad}{40}{subsection.5.7.2}%
+\contentsline {subsection}{\numberline {5.7.3}Para la Investigación Académica}{40}{subsection.5.7.3}%
+\contentsline {section}{\numberline {5.8}Lecciones Aprendidas}{41}{section.5.8}%
+\contentsline {subsection}{\numberline {5.8.1}Técnicas}{41}{subsection.5.8.1}%
+\contentsline {subsection}{\numberline {5.8.2}Prácticas}{41}{subsection.5.8.2}%
+\contentsline {section}{\numberline {5.9}Consideraciones Éticas}{41}{section.5.9}%
+\contentsline {subsection}{\numberline {5.9.1}Uso Responsable}{41}{subsection.5.9.1}%
+\contentsline {subsection}{\numberline {5.9.2}Transparencia}{42}{subsection.5.9.2}%
+\contentsline {subsection}{\numberline {5.9.3}Privacidad y Confidencialidad}{42}{subsection.5.9.3}%
+\contentsline {section}{\numberline {5.10}Reflexiones Finales}{42}{section.5.10}%
+\contentsline {section}{\numberline {5.11}Conclusión}{42}{section.5.11}%
+\contentsline {backmatter}{Bibliografía}{46}{chapter*.68}%

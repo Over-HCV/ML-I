@@ -1,0 +1,16 @@
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Curvas de entrenamiento de ResNet50 Fine-tuned. Se observa convergencia rápida (mejor época: 6) y gap train-val controlado ($\sim $1\%), indicando buena generalización.}}{23}{figure.caption.24}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Evolución de Precision, Recall y F1-Score durante el entrenamiento de ResNet50. Las tres métricas convergen a valores superiores al 95\%.}}{23}{figure.caption.25}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Matriz de confusión de ResNet50 sobre el conjunto de prueba. Los valores en la diagonal representan clasificaciones correctas por familia de malware.}}{24}{figure.caption.26}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Curvas de entrenamiento del modelo baseline (Conventional CNN) para comparación.}}{24}{figure.caption.27}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Comparación de curvas de entrenamiento con y sin data augmentation. Se observa [TODO: describir diferencias en convergencia y overfitting].}}{28}{figure.caption.37}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Comparación de recall por clase minoritaria. Las barras azules representan el modelo sin augmentation; las verdes, con augmentation moderada.}}{28}{figure.caption.38}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Comparación de curvas de entrenamiento entre CNN-3 y CNN-5. (a) Validation accuracy por época. (b) Validation loss por época. Se observa [TODO: describir diferencias].}}{29}{figure.caption.45}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Matriz de confusión de ResNet50 (mejor modelo) sobre el conjunto de prueba. Los valores en la diagonal representan clasificaciones correctas.}}{31}{figure.caption.50}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Visualización t-SNE de los embeddings de la penúltima capa de ResNet50. Cada color representa una familia de malware. Se observa clara separación entre la mayoría de clusters.}}{31}{figure.caption.51}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces Mapas de activación Grad-CAM para muestras representativas de 4 familias. Las regiones rojas indican áreas de mayor importancia para la clasificación.}}{31}{figure.caption.52}%
+\addvspace {10\p@ }

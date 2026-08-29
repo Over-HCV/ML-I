@@ -1,0 +1,17 @@
+\babel@toc {spanish}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Distribución de familias en el dataset MalImg}}{21}{table.caption.16}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Comparación de rendimiento entre arquitecturas (Experimento H1)}}{22}{table.caption.21}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Hiperparámetros de entrenamiento para Experimento H1}}{22}{table.caption.22}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Métricas detalladas de ResNet50 Fine-tuned (mejor modelo)}}{22}{table.caption.23}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces Impacto de data augmentation en métricas globales}}{27}{table.caption.34}%
+\contentsline {table}{\numberline {4.6}{\ignorespaces Recall por clase minoritaria antes y después de augmentation}}{27}{table.caption.35}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Configuración de data augmentation aplicada}}{27}{table.caption.36}%
+\contentsline {table}{\numberline {4.8}{\ignorespaces Comparación CNN-3 vs CNN-5 bloques}}{29}{table.caption.43}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Configuración de arquitecturas CNN-3 y CNN-5}}{29}{table.caption.44}%
+\contentsline {table}{\numberline {4.10}{\ignorespaces Resumen de verificación de hipótesis}}{32}{table.caption.53}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Resumen de verificación de hipótesis}}{36}{table.caption.54}%

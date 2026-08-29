@@ -1,0 +1,206 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nyt/global//global/global/global}
+    \entry{Chen2019}{inproceedings}{}{}
+      \name{author}{5}{}{%
+        {{un=0,uniquepart=base,hash=1107d5a95b697abb672631482765342e}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Bingcai},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=85c8a9cc5cd88ca73f8895920e238a29}{%
+           family={Ren},
+           familyi={R\bibinitperiod},
+           given={Zhongru},
+           giveni={Z\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=a10237d1d57fbf19311761320dafceb5}{%
+           family={Yu},
+           familyi={Y\bibinitperiod},
+           given={Chao},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0e1f459487a882a96db2dbca552f0f55}{%
+           family={Hussain},
+           familyi={H\bibinitperiod},
+           given={Iqbal},
+           giveni={I\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=7a7107564ecf7d64ed0ffa00a7cb7466}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Jintao},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {ACM}%
+      }
+      \strng{namehash}{03f6d10b1ae5371a995b190f64007199}
+      \strng{fullhash}{746b422b1c5a40baa19ac4e836b90a5d}
+      \strng{fullhashraw}{746b422b1c5a40baa19ac4e836b90a5d}
+      \strng{bibnamehash}{03f6d10b1ae5371a995b190f64007199}
+      \strng{authorbibnamehash}{03f6d10b1ae5371a995b190f64007199}
+      \strng{authornamehash}{03f6d10b1ae5371a995b190f64007199}
+      \strng{authorfullhash}{746b422b1c5a40baa19ac4e836b90a5d}
+      \strng{authorfullhashraw}{746b422b1c5a40baa19ac4e836b90a5d}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 2019 ACM SIGSAC Conference on Computer and Communications Security (CCS)}
+      \field{note}{Demonstrates over 99\% attack success rate against CNN malware detectors}
+      \field{title}{Adversarial Examples for CNN-Based Malware Detectors}
+      \field{year}{2019}
+      \field{pages}{1\bibrangedash 12}
+      \range{pages}{12}
+    \endentry
+    \entry{Nataraj2011}{inproceedings}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=8c3f0c5eb2b50f322da8d70d634d9e5f}{%
+           family={Nataraj},
+           familyi={N\bibinitperiod},
+           given={Lakshmanan},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2ed9a843fbfc5bde23df869d8f889300}{%
+           family={Karthikeyan},
+           familyi={K\bibinitperiod},
+           given={S.},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8c5eff3667b660bfda87935fced440cc}{%
+           family={Jacob},
+           familyi={J\bibinitperiod},
+           given={Gregoire},
+           giveni={G\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=b3476468ce13deabd655bf32af3ff985}{%
+           family={Manjunath},
+           familyi={M\bibinitperiod},
+           given={B.\bibnamedelimi S.},
+           giveni={B\bibinitperiod\bibinitdelim S\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {ACM}%
+      }
+      \strng{namehash}{1a4582be2cb50c2f6f839a09a1a82138}
+      \strng{fullhash}{38a8e359ea5948156fb0ce4b640b8df5}
+      \strng{fullhashraw}{38a8e359ea5948156fb0ce4b640b8df5}
+      \strng{bibnamehash}{1a4582be2cb50c2f6f839a09a1a82138}
+      \strng{authorbibnamehash}{1a4582be2cb50c2f6f839a09a1a82138}
+      \strng{authornamehash}{1a4582be2cb50c2f6f839a09a1a82138}
+      \strng{authorfullhash}{38a8e359ea5948156fb0ce4b640b8df5}
+      \strng{authorfullhashraw}{38a8e359ea5948156fb0ce4b640b8df5}
+      \field{sortinit}{N}
+      \field{sortinithash}{22369a73d5f88983a108b63f07f37084}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 8th International Symposium on Visualization for Cyber Security (VizSec)}
+      \field{note}{Pioneering work on converting malware binaries to images for classification}
+      \field{title}{Malware Images: Visualization and Automatic Classification}
+      \field{year}{2011}
+      \field{pages}{1\bibrangedash 7}
+      \range{pages}{7}
+      \verb{doi}
+      \verb 10.1145/2016904.2016908
+      \endverb
+    \endentry
+    \entry{Nisa2020}{article}{}{}
+      \name{author}{7}{}{%
+        {{un=0,uniquepart=base,hash=40bb427f595fb64d3cf6594c569b145a}{%
+           family={Nisa},
+           familyi={N\bibinitperiod},
+           given={Maryam},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=13a583250a1087120fa20135f07b0004}{%
+           family={Shah},
+           familyi={S\bibinitperiod},
+           given={Jamal\bibnamedelima Hussain},
+           giveni={J\bibinitperiod\bibinitdelim H\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=d6c521b3e2eabb2a2373ed755d43496d}{%
+           family={Kanwal},
+           familyi={K\bibinitperiod},
+           given={Shansa},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=551b7646259d2fd84b8bfe9296619c7b}{%
+           family={Rauf},
+           familyi={R\bibinitperiod},
+           given={Muhammad},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1c8fc2abc9f8203aa462c442092d1143}{%
+           family={Kazmi},
+           familyi={K\bibinitperiod},
+           given={Waqar},
+           giveni={W\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=6d2be5b7a5a85b57109bbdb73faefa02}{%
+           family={Bukhari},
+           familyi={B\bibinitperiod},
+           given={Syed\bibnamedelimb Ahmad\bibnamedelima Chan},
+           giveni={S\bibinitperiod\bibinitdelim A\bibinitperiod\bibinitdelim C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=5b99037e436ccfff2274ff29e4c8b7de}{%
+           family={El-Sappagh},
+           familyi={E\bibinithyphendelim S\bibinitperiod},
+           given={Shaker},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{47d6b4a6994e525e1d300a7f57f538bd}
+      \strng{fullhash}{c79d326249f4d1e98054a22aed3a946a}
+      \strng{fullhashraw}{c79d326249f4d1e98054a22aed3a946a}
+      \strng{bibnamehash}{47d6b4a6994e525e1d300a7f57f538bd}
+      \strng{authorbibnamehash}{47d6b4a6994e525e1d300a7f57f538bd}
+      \strng{authornamehash}{47d6b4a6994e525e1d300a7f57f538bd}
+      \strng{authorfullhash}{c79d326249f4d1e98054a22aed3a946a}
+      \strng{authorfullhashraw}{c79d326249f4d1e98054a22aed3a946a}
+      \field{sortinit}{N}
+      \field{sortinithash}{22369a73d5f88983a108b63f07f37084}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{PeerJ Computer Science}
+      \field{note}{Demonstrates effectiveness of rotation, flip and scale augmentation for malware image classification}
+      \field{title}{Data Augmentation Based Malware Detection using Convolutional Neural Networks}
+      \field{volume}{7}
+      \field{year}{2021}
+      \field{pages}{e346}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.7717/peerj-cs.346
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
