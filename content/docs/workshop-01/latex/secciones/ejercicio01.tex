@@ -1,0 +1,107 @@
+% =====================================================================
+% ejercicio01.tex
+% Responsabilidad única: demostrar que \hat p_k(x) es una proporción,
+% derivar la regla de decisión por umbral 1/2, resolver los dos casos
+% numéricos (k=5 y k=7), y justificar por qué k impar evita empates.
+% =====================================================================
+\subsection{Ejercicio 1 --- Fundamento probabilístico de KNN}
+
+Sea un conjunto de entrenamiento $D=\{(x_i,y_i)\}_{i=1}^n$, con
+$x_i\in\mathbb{R}^d$, $y_i\in\{0,1\}$. Para una nueva observación $x$,
+sea $N_k(x)$ el conjunto de sus $k$ vecinos más cercanos, y defínase
+
+\[
+    \hat p_k(x) = \frac{1}{k}\sum_{x_i \in N_k(x)} y_i .
+\]
+
+\begin{enumerate}
+
+\item \textbf{$\hat p_k(x)$ es una proporción.}
+Dado que $y_i\in\{0,1\}$, cada etiqueta funciona como una variable
+indicadora, de forma que $y_i=1$ aporta exactamente una unidad a la
+suma cuando el vecino pertenece a la clase positiva, mientras que
+$y_i=0$ no aporta nada, por lo tanto,
+\[
+    \sum_{x_i\in N_k(x)} y_i = \#\{x_i\in N_k(x) : y_i = 1\} = m,
+\]
+es decir, la sumatoria cuenta literalmente cuántos de los $k$ vecinos
+son positivos sin que los negativos alteren el resultado, y al dividir
+entre $k$ se obtiene $\hat p_k(x)=m/k$, que corresponde exactamente a
+la definición frecuentista de una proporción (casos favorables sobre
+casos totales), quedando así demostrado que $\hat p_k(x)$ es la
+proporción de vecinos de clase positiva.
+
+\item \textbf{El umbral $\tfrac12$ como regla de mayoría.}
+KNN asigna a $x$ la clase mayoritaria entre sus $k$ vecinos, de forma
+que, si $m$ es el número de vecinos positivos, entonces $k-m$ es el de
+negativos, y la clase 1 es mayoritaria cuando $m > k-m$, lo cual
+equivale a $2m>k$, es decir, a $m/k>\tfrac12$ (y como
+$\hat p_k(x)=m/k$, esta condición es exactamente
+$\hat p_k(x) > \tfrac12$), con lo cual el umbral no se impone
+arbitrariamente, sino que es la traducción algebraica directa de la
+regla ``la clase con más votos gana''.
+
+\item \textbf{Caso $k=5$, etiquetas $\{1,0,1,1,0\}$.}
+\[
+    m = 1+0+1+1+0 = 3, \qquad \hat p_k(x) = \frac{3}{5} = 0.6 > 0.5
+    \;\Longrightarrow\; \text{KNN predice la \textbf{clase 1}.}
+\]
+
+\item \textbf{Caso $k=7$, etiquetas $\{0,0,1,0,1,1,0\}$.}
+\[
+    m = 0+0+1+0+1+1+0 = 3, \qquad \hat p_k(x) = \frac{3}{7} \approx 0.4286 < 0.5
+    \;\Longrightarrow\; \text{KNN predice la \textbf{clase 0}.}
+\]
+
+\item \textbf{Por qué $k$ impar evita empates.}
+Un empate ocurre cuando $m = k-m$, es decir, cuando $k=2m$, y esta
+igualdad exige que $k$ sea par (porque $2m$ es siempre un número par
+para cualquier entero $m$), de modo que si $k$ es impar no existe
+ningún entero $m$ que satisfaga $k=2m$, y el empate resulta
+matemáticamente imposible, que es justo lo que se observó en los
+incisos c y d, donde al ser $k$ impar en ambos casos, $\hat p_k(x)$
+nunca cae exactamente en $0.5$ y siempre hay una clase estrictamente
+mayoritaria.
+
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[every node/.style={font=\small}]
+
+\draw[dashed, gray!60, thick] (0,0) circle (2.4);
+\node[gray!55] at (2.95,1.55) {$N_5(x)$};
+
+\draw[gray!45] (0,0) -- (90:2);
+\draw[gray!45] (0,0) -- (162:1.8);
+\draw[gray!45] (0,0) -- (234:2.1);
+\draw[gray!45] (0,0) -- (306:1.9);
+\draw[gray!45] (0,0) -- (18:2.2);
+
+\node[draw=black, fill=black, rectangle, minimum size=8pt, inner sep=0pt] (x) at (0,0) {};
+\node[below=2pt] at (0,-0.22) {$x$};
+
+\node[draw=black, fill=classred,  circle, minimum size=10pt, inner sep=0pt] (n1) at (90:2)   {};
+\node[draw=black, fill=classblue, circle, minimum size=10pt, inner sep=0pt] (n2) at (162:1.8) {};
+\node[draw=black, fill=classred,  circle, minimum size=10pt, inner sep=0pt] (n3) at (234:2.1) {};
+\node[draw=black, fill=classred,  circle, minimum size=10pt, inner sep=0pt] (n4) at (306:1.9) {};
+\node[draw=black, fill=classblue, circle, minimum size=10pt, inner sep=0pt] (n5) at (18:2.2)  {};
+
+\node[draw=black, fill=classred, circle, minimum size=10pt, inner sep=0pt] (lr) at (3.7,0.55) {};
+\node[right=5pt] at (lr) {clase 1};
+\node[draw=black, fill=classblue, circle, minimum size=10pt, inner sep=0pt] (lb) at (3.7,-0.05) {};
+\node[right=5pt] at (lb) {clase 0};
+\node[draw=black, fill=black, rectangle, minimum size=8pt, inner sep=0pt] (lx) at (3.7,-0.65) {};
+\node[right=5pt] at (lx) {consulta $x$};
+
+\node[align=center, text width=8.6cm] at (0.9,-3.05)
+  {\textbf{3 votos de clase 1} contra \textbf{2 votos de clase 0}
+   $\Rightarrow\ \hat p_5(x)=\dfrac{3}{5}=0.6 > \dfrac12$
+   $\Rightarrow$ predicción: \textbf{clase 1}};
+
+\end{tikzpicture}
+\caption{Votación de KNN para el ejemplo del inciso c ($k=5$, etiquetas
+$\{1,0,1,1,0\}$): cada punto de color es uno de los 5 vecinos más
+cercanos a $x$, y la clase mayoritaria entre ellos determina la
+predicción.}
+\end{figure}

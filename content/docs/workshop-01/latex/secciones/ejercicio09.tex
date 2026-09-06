@@ -1,0 +1,61 @@
+% =====================================================================
+% ejercicio09.tex
+% Responsabilidad única: comparar, para los tres mejores k según F1 del
+% Ejercicio 8, el efecto de cambiar la métrica de distancia.
+% =====================================================================
+\subsection{Ejercicio 9 --- Distancia Euclidiana vs. Manhattan}
+
+Se comparan los tres mejores valores de $k$ según F1 obtenidos en el
+Ejercicio 8: $k=1,3,5$.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rlrrrr}
+\toprule
+$k$ & Distancia & Accuracy & Precision & Recall & F1 \\
+\midrule
+1 & Euclidiana & 0.9044 & 0.2496 & 0.2144 & \textbf{0.2307} \\
+1 & Manhattan  & 0.9054 & 0.2518 & 0.2105 & 0.2293 \\
+3 & Euclidiana & 0.9276 & 0.3978 & 0.1621 & 0.2303 \\
+3 & Manhattan  & 0.9283 & 0.4000 & 0.1466 & 0.2146 \\
+5 & Euclidiana & 0.9329 & 0.4936 & 0.1357 & 0.2128 \\
+5 & Manhattan  & 0.9329 & 0.4921 & 0.1237 & 0.1977 \\
+\bottomrule
+\end{tabular}
+\caption{Euclidiana vs. Manhattan para $k \in \{1,3,5\}$.}
+\end{table}
+
+\begin{enumerate}
+
+\item \textbf{¿La métrica modifica el desempeño?}
+Sí, pero de forma mucho más discreta que la estandarización o que $k$,
+y sin un patrón del todo consistente, pues para $k=1$ y $k=3$ Manhattan
+da Accuracy y Precision levemente superiores pero Recall y F1
+levemente inferiores a Euclidiana, mientras que para $k=5$ ocurre lo
+contrario y Euclidiana iguala o supera a Manhattan en las cuatro
+métricas (obsérvese la Precision, de $0.4936$ para Euclidiana y no
+$0.4921$ como en Manhattan), aunque en ningún caso la diferencia entre
+métricas supera $1.5$ puntos porcentuales, muy por debajo del efecto
+de estandarizar o de cambiar $k$.
+
+\item \textbf{Mayor F1:} $k=1$, Euclidiana ($F1=0.2307$).
+
+\item \textbf{Mayor Recall:} $k=1$, Euclidiana ($\text{Recall}=0.2144$).
+
+\item \textbf{¿Coinciden F1 y Recall en la misma configuración?}
+Sí, ambas apuntan a $k=1$ con distancia euclidiana, aunque vale la pena
+matizar esta coincidencia, ya que los tres valores de $k$ comparados
+aquí ya fueron preseleccionados por ranking de F1 en el Ejercicio 8, y
+en este dataset el Recall resulta monótonamente decreciente en $k$ (a
+mayor $k$, menor Recall), así que el ranking de F1 y el de Recall casi
+tenían que coincidir dentro de ese subconjunto de tres, por lo que no
+es del todo una confirmación independiente. Dicho esto, el mecanismo
+de fondo sí es real, pues a diferencia del trade-off marcado entre
+$k=1$ y $k=9$ del Ejercicio 8, aquí cambiar la métrica de distancia no
+altera lo suficiente cuál vecino es ``más cercano'' como para invertir
+el orden de los modelos, ya que con los datos ya estandarizados, la
+diferencia entre penalizar cuadráticamente (Euclidiana) o linealmente
+(Manhattan) las diferencias por variable resulta menor que la que
+introduce cambiar $k$.
+
+\end{enumerate}

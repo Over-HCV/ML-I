@@ -1,0 +1,50 @@
+% =====================================================================
+% main.tex
+% Responsabilidad única: ensamblar el documento completo a partir de los
+% módulos (preámbulo, portada y las diez secciones de ejercicios). No
+% contiene desarrollo matemático ni resultados propios — solo estructura.
+%
+% Para compilar:  pdflatex main.tex   (dos veces, por el índice)
+%             o:  latexmk -pdf main.tex
+% =====================================================================
+\documentclass[11pt]{article}
+
+\input{preambulo}
+
+\begin{document}
+
+\input{portada}
+
+\tableofcontents
+\newpage
+
+% ---------------------------------------------------------------------
+% Parte I — Componente teórico-matemático
+% ---------------------------------------------------------------------
+\section{Componente teórico-matemático}
+\input{secciones/ejercicio01}
+\input{secciones/ejercicio02}
+\input{secciones/ejercicio03}
+\input{secciones/ejercicio04}
+\input{secciones/ejercicio05}
+
+\newpage
+% ---------------------------------------------------------------------
+% Parte II — Componente práctico-computacional
+% ---------------------------------------------------------------------
+\section{Componente práctico-computacional}
+\label{sec:practico}
+
+\noindent Los ejercicios 6 a 10 se desarrollaron en Python sobre el
+conjunto de datos \emph{Give Me Some Credit} (150.000 observaciones);
+el notebook reproducible correspondiente se entrega por separado (en
+formato \texttt{.ipynb}) y produjo todos los números y figuras citados
+en esta sección.
+
+\input{secciones/ejercicio06}
+\input{secciones/ejercicio07}
+\input{secciones/ejercicio08}
+\input{secciones/ejercicio09}
+\input{secciones/ejercicio10}
+
+\end{document}

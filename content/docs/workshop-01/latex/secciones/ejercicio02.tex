@@ -1,0 +1,94 @@
+% =====================================================================
+% ejercicio02.tex
+% Responsabilidad única: calcular y comparar d_E y d_M sobre tres puntos
+% dados, y demostrar la desigualdad general d_E(A,B) <= d_M(A,B).
+% =====================================================================
+\subsection{Ejercicio 2 --- Distancia euclidiana vs. Manhattan}
+
+Sean $A=(a_1,a_2)$ y $B=(b_1,b_2)$, con
+
+\[
+    d_E(A,B) = \sqrt{(a_1-b_1)^2+(a_2-b_2)^2}, \qquad
+    d_M(A,B) = |a_1-b_1|+|a_2-b_2|.
+\]
+
+Se consideran los puntos $A=(2,3)$, $B=(7,7)$, $C=(5,2)$.
+
+\begin{enumerate}
+
+\item
+\[
+    d_E(A,B) = \sqrt{(2-7)^2+(3-7)^2} = \sqrt{25+16} = \sqrt{41} \approx 6.4031
+\]
+
+\item
+\[
+    d_M(A,B) = |2-7|+|3-7| = 5+4 = 9
+\]
+
+\item
+\[
+    d_E(A,C) = \sqrt{(2-5)^2+(3-2)^2} = \sqrt{10} \approx 3.1623,
+    \qquad
+    d_M(A,C) = |2-5|+|3-2| = 4
+\]
+
+\item \textbf{Vecino más cercano de $A$.}
+{\sloppy Al comparar $d_E(A,B)\approx 6.40$ con $d_E(A,C)\approx 3.16$,
+y $d_M(A,B)=9$ con $d_M(A,C)=4$, resulta claro que en ambos casos
+\textbf{C} es el vecino más cercano, de forma que aquí las dos
+métricas coinciden en su conclusión, aunque esto no está garantizado
+en general, pues nada impide construir puntos donde Euclidiana y
+Manhattan discrepen sobre cuál es el vecino más cercano.\par}
+
+\item \textbf{Demostración de $d_E(A,B)\le d_M(A,B)$.}
+Partiendo de la expresión sugerida y expandiendo el cuadrado del lado
+izquierdo,
+\[
+    (|a_1-b_1|+|a_2-b_2|)^2 = (a_1-b_1)^2 + 2|a_1-b_1||a_2-b_2| + (a_2-b_2)^2 ,
+\]
+y como el término cruzado $2|a_1-b_1||a_2-b_2|$ es siempre no negativo
+(por ser producto de valores absolutos), se cumple que
+\[
+    (|a_1-b_1|+|a_2-b_2|)^2 \;\ge\; (a_1-b_1)^2+(a_2-b_2)^2,
+\]
+es decir, $d_M(A,B)^2 \ge d_E(A,B)^2$, y dado que ambas distancias son
+cantidades no negativas, al tomar raíz cuadrada la desigualdad se
+preserva:
+\[
+    d_M(A,B) \ge d_E(A,B) \quad\Longleftrightarrow\quad d_E(A,B)\le d_M(A,B).
+\]
+La igualdad solo se alcanza cuando $|a_1-b_1||a_2-b_2|=0$, es decir,
+cuando los puntos difieren en una única coordenada (geométricamente,
+cuando el desplazamiento es puramente horizontal o vertical).
+
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.68, every node/.style={font=\small}]
+
+\draw[step=1, gray!22, thin] (0,0) grid (8,8);
+\draw[-{Stealth[length=6pt]}] (-0.4,0) -- (8.6,0) node[right] {$x_1$};
+\draw[-{Stealth[length=6pt]}] (0,-0.4) -- (0,8.6) node[above] {$x_2$};
+
+\coordinate (A) at (2,3);
+\coordinate (B) at (7,7);
+
+\draw[very thick, classblue] (A) -- (7,3) -- (B);
+\draw[very thick, classred] (A) -- (B);
+
+\node[draw=black, fill=black, circle, minimum size=5pt, inner sep=0pt] at (A) {};
+\node[below left=1pt and -2pt] at (A) {$A=(2,3)$};
+\node[draw=black, fill=black, circle, minimum size=5pt, inner sep=0pt] at (B) {};
+\node[above right=1pt and -2pt] at (B) {$B=(7,7)$};
+
+\node[classred, fill=white, inner sep=1pt] at (3.35,5.05) {$d_E\approx 6.40$};
+\node[classblue] at (4.5,2.55) {$d_M=9$};
+
+\end{tikzpicture}
+\caption{Trayecto directo (Euclidiana, rojo) frente al trayecto en
+escalera (Manhattan, azul) entre $A$ y $B$: la escalera nunca puede ser
+más corta que la línea recta, lo que ilustra geométricamente por qué
+$d_E \le d_M$.}
+\end{figure}

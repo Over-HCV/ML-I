@@ -1,0 +1,78 @@
+% =====================================================================
+% ejercicio05.tex
+% Responsabilidad única: contrastar dos matrices de confusión bajo las
+% cuatro métricas estándar y bajo un costo asimétrico L=FP+5FN,
+% evidenciando que "mejor Accuracy" no implica "menor costo".
+% =====================================================================
+\subsection{Ejercicio 5 --- Comparación de dos modelos y costo de clasificación}
+
+\begin{table}[H]
+\centering
+\begin{minipage}{0.45\textwidth}
+\centering
+\begin{tabular}{cc|cc}
+    & & \multicolumn{2}{c}{\textbf{Predicho}} \\
+    & & $\hat Y=0$ & $\hat Y=1$ \\
+    \hline
+    \multirow{2}{*}{\textbf{Real}} & $Y=0$ & 900 & 50 \\
+    & $Y=1$ & 30 & 20 \\
+\end{tabular}
+\caption*{Modelo A}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+\centering
+\begin{tabular}{cc|cc}
+    & & \multicolumn{2}{c}{\textbf{Predicho}} \\
+    & & $\hat Y=0$ & $\hat Y=1$ \\
+    \hline
+    \multirow{2}{*}{\textbf{Real}} & $Y=0$ & 850 & 100 \\
+    & $Y=1$ & 10 & 40 \\
+\end{tabular}
+\caption*{Modelo B}
+\end{minipage}
+\caption{Matrices de confusión de los dos modelos comparados.}
+\end{table}
+
+\begin{enumerate}
+
+\item \textbf{Métricas de cada modelo.}
+Modelo A ($TN=900,FP=50,FN=30,TP=20$):
+\[
+    \text{Acc}_A = 0.92, \quad
+    \text{Prec}_A = \tfrac{20}{70}\approx 0.2857, \quad
+    \text{Rec}_A = 0.4, \quad
+    F1_A = \tfrac13 \approx 0.3333.
+\]
+Modelo B ($TN=850,FP=100,FN=10,TP=40$):
+\[
+    \text{Acc}_B = 0.89, \quad
+    \text{Prec}_B = \tfrac{40}{140}\approx 0.2857, \quad
+    \text{Rec}_B = 0.8, \quad
+    F1_B = \tfrac{8}{19} \approx 0.4211.
+\]
+
+\item \textbf{Costo $L=FP+5FN$.}
+\[
+    L_A = 50+5(30) = 200, \qquad L_B = 100+5(10) = 150.
+\]
+
+\item \textbf{Mayor Accuracy:} el Modelo A ($0.92 > 0.89$).
+
+\item \textbf{Mayor Recall:} el Modelo B ($0.8 > 0.4$), por amplio margen.
+
+\item \textbf{Menor costo:} el Modelo B ($150 < 200$).
+
+\item \textbf{El modelo de mayor Accuracy no minimiza el costo.}
+El Modelo A tiene mayor Accuracy pero un mayor coste asociado que el
+Modelo B, esto sucede porque lo que hace el Accuracy es ponderar todos
+los errores por igual, mientras que $L$ pondera cada falso negativo
+cinco veces más que cada falso positivo: el Modelo A minimiza el
+número total de errores ($80$ en vez de $110$), pero comete más falsos
+negativos ($30$ y no $10$), que son los más costosos, mientras que el
+Modelo B sí compensa con más falsos positivos ($100$ en vez de $50$),
+los que son baratos. Cuando los dos tipos de error tienen consecuencias
+distintas, elegir un modelo únicamente por el Accuracy puede ser una
+decisión subóptima enmarcada en el costo real del negocio.
+
+\end{enumerate}

@@ -1,0 +1,72 @@
+% =====================================================================
+% ejercicio10.tex
+% Responsabilidad única: seleccionar y comparar tres modelos bajo un
+% costo de negocio asimétrico (L=FP+5FN), y traducir el resultado en
+% una recomendación de negocio justificada.
+% =====================================================================
+\subsection{Ejercicio 10 --- Análisis final y costo de negocio}
+
+Se comparan tres modelos representativos: el de mejor F1/Recall
+($k=1$, Euclidiana, estandarizado), el de mejor Accuracy ($k=9$,
+Euclidiana, estandarizado), y el modelo base sin estandarizar ($k=5$,
+Ejercicio 7).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Modelo & $k$ & FP & FN & Recall & F1 & Costo $L$ \\
+\midrule
+Modelo 1 (mejor F1/Recall)          & 1 & 1.293 & 1.575 & 0.2144 & 0.2307 & \textbf{9.168} \\
+Modelo 2 (mejor Accuracy)           & 9 &   180 & 1.771 & 0.1167 & 0.1935 & \textbf{9.035} \\
+Modelo 3 (base, sin estandarizar)   & 5 &    67 & 1.956 & 0.0244 & 0.0462 & \textbf{9.847} \\
+\bottomrule
+\end{tabular}
+\caption{Comparación final de modelos, con $L = FP + 5FN$.}
+\end{table}
+
+\begin{enumerate}
+
+\item \textbf{¿El modelo de mayor Accuracy es también el de menor costo?}
+En este caso concreto, \textbf{sí}, ya que el Modelo 2 tiene
+simultáneamente el mayor Accuracy ($0.9350$) y el menor costo
+($9.035$) de los tres, aunque vale la pena anotarlo con honestidad:
+esto \textbf{no contradice} lo demostrado teóricamente en el Ejercicio
+5f, donde se construyó un ejemplo específico en el que Accuracy y
+costo mínimo sí divergían, sino que simplemente muestra que la
+relación entre ambas métricas depende de la forma concreta de los
+errores de cada modelo y no es ninguna ley universal, pues aquí el
+modelo con más vecinos ($k=9$) resulta lo bastante conservador (con
+muy pocos FP) como para también minimizar el costo, algo que podría no
+sostenerse con otra función de costo o con otro dataset.
+
+\item \textbf{¿Menor número de falsos negativos?}
+El \textbf{Modelo 1} ($k=1$), con $1.575$ FN en vez de los $1.771$ del
+Modelo 2 o los $1.956$ del Modelo 3.
+
+\item \textbf{¿Qué modelo recomendaría para identificar clientes de alto riesgo?}
+El \textbf{Modelo 1}, a pesar de no tener ni el mayor Accuracy ni el
+menor costo $L$, y esto porque si el objetivo explícito es maximizar
+la detección de incumplimientos reales (priorizando el Recall), el
+Modelo 1 detecta $430$ de los $2.005$ incumplimientos del conjunto de
+prueba ($21.44\%$), casi el doble que el Modelo 2 ($234$ de $2.005$,
+$11.67\%$), y aunque el costo $L$ tal como está definido pondera los
+falsos positivos con peso $1$, esto puede subestimar el valor real de
+detectar más incumplimientos si, en la práctica, el costo de no
+detectar a un mal pagador termina siendo incluso mayor a $5$ veces el
+de una alerta equivocada.
+
+\item \textbf{Justificación final.}
+La comparación deja en evidencia una tensión real entre tres criterios
+de selección (Accuracy, un costo explícito ponderado, y Recall puro)
+que no siempre apuntan al mismo modelo, siendo el Modelo 2 la opción
+más conservadora y ``eficiente en costo'' bajo la $L$ definida aquí,
+mientras que el Modelo 1 es la más agresiva en detección de riesgo, y
+por eso la elección final no es un ejercicio puramente estadístico
+sino una decisión de negocio que depende de cuánto le cuesta realmente
+a la institución cada tipo de error, ya que si ese costo relativo real
+fuera mayor a $5{:}1$, el balance se inclinaría todavía más hacia el
+Modelo 1.
+
+\end{enumerate}

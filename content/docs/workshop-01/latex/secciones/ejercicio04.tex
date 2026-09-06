@@ -1,0 +1,78 @@
+% =====================================================================
+% ejercicio04.tex
+% Responsabilidad única: extraer TP/TN/FP/FN de una matriz de confusión
+% dada, calcular Accuracy/Precision/Recall/F1, y demostrar la forma
+% alternativa de F1 en función únicamente de TP, FP y FN.
+% =====================================================================
+\subsection{Ejercicio 4 --- Matriz de confusión y métricas básicas}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cc|cc}
+    & & \multicolumn{2}{c}{\textbf{Predicho}} \\
+    & & $\hat Y = 0$ & $\hat Y = 1$ \\
+    \hline
+    \multirow{2}{*}{\textbf{Real}}
+    & $Y=0$ & 850 & 100 \\
+    & $Y=1$ & 20  & 30  \\
+\end{tabular}
+\caption{Matriz de confusión del Ejercicio 4.}
+\end{table}
+
+\begin{enumerate}
+
+\item \textbf{Identificación de $TP,TN,FP,FN$.}
+Leyendo las filas como clase real y las columnas como clase predicha,
+se identifica que $TN=850$ (real 0, predicho 0), $FP=100$ (real 0,
+predicho 1), $FN=20$ (real 1, predicho 0) y $TP=30$ (real 1, predicho 1).
+
+\item \textbf{Accuracy.}
+\[
+    \text{Accuracy} = \frac{TP+TN}{TP+TN+FP+FN} = \frac{30+850}{1000} = 0.88
+\]
+
+\item \textbf{Precision.}
+\[
+    \text{Precision} = \frac{TP}{TP+FP} = \frac{30}{130} = \frac{3}{13} \approx 0.2308
+\]
+
+\item \textbf{Recall.}
+\[
+    \text{Recall} = \frac{TP}{TP+FN} = \frac{30}{50} = 0.6
+\]
+
+\item \textbf{F1.}
+\[
+    F1 = 2\cdot\frac{\text{Precision}\cdot\text{Recall}}{\text{Precision}+\text{Recall}}
+       = 2\cdot\frac{(3/13)(3/5)}{3/13+3/5}
+       = 2\cdot\frac{9/65}{54/65}
+       = \frac{18}{54} = \frac13 \approx 0.3333
+\]
+
+\item \textbf{Demostración algebraica de $F1 = \dfrac{2TP}{2TP+FP+FN}$.}
+
+Se parte de las definiciones $P = \dfrac{TP}{TP+FP}$ y $R = \dfrac{TP}{TP+FN}$.
+
+Primero se calcula el producto $P\cdot R$:
+\[
+    P\cdot R = \frac{TP^2}{(TP+FP)(TP+FN)}.
+\]
+
+Luego se calcula la suma $P+R$, llevándola a un denominador común:
+\[
+    P + R = \frac{TP(TP+FN)+TP(TP+FP)}{(TP+FP)(TP+FN)} = \frac{TP\,(2TP+FP+FN)}{(TP+FP)(TP+FN)}.
+\]
+
+Sustituyendo ambas expresiones en $F1 = 2\cdot\dfrac{P\cdot R}{P+R}$,
+el denominador común $(TP+FP)(TP+FN)$ se cancela:
+\[
+    F1 = 2\cdot\frac{TP^2}{TP\,(2TP+FP+FN)} = \frac{2TP}{2TP+FP+FN}.
+\]
+
+Verificación numérica:
+\[
+    \frac{2(30)}{2(30)+100+20} = \frac{60}{180} = \frac13,
+\]
+idéntico al resultado del inciso e.
+
+\end{enumerate}

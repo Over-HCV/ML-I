@@ -6,28 +6,28 @@ Guía de asignatura
 
 ## 1. Información general
 
-| Campo | Valor |
-| --- | --- |
-| Nombre de la asignatura | Aprendizaje automático de máquina I |
-| Código | 32310002 |
-| Tipo de asignatura | Obligatoria |
-| Número de créditos | 2 |
-| Tipo de crédito | A |
-| Horas de trabajo semanal con acompañamiento directo del profesor | 24 |
-| Horas semanales de trabajo independiente del estudiante | 72 |
-| Total horas por periodo académico | 96 |
-| Prerrequisitos | Ninguno |
-| Correquisitos | Ninguno |
-| Horario | Sábado 7:00 a.m. a 10:00 a.m. |
-| Salón | Sala BOOLE (Sede Claustro - Edificio el Tiempo) |
+| Campo                                                            | Valor                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------- |
+| Nombre de la asignatura                                          | Aprendizaje automático de máquina I             |
+| Código                                                           | 32310002                                        |
+| Tipo de asignatura                                               | Obligatoria                                     |
+| Número de créditos                                               | 2                                               |
+| Tipo de crédito                                                  | A                                               |
+| Horas de trabajo semanal con acompañamiento directo del profesor | 24                                              |
+| Horas semanales de trabajo independiente del estudiante          | 72                                              |
+| Total horas por periodo académico                                | 96                                              |
+| Prerrequisitos                                                   | Ninguno                                         |
+| Correquisitos                                                    | Ninguno                                         |
+| Horario                                                          | Sábado 7:00 a.m. a 10:00 a.m.                   |
+| Salón                                                            | Sala BOOLE (Sede Claustro - Edificio el Tiempo) |
 
 ## 2. Información del profesor
 
-| Campo | Valor |
-| --- | --- |
-| Nombre del profesor | Daniel Felipe Rambaut Lemus |
-| Correo electrónico institucional | daniel.rambaut@urosario.edu.co |
-| Lugar y horario de atención | Lunes y jueves de 6:00 a 7:00 p.m., o escribiendo al correo daniel.rambaut@urosario.edu.co para programar una reunión, o al WhatsApp 3136991094 |
+| Campo                            | Valor                                                                                                                                           |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nombre del profesor              | Daniel Felipe Rambaut Lemus                                                                                                                     |
+| Correo electrónico institucional | daniel.rambaut@urosario.edu.co                                                                                                                  |
+| Lugar y horario de atención      | Lunes y jueves de 6:00 a 7:00 p.m., o escribiendo al correo daniel.rambaut@urosario.edu.co para programar una reunión, o al WhatsApp 3136991094 |
 
 ## 3. Resumen y propósitos del curso
 
@@ -77,24 +77,24 @@ El desarrollo de las sesiones se efectuará con el apoyo de la plataforma e-aula
 
 La evaluación del curso se realizará por medio de talleres prácticos y un estudio de caso que involucre conceptos, técnicas y herramientas abordadas en el curso.
 
-| Actividad | Descripción | Porcentaje | Fecha |
-| --- | --- | --- | --- |
-| Estudio de caso 1 | Análisis exploratorio y Machine Learning 1: clasificación | 40% | Para entregar en la sesión 3 (15/03) |
-| Estudio de caso 2 | Modelos de Machine Learning 2: clasificación y regresión | 30% | Para entregar en la sesión 5 (12/04) |
-| Estudio de caso 3 | Modelos de Machine Learning 3: regresión y clustering | 30% | Para entregar en la sesión 8 (31/05) |
+| Actividad         | Descripción                                               | Porcentaje | Fecha                                |
+| ----------------- | --------------------------------------------------------- | ---------- | ------------------------------------ |
+| Estudio de caso 1 | Análisis exploratorio y Machine Learning 1: clasificación | 40%        | Para entregar en la sesión 3 (15/03) |
+| Estudio de caso 2 | Modelos de Machine Learning 2: clasificación y regresión  | 30%        | Para entregar en la sesión 5 (12/04) |
+| Estudio de caso 3 | Modelos de Machine Learning 3: regresión y clustering     | 30%        | Para entregar en la sesión 8 (31/05) |
 
 ## 9. Programación de actividades
 
-| Sesión y fecha | Tema | Descripción de la actividad | Trabajo independiente del estudiante | Recursos que apoyan la actividad |
-| --- | --- | --- | --- | --- |
-| Sesión 1 (15/02/26) | Generalidades del curso, introducción al aprendizaje automático de máquina, tipos de problemas, análisis exploratorio de datos, esquema general de machine learning para clasificación, introducción a k-vecinos más cercanos | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1] |
-| Sesión 2 (01/03/26) | Métricas de evaluación: accuracy, precisión, recall, f1-score, matriz de confusión, optimización de hiperparámetros, búsqueda en grilla, validación cruzada | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1] |
-| Sesión 3 (15/03/26) | Regresión logística, curva ROC, umbral | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1] |
-| Sesión 4 (29/03/26) | Árboles de decisión, poda (pruning), ccp | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1] |
-| Sesión 5 (12/04/26) | Problemas de regresión, regresión lineal simple y múltiple, mínimos cuadrados, métricas de evaluación, error cuadrático medio (MSE) | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1] |
-| Sesión 6 (03/05/26) | Otros modelos de regresión, KNN-regresor, decision tree regresor | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1] |
-| Sesión 7 (17/05/26) | Modelos de clustering, K-means, DBSCAN | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1] |
-| Sesión 8 (31/05/26) | Introducción a redes neuronales, neurona, perceptrón, función de activación, idea de backpropagation, redes en Keras + TensorFlow | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencias [1] y [2] |
+| Sesión y fecha      | Tema                                                                                                                                                                                                                          | Descripción de la actividad                                                                                               | Trabajo independiente del estudiante                         | Recursos que apoyan la actividad |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | -------------------------------- |
+| Sesión 1 (15/02/26) | Generalidades del curso, introducción al aprendizaje automático de máquina, tipos de problemas, análisis exploratorio de datos, esquema general de machine learning para clasificación, introducción a k-vecinos más cercanos | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1]        |
+| Sesión 2 (01/03/26) | Métricas de evaluación: accuracy, precisión, recall, f1-score, matriz de confusión, optimización de hiperparámetros, búsqueda en grilla, validación cruzada                                                                   | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1]        |
+| Sesión 3 (15/03/26) | Regresión logística, curva ROC, umbral                                                                                                                                                                                        | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1]        |
+| Sesión 4 (29/03/26) | Árboles de decisión, poda (pruning), ccp                                                                                                                                                                                      | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1]        |
+| Sesión 5 (12/04/26) | Problemas de regresión, regresión lineal simple y múltiple, mínimos cuadrados, métricas de evaluación, error cuadrático medio (MSE)                                                                                           | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1]        |
+| Sesión 6 (03/05/26) | Otros modelos de regresión, KNN-regresor, decision tree regresor                                                                                                                                                              | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1]        |
+| Sesión 7 (17/05/26) | Modelos de clustering, K-means, DBSCAN                                                                                                                                                                                        | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencia [1]        |
+| Sesión 8 (31/05/26) | Introducción a redes neuronales, neurona, perceptrón, función de activación, idea de backpropagation, redes en Keras + TensorFlow                                                                                             | Presentación de conceptos y herramientas por parte del docente. Desarrollo de casos en clase con seguimiento del docente. | Preparación de la sesión, lecturas previas, tareas, talleres | Notebook y referencias [1] y [2] |
 
 ## 10. Factores de éxito para este curso
 

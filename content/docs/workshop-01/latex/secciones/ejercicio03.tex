@@ -1,0 +1,101 @@
+% =====================================================================
+% ejercicio03.tex
+% Responsabilidad única: mostrar, con un ejemplo numérico y su
+% generalización algebraica, por qué una variable de escala mayor
+% domina la distancia euclidiana cuando no se estandariza — es la base
+% conceptual que se retoma empíricamente en el Ejercicio 7.
+% =====================================================================
+\subsection{Ejercicio 3 --- Efecto de la escala sobre la distancia}
+
+Se consideran los puntos $A=(20,1000)$, $B=(25,1200)$, $C=(40,1010)$.
+
+\begin{enumerate}
+
+\item \textbf{Distancias en escala original.}
+\[
+    d(A,B) = \sqrt{(20-25)^2+(1000-1200)^2} = \sqrt{25+40000} = \sqrt{40025} \approx 200.06
+\]
+\[
+    d(A,C) = \sqrt{(20-40)^2+(1000-1010)^2} = \sqrt{400+100} = \sqrt{500} \approx 22.36
+\]
+
+\item \textbf{Vecino más cercano.}
+Como $d(A,C)\approx 22.36$ es mucho menor que $d(A,B)\approx 200.06$,
+el punto \textbf{C} es el vecino más cercano a $A$.
+
+\item \textbf{Distancias tras dividir la segunda variable entre 100.}
+Con $A'=(20,10)$, $B'=(25,12)$, $C'=(40,10.1)$:
+\[
+    d(A',B') = \sqrt{5^2+2^2} = \sqrt{29} \approx 5.385
+\]
+\[
+    d(A',C') = \sqrt{20^2+0.1^2} = \sqrt{400.01} \approx 20.0002
+\]
+
+\item \textbf{¿Cambió el vecino más cercano?}
+Sí, ahora $d(A',B')\approx 5.39 < d(A',C')\approx 20.00$, así que el
+vecino más cercano pasó a ser \textbf{B}, el punto opuesto al de antes
+de reescalar, y esto tiene una explicación directa: en la escala
+original la segunda variable (diferencias de cientos) dominaba por
+completo el cálculo, mientras que al dividirla entre 100 su diferencia
+se vuelve comparable a la de la primera variable, y esta última, antes
+irrelevante, pasa a determinar la distancia.
+
+\item \textbf{Por qué una escala mayor domina la distancia.}
+En la expresión general
+\[
+    d(x,z) = \sqrt{\sum_{j=1}^{d} (x_j-z_j)^2},
+\]
+cada variable contribuye a través del cuadrado de su diferencia, de
+modo que si la variable $j$ tiene un rango considerablemente mayor al
+de las demás (como la segunda coordenada en este ejercicio, del orden
+de miles y no de decenas), $(x_j-z_j)^2$ será, en términos absolutos,
+mucho mayor que los demás términos, de forma que tanto la suma como,
+en consecuencia, la distancia total terminan determinadas casi
+exclusivamente por esa variable, sin importar si conceptualmente es la
+más relevante para el problema, y este es precisamente el motivo por
+el cual, antes de aplicar un algoritmo basado en distancias como KNN,
+se recomienda estandarizar o normalizar las variables.
+
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[every node/.style={font=\footnotesize}]
+
+% ===== Panel 1: antes de estandarizar =====
+\begin{scope}
+\draw[gray!50] (0,0) -- (3.5,0);
+\pgfmathsetmacro{\hA}{200.06*0.011}
+\pgfmathsetmacro{\hC}{22.36*0.011}
+\draw[fill=gray!45, draw=gray!70] (0.15,0) rectangle (0.85,\hA);
+\draw[fill=classgreen, draw=black] (2.15,0) rectangle (2.85,\hC);
+\node at (0.5,\hA+0.28) {$200.06$};
+\node[classgreen, font=\scriptsize\bfseries] at (2.5,\hC+0.32) {$\star$ más cercano};
+\node at (2.5,\hC+0.62) {$22.36$};
+\node at (0.5,-0.35) {$d(A,B)$};
+\node at (2.5,-0.35) {$d(A,C)$};
+\node[align=center, font=\small\bfseries] at (1.5,-1.0) {Antes de estandarizar};
+\end{scope}
+
+% ===== Panel 2: despues de estandarizar =====
+\begin{scope}[shift={(5.6,0)}]
+\draw[gray!50] (0,0) -- (3.5,0);
+\pgfmathsetmacro{\hBp}{5.385*0.11}
+\pgfmathsetmacro{\hCp}{20.0002*0.11}
+\draw[fill=classgreen, draw=black] (0.15,0) rectangle (0.85,\hBp);
+\draw[fill=gray!45, draw=gray!70] (2.15,0) rectangle (2.85,\hCp);
+\node[classgreen, font=\scriptsize\bfseries] at (0.5,\hBp+0.32) {$\star$ más cercano};
+\node at (0.5,\hBp+0.62) {$5.385$};
+\node at (2.5,\hCp+0.28) {$20.0002$};
+\node at (0.5,-0.35) {$d(A',B')$};
+\node at (2.5,-0.35) {$d(A',C')$};
+\node[align=center, font=\small\bfseries] at (1.5,-1.0) {Después de estandarizar};
+\end{scope}
+
+\end{tikzpicture}
+\caption{Cambio del vecino más cercano de $A$ tras dividir la segunda
+variable entre 100 (cada panel usa su propia escala vertical, ya que
+las magnitudes antes y después no son comparables): pasa de ser $C$ a
+ser $B$.}
+\end{figure}

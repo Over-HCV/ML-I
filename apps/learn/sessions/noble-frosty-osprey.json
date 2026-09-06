@@ -1,6 +1,7 @@
 {
   "session_id": "noble-frosty-osprey",
-  "created_at": "2025-11-28T13:21:25.222632",
+  "created_at": "2026-08-29T09:51:10.348061",
+  "active_dataset": "diabetes.csv",
   "dataset_config": {},
   "model_library": [],
   "training_library": [],
