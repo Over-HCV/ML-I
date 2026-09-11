@@ -11,8 +11,8 @@
 
 El conjunto de datos \emph{Give Me Some Credit} contiene 150.000
 observaciones y 11 variables (10 predictoras más la variable objetivo
-\texttt{SeriousDlqin2yrs}), de las cuales 6 son de tipo entero
-(\texttt{int64}) y 4 de tipo decimal (\texttt{float64}), y solo dos
+\texttt{SeriousDlqin2yrs}) de las cuales 6 son de tipo entero
+[\texttt{int64}], 4 de tipo decimal [\texttt{float64}] y solo dos
 presentan valores faltantes: \texttt{MonthlyIncome} (29.731 faltantes,
 $19.82\%$) y \texttt{NumberOfDependents} (3.924 faltantes, $2.62\%$),
 mientras que el resto de variables no tiene ningún faltante.
@@ -32,10 +32,10 @@ Clase & $n$ & \% \\
 \caption{Distribución de la variable objetivo \texttt{SeriousDlqin2yrs}.}
 \end{table}
 
-Casi 14 casos negativos por cada positivo: un modelo trivial que
+Casi 14 casos negativos por cada positivo: Un modelo trivial que
 siempre prediga la clase 0 ya alcanzaría cerca de $93\%$ de Accuracy
-sin ser útil en la práctica, de modo que Precision, Recall y F1 sobre
-la clase 1 serán las métricas que realmente informen del desempeño.
+sin ser útil en la práctica, de modo que la Precision, Recall y F1 sobre
+la clase 1 serán las métricas que realmente den informen del desempeño.
 
 \subsubsection*{e. Gráfica}
 
@@ -48,9 +48,9 @@ la clase 1 serán las métricas que realmente informen del desempeño.
 \subsubsection*{f. Tratamiento de valores faltantes}
 
 Se imputó con la \textbf{mediana} de cada variable en lugar de la
-media, ya que ambas variables con faltantes tienen colas largas hacia
+media ya que ambas variables con faltantes tienen colas largas hacia
 la derecha (unos pocos ingresos o números de dependientes
-extremadamente altos que arrastrarían la media), y la mediana resulta
+extremadamente altos que arrastrarían la media), la mediana resulta
 mucho más robusta frente a esos valores atípicos, usando como
 referencia \texttt{MonthlyIncome}\,$=5.400$ y
 \texttt{NumberOfDependents}\,$=0$.
@@ -71,7 +71,7 @@ Prueba (30.000)         &  27.995 & 93.32 & 2.005 & 6.68 \\
 \end{table}
 
 Se usó \texttt{train\_test\_split(X, y, test\_size=0.2, stratify=y,
-random\_state=42)} (la estratificación mantiene la proporción de
+random\_state=42)} (la estratificación busca mantener la proporción de
 clases prácticamente idéntica entre \emph{train} y \emph{test}),
 evitando que el azar de la partición produzca un subconjunto con una
 tasa de incumplimiento notablemente distinta a la del conjunto

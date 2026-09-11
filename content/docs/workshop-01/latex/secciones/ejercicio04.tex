@@ -23,8 +23,7 @@
 
 \item \textbf{Identificación de $TP,TN,FP,FN$.}
 Leyendo las filas como clase real y las columnas como clase predicha,
-se identifica que $TN=850$ (real 0, predicho 0), $FP=100$ (real 0,
-predicho 1), $FN=20$ (real 1, predicho 0) y $TP=30$ (real 1, predicho 1).
+se identifica que $TN=850$ (real 0 | predijo 0), $FP=100$ (real 0 | predijo 1), $FN=20$ (real 1 | predijo 0) y $TP=30$ (real 1 | predijo 1).
 
 \item \textbf{Accuracy.}
 \[
@@ -46,7 +45,7 @@ predicho 1), $FN=20$ (real 1, predicho 0) y $TP=30$ (real 1, predicho 1).
     F1 = 2\cdot\frac{\text{Precision}\cdot\text{Recall}}{\text{Precision}+\text{Recall}}
        = 2\cdot\frac{(3/13)(3/5)}{3/13+3/5}
        = 2\cdot\frac{9/65}{54/65}
-       = \frac{18}{54} = \frac13 \approx 0.3333
+       = \frac{18}{54} = \frac13 = 0.\overline{3}
 \]
 
 \item \textbf{Demostración algebraica de $F1 = \dfrac{2TP}{2TP+FP+FN}$.}
@@ -58,7 +57,7 @@ Primero se calcula el producto $P\cdot R$:
     P\cdot R = \frac{TP^2}{(TP+FP)(TP+FN)}.
 \]
 
-Luego se calcula la suma $P+R$, llevándola a un denominador común:
+Luego se calcula la suma $P+R$, llevándose a un denominador común:
 \[
     P + R = \frac{TP(TP+FN)+TP(TP+FP)}{(TP+FP)(TP+FN)} = \frac{TP\,(2TP+FP+FN)}{(TP+FP)(TP+FN)}.
 \]

@@ -12,7 +12,7 @@
 \centering
 \begin{tabular}{cc|cc}
     & & \multicolumn{2}{c}{\textbf{Predicho}} \\
-    & & $\hat Y=0$ & $\hat Y=1$ \\
+    & & $\hat Y=1$ \\
     \hline
     \multirow{2}{*}{\textbf{Real}} & $Y=0$ & 900 & 50 \\
     & $Y=1$ & 30 & 20 \\
@@ -37,17 +37,18 @@
 \begin{enumerate}
 
 \item \textbf{Métricas de cada modelo.}
+
 Modelo A ($TN=900,FP=50,FN=30,TP=20$):
 \[
     \text{Acc}_A = 0.92, \quad
-    \text{Prec}_A = \tfrac{20}{70}\approx 0.2857, \quad
+    \text{Prec}_A = \tfrac{20}{70} = 0.\overline{285714}, \quad
     \text{Rec}_A = 0.4, \quad
-    F1_A = \tfrac13 \approx 0.3333.
+    F1_A = \tfrac13 = 0.\overline{3}.
 \]
 Modelo B ($TN=850,FP=100,FN=10,TP=40$):
 \[
     \text{Acc}_B = 0.89, \quad
-    \text{Prec}_B = \tfrac{40}{140}\approx 0.2857, \quad
+    \text{Prec}_B = \tfrac{40}{140} = 0.\overline{285714}, \quad
     \text{Rec}_B = 0.8, \quad
     F1_B = \tfrac{8}{19} \approx 0.4211.
 \]

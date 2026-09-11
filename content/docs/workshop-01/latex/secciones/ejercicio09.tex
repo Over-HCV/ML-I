@@ -32,9 +32,9 @@ Sí, pero de forma mucho más discreta que la estandarización o que $k$,
 y sin un patrón del todo consistente, pues para $k=1$ y $k=3$ Manhattan
 da Accuracy y Precision levemente superiores pero Recall y F1
 levemente inferiores a Euclidiana, mientras que para $k=5$ ocurre lo
-contrario y Euclidiana iguala o supera a Manhattan en las cuatro
-métricas (obsérvese la Precision, de $0.4936$ para Euclidiana y no
-$0.4921$ como en Manhattan), aunque en ningún caso la diferencia entre
+contrario y la Euclidiana iguala o supera a Manhattan en las cuatro
+métricas (obsérvese la Precision de $0.4936$ para Euclidiana y no
+$0.4921$ como en la Manhattan), aunque en ningún caso la diferencia entre
 métricas supera $1.5$ puntos porcentuales, muy por debajo del efecto
 de estandarizar o de cambiar $k$.
 
@@ -44,16 +44,15 @@ de estandarizar o de cambiar $k$.
 
 \item \textbf{¿Coinciden F1 y Recall en la misma configuración?}
 Sí, ambas apuntan a $k=1$ con distancia euclidiana, aunque vale la pena
-matizar esta coincidencia, ya que los tres valores de $k$ comparados
+matizar dicha coincidencia ya que los tres valores de $k$ comparados
 aquí ya fueron preseleccionados por ranking de F1 en el Ejercicio 8, y
-en este dataset el Recall resulta monótonamente decreciente en $k$ (a
-mayor $k$, menor Recall), así que el ranking de F1 y el de Recall casi
+en este dataset el Recall resulta monótonamente decreciente en $k$ ($\uparrow \text{k}$, $\downarrow \text{Recall}$), así que el ranking de F1 y el de Recall casi
 tenían que coincidir dentro de ese subconjunto de tres, por lo que no
 es del todo una confirmación independiente. Dicho esto, el mecanismo
 de fondo sí es real, pues a diferencia del trade-off marcado entre
-$k=1$ y $k=9$ del Ejercicio 8, aquí cambiar la métrica de distancia no
+$k=[1,9]$ del Ejercicio 8, aquí cambiar la métrica de distancia no
 altera lo suficiente cuál vecino es ``más cercano'' como para invertir
-el orden de los modelos, ya que con los datos ya estandarizados, la
+el orden de los modelos, ya que con los datos ya estandarizados la
 diferencia entre penalizar cuadráticamente (Euclidiana) o linealmente
 (Manhattan) las diferencias por variable resulta menor que la que
 introduce cambiar $k$.

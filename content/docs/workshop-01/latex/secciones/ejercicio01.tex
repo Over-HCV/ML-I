@@ -18,7 +18,7 @@ sea $N_k(x)$ el conjunto de sus $k$ vecinos más cercanos, y defínase
 
 \item \textbf{$\hat p_k(x)$ es una proporción.}
 Dado que $y_i\in\{0,1\}$, cada etiqueta funciona como una variable
-indicadora, de forma que $y_i=1$ aporta exactamente una unidad a la
+indicadora de forma que $y_i=1$ aporta exactamente una unidad a la
 suma cuando el vecino pertenece a la clase positiva, mientras que
 $y_i=0$ no aporta nada, por lo tanto,
 \[
@@ -38,7 +38,7 @@ negativos, y la clase 1 es mayoritaria cuando $m > k-m$, lo cual
 equivale a $2m>k$, es decir, a $m/k>\tfrac12$ (y como
 $\hat p_k(x)=m/k$, esta condición es exactamente
 $\hat p_k(x) > \tfrac12$), con lo cual el umbral no se impone
-arbitrariamente, sino que es la traducción algebraica directa de la
+arbitrariamente sino que es la traducción algebraica explícita a la
 regla ``la clase con más votos gana''.
 
 \item \textbf{Caso $k=5$, etiquetas $\{1,0,1,1,0\}$.}
@@ -54,7 +54,7 @@ regla ``la clase con más votos gana''.
 \]
 
 \item \textbf{Por qué $k$ impar evita empates.}
-Un empate ocurre cuando $m = k-m$, es decir, cuando $k=2m$, y esta
+Un empate ocurre cuando $m = k-m$, es decir, cuando $k=2m$, esta
 igualdad exige que $k$ sea par (porque $2m$ es siempre un número par
 para cualquier entero $m$), de modo que si $k$ es impar no existe
 ningún entero $m$ que satisfaga $k=2m$, y el empate resulta
@@ -102,6 +102,5 @@ mayoritaria.
 \end{tikzpicture}
 \caption{Votación de KNN para el ejemplo del inciso c ($k=5$, etiquetas
 $\{1,0,1,1,0\}$): cada punto de color es uno de los 5 vecinos más
-cercanos a $x$, y la clase mayoritaria entre ellos determina la
-predicción.}
+cercanos a $x$, la clase mayoritaria entre ellos es quien determina la predicción.}
 \end{figure}

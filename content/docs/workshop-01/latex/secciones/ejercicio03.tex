@@ -33,13 +33,13 @@ Con $A'=(20,10)$, $B'=(25,12)$, $C'=(40,10.1)$:
 \]
 
 \item \textbf{¿Cambió el vecino más cercano?}
-Sí, ahora $d(A',B')\approx 5.39 < d(A',C')\approx 20.00$, así que el
+Sí, ahora $d(A',B')\approx 5.39 < d(A',C')\approx 20.00$ así que el
 vecino más cercano pasó a ser \textbf{B}, el punto opuesto al de antes
-de reescalar, y esto tiene una explicación directa: en la escala
-original la segunda variable (diferencias de cientos) dominaba por
+de reescalar pero esto tiene una explicación directa: En la escala
+original la segunda variable (diferencias en centenas) dominaba por
 completo el cálculo, mientras que al dividirla entre 100 su diferencia
-se vuelve comparable a la de la primera variable, y esta última, antes
-irrelevante, pasa a determinar la distancia.
+se vuelve comparable a la de la primera variable y esta última antes
+irrelevante, ahora pasa a determinar la distancia.
 
 \item \textbf{Por qué una escala mayor domina la distancia.}
 En la expresión general
@@ -48,13 +48,12 @@ En la expresión general
 \]
 cada variable contribuye a través del cuadrado de su diferencia, de
 modo que si la variable $j$ tiene un rango considerablemente mayor al
-de las demás (como la segunda coordenada en este ejercicio, del orden
-de miles y no de decenas), $(x_j-z_j)^2$ será, en términos absolutos,
+de las demás (como la segunda coordenada (ordenada) de este ejercicio en orden de miles y no decenas), $(x_j-z_j)^2$ será en términos absolutos,
 mucho mayor que los demás términos, de forma que tanto la suma como,
 en consecuencia, la distancia total terminan determinadas casi
-exclusivamente por esa variable, sin importar si conceptualmente es la
-más relevante para el problema, y este es precisamente el motivo por
-el cual, antes de aplicar un algoritmo basado en distancias como KNN,
+exclusivamente por esa variable sin importar si conceptualmente es la
+más relevante para el problema, este es precisamente el motivo por
+el cual antes de aplicar un algoritmo basado en distancias como KNN,
 se recomienda estandarizar o normalizar las variables.
 
 \end{enumerate}

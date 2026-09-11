@@ -1,0 +1,13 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {section}{\numberline {1}Componente teórico-matemático}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Ejercicio 1 --- Fundamento probabilístico de KNN}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Ejercicio 2 --- Distancia euclidiana vs. Manhattan}{3}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Ejercicio 3 --- Efecto de la escala sobre la distancia}{4}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.4}Ejercicio 4 --- Matriz de confusión y métricas básicas}{5}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.5}Ejercicio 5 --- Comparación de dos modelos y costo de clasificación}{6}{subsection.1.5}%
+\contentsline {section}{\numberline {2}Componente práctico-computacional}{8}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Ejercicio 6 --- Exploración inicial y preparación de datos}{8}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Ejercicio 7 --- KNN con $k=5$: sin escalar vs. estandarizado}{9}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Ejercicio 8 --- Efecto del número de vecinos $k$}{10}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Ejercicio 9 --- Distancia Euclidiana vs. Manhattan}{11}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Ejercicio 10 --- Análisis final y costo de negocio}{11}{subsection.2.5}%

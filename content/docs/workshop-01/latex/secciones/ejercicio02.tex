@@ -5,11 +5,11 @@
 % =====================================================================
 \subsection{Ejercicio 2 --- Distancia euclidiana vs. Manhattan}
 
-Sean $A=(a_1,a_2)$ y $B=(b_1,b_2)$, con
+Sean $\mathcal A=(a_1,a_2)$ y $\mathcal B=(b_1,b_2)$, con
 
 \[
-    d_E(A,B) = \sqrt{(a_1-b_1)^2+(a_2-b_2)^2}, \qquad
-    d_M(A,B) = |a_1-b_1|+|a_2-b_2|.
+    d_E(\mathcal A,\mathcal B) = \sqrt{(a_1-b_1)^2+(a_2-b_2)^2}, \qquad
+    d_M(\mathcal A,\mathcal B) = |a_1-b_1|+|a_2-b_2|.
 \]
 
 Se consideran los puntos $A=(2,3)$, $B=(7,7)$, $C=(5,2)$.
@@ -43,22 +43,22 @@ Manhattan discrepen sobre cuál es el vecino más cercano.\par}
 
 \item \textbf{Demostración de $d_E(A,B)\le d_M(A,B)$.}
 Partiendo de la expresión sugerida y expandiendo el cuadrado del lado
-izquierdo,
+izquierdo
 \[
     (|a_1-b_1|+|a_2-b_2|)^2 = (a_1-b_1)^2 + 2|a_1-b_1||a_2-b_2| + (a_2-b_2)^2 ,
 \]
-y como el término cruzado $2|a_1-b_1||a_2-b_2|$ es siempre no negativo
-(por ser producto de valores absolutos), se cumple que
+como el término cruzado $2|a_1-b_1||a_2-b_2|$ es siempre no-negativo
+(al producto de valores absolutos), se cumple que
 \[
     (|a_1-b_1|+|a_2-b_2|)^2 \;\ge\; (a_1-b_1)^2+(a_2-b_2)^2,
 \]
-es decir, $d_M(A,B)^2 \ge d_E(A,B)^2$, y dado que ambas distancias son
-cantidades no negativas, al tomar raíz cuadrada la desigualdad se
-preserva:
+es decir que $d_M(A,B)^2 \ge d_E(A,B)^2$ y, dado que ambas distancias son
+cantidades no negativas al tomar raíz cuadrada se
+preserva la desigualdad:
 \[
     d_M(A,B) \ge d_E(A,B) \quad\Longleftrightarrow\quad d_E(A,B)\le d_M(A,B).
 \]
-La igualdad solo se alcanza cuando $|a_1-b_1||a_2-b_2|=0$, es decir,
+Solo se alcanza igualdad cuando $|a_1-b_1||a_2-b_2|=0$, es decir,
 cuando los puntos difieren en una única coordenada (geométricamente,
 cuando el desplazamiento es puramente horizontal o vertical).
 
@@ -88,7 +88,7 @@ cuando el desplazamiento es puramente horizontal o vertical).
 
 \end{tikzpicture}
 \caption{Trayecto directo (Euclidiana, rojo) frente al trayecto en
-escalera (Manhattan, azul) entre $A$ y $B$: la escalera nunca puede ser
+escalera (Manhattan, azul) entre $A$ y $B$: La escalera nunca puede ser
 más corta que la línea recta, lo que ilustra geométricamente por qué
 $d_E \le d_M$.}
 \end{figure}

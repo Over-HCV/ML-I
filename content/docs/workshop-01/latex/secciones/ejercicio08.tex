@@ -40,7 +40,7 @@ $k$ & Accuracy & Precision & Recall & F1 \\
 
 \item \textbf{¿Coinciden los tres criterios en el mismo modelo?}
 No, pues F1 y Recall se maximizan en $k=1$ mientras que Accuracy se
-maximiza en $k=9$, y esto tiene una razón de fondo: al aumentar $k$ el
+maximiza en $k=9$, y esto tiene una razón de fondo: Al aumentar $k$ el
 modelo promedia sobre vecindarios cada vez más grandes que, dado el
 fuerte desbalance de clases ($93\%/7\%$), terminan dominados por
 vecinos de la clase mayoritaria, empujando las predicciones hacia la
@@ -48,6 +48,6 @@ clase 0 y sacrificando Recall a cambio de un Accuracy apenas mayor,
 mientras que $k=1$, al fijarse solo en el vecino más próximo, es mucho
 más sensible a los pocos vecinos positivos cercanos, favoreciendo el
 Recall aunque a costa de una mayor varianza (más falsos positivos,
-como se ve más adelante en el Ejercicio 10).
+como en el Ejercicio 10).
 
 \end{enumerate}
