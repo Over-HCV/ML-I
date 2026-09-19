@@ -10,3 +10,6 @@ wheels/
 .venv
 
 *.csv
+
+# Local app sessions
+apps/learn/sessions/

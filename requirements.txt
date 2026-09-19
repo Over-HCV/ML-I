@@ -1,0 +1,16 @@
+# Deployment requirements for Streamlit Community Cloud
+# Subset of pyproject.toml: only packages the app actually imports
+# CPU-only torch to keep the container light and cold starts fast
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+streamlit>=1.62.0
+pandas>=3.0.5
+numpy>=2.5.2
+matplotlib>=3.11.1
+plotly>=6.9.0
+scikit-learn>=1.9.0
+pillow>=11.0.0
+psutil>=6.0.0
+requests>=2.32.0
+torch>=2.6.0
+torchvision>=0.21.0

@@ -1,0 +1,12 @@
+# Streamlit Cloud reads config from the repo root (not apps/learn/app)
+# Theme mirrored from apps/learn/app/.streamlit/config.toml
+
+[theme]
+primaryColor = "#ffcd8e"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#1a1f29"
+textColor = "#fafafa"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false

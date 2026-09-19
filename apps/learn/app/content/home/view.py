@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 
 def render():
     """Main render function for Home page"""
-    st.title("Malware Classification with Deep Learning")
+    st.title("Machine Learning & Deep Learning")
 
     render_project_overview()
     st.divider()
