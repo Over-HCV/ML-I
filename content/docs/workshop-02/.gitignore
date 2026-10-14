@@ -1,0 +1,8 @@
+notebook/src/_combined_notebook.py
+latex/*.aux
+latex/*.fdb_latexmk
+latex/*.fls
+latex/*.log
+latex/*.out
+latex/*.toc
+latex/*.synctex.gz

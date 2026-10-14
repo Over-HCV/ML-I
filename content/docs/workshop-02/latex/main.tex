@@ -1,0 +1,47 @@
+% =====================================================================
+% main.tex
+% Responsabilidad única: ensamblar el documento completo a partir de los
+% módulos (preámbulo, portada y las diez secciones de ejercicios). No
+% contiene desarrollo matemático ni resultados propios — solo estructura.
+%
+% Para compilar:  latexmk -pdf main.tex
+% =====================================================================
+\documentclass[11pt]{article}
+
+\input{preambulo}
+
+\begin{document}
+
+\input{portada}
+
+\tableofcontents
+\newpage
+
+% ---------------------------------------------------------------------
+% Parte I — Componente teórico-matemático
+% ---------------------------------------------------------------------
+\section{Componente teórico-matemático}
+\input{secciones/ejercicio01}
+\input{secciones/ejercicio02}
+\input{secciones/ejercicio03}
+\input{secciones/ejercicio04}
+\input{secciones/ejercicio05}
+
+\newpage
+% ---------------------------------------------------------------------
+% Parte II — Componente práctico-computacional
+% ---------------------------------------------------------------------
+\section{Componente práctico-computacional}
+\label{sec:practico}
+
+% TODO(rama práctica): párrafo de datos (load_diabetes con scaled=False,
+% load_breast_cancer recodificado 1 = maligno) y protocolo 60/20/20 con
+% random_state=42; tamaños de partición vía macros de generado/resultados.
+
+\input{secciones/ejercicio06}
+\input{secciones/ejercicio07}
+\input{secciones/ejercicio08}
+\input{secciones/ejercicio09}
+\input{secciones/ejercicio10}
+
+\end{document}
