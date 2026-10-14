@@ -120,7 +120,7 @@ ax.axhline(0, color=COLORES["rojo"], linestyle="--", linewidth=1.2, label="Resid
 ax.set_title("Figura 6.2 — Residuos frente a valores predichos\n(regresión simple con bmi, validación)")
 ax.set_xlabel("Valor predicho")
 ax.set_ylabel("Residuo (y − ŷ)")
-ax.legend()
+ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=2, frameon=False)
 plt.tight_layout()
 guardar_fig(fig, "ex6_residuos")
 plt.show()

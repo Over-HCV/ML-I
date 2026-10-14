@@ -1,25 +1,140 @@
 % =====================================================================
 % ejercicio04.tex
-% Responsabilidad única: evaluar la entropía cruzada, deducir su gradiente, ejecutar un paso de
-% descenso de gradiente y analizar la penalización L2 y el parámetro $C$.
+% Responsabilidad única: evaluar la entropía cruzada, deducir su
+% gradiente, ejecutar un paso de descenso de gradiente y analizar la
+% penalización L2 y el parámetro C. Cifras verificadas con
+% verificacion/teoria.py.
 % =====================================================================
 \subsection{Ejercicio 4 --- Regresión logística: pérdida, gradiente y regularización}
+
+Se tienen tres observaciones $(x_i,y_i)$: $(-1,0)$, $(0,0)$ y $(1,1)$,
+con $p_i=\sigma(\beta_0+\beta_1x_i)$ y la entropía cruzada media
+\[
+    J = -\frac{1}{3}\sum_{i=1}^{3}\bigl[y_i\log p_i + (1-y_i)\log(1-p_i)\bigr],
+\]
+partiendo de $\beta_0=\beta_1=0$ y usando logaritmos naturales.
 
 \begin{enumerate}
 
 \item \textbf{Probabilidades y pérdida inicial.}
-% TODO
+Con $\beta=0$ todos los puntajes son $z_i=0$, de forma que
+$p_1=p_2=p_3=\sigma(0)=0.5$, y cada término de la suma vale $\log0.5$
+(si $y_i=1$ aporta $\log p_i$ y si $y_i=0$ aporta $\log(1-p_i)$, ambos
+iguales a $\log0.5$), por lo tanto
+\[
+    J(0,0) = -\frac13\cdot3\log 0.5 = \log 2 \approx 0.6931 ,
+\]
+que es la pérdida de un modelo que no distingue entre clases y asigna
+probabilidad $\tfrac12$ a todo.
 
 \item \textbf{Gradiente de $J$.}
-% TODO
+Para una observación, sea
+$\ell_i=-[y_i\log p_i+(1-y_i)\log(1-p_i)]$ con $p_i=\sigma(z_i)$ y
+$z_i=\beta_0+\beta_1x_i$. Por la regla de la cadena y
+$\sigma'(z)=\sigma(z)(1-\sigma(z))$,
+\[
+    \frac{\partial\ell_i}{\partial z_i}
+    = -\Bigl[\frac{y_i}{p_i} - \frac{1-y_i}{1-p_i}\Bigr]p_i(1-p_i)
+    = -\bigl[y_i(1-p_i) - (1-y_i)p_i\bigr]
+    = p_i - y_i ,
+\]
+donde los factores $p_i(1-p_i)$ se cancelan limpiamente con los
+denominadores (esa cancelación es precisamente la razón por la que la
+entropía cruzada y la sigmoide combinan tan bien). Como
+$\partial z_i/\partial\beta_0=1$ y $\partial z_i/\partial\beta_1=x_i$,
+y $J$ es el promedio de los $\ell_i$,
+\[
+    \frac{\partial J}{\partial \beta_0} = \frac13\sum_i (p_i-y_i),
+    \qquad
+    \frac{\partial J}{\partial \beta_1} = \frac13\sum_i (p_i-y_i)\,x_i .
+\]
+En el punto inicial, $p-y=(0.5,\,0.5,\,-0.5)$, de modo que
+\[
+    \frac{\partial J}{\partial \beta_0} = \frac{0.5}{3} = \frac16 \approx 0.1667,
+    \qquad
+    \frac{\partial J}{\partial \beta_1} = \frac{-0.5+0-0.5}{3} = -\frac13 \approx -0.3333 .
+\]
 
 \item \textbf{Un paso de descenso de gradiente.}
-% TODO
+Con $\eta=0.5$ y actualización simultánea,
+\[
+    \beta_0^{\text{nuevo}} = 0 - 0.5\cdot\tfrac16 = -\tfrac{1}{12} \approx -0.0833,
+    \qquad
+    \beta_1^{\text{nuevo}} = 0 - 0.5\cdot\bigl(-\tfrac13\bigr) = \tfrac16 \approx 0.1667 ,
+\]
+así que los nuevos puntajes son $z=(-0.25,\,-0.0833,\,0.0833)$ y
+
+\begin{table}[H]
+\centering
+\begin{tabular}{crrrrr}
+\toprule
+$i$ & $x_i$ & $y_i$ & $z_i$ & $p_i$ & término de pérdida \\
+\midrule
+1 & $-1$ & 0 & $-0.2500$ & 0.4378 & $-\log(1-0.4378) = 0.5759$ \\
+2 & $0$  & 0 & $-0.0833$ & 0.4792 & $-\log(1-0.4792) = 0.6523$ \\
+3 & $1$  & 1 & $0.0833$  & 0.5208 & $-\log(0.5208) = 0.6523$ \\
+\bottomrule
+\end{tabular}
+\caption{Probabilidades y pérdidas individuales tras un paso de descenso de gradiente.}
+\end{table}
+
+\[
+    J^{\text{nuevo}} = \frac{0.5759+0.6523+0.6523}{3} \approx 0.6269 < 0.6931 ,
+\]
+por lo cual \textbf{$J$ sí disminuyó} (en $0.0663$), lo esperable al
+avanzar en la dirección opuesta al gradiente con un paso moderado: el
+intercepto bajó (dos de las tres observaciones son de clase $0$) y la
+pendiente pasó a ser positiva (la única observación positiva está en
+$x=1$), de forma que las probabilidades se mueven en la dirección
+correcta para las tres observaciones.
 
 \item \textbf{Penalización $\lambda\beta_1^2/2$.}
-% TODO
+Como el término añadido no depende de $\beta_0$ y
+$\frac{\partial}{\partial\beta_1}\bigl(\lambda\beta_1^2/2\bigr)=\lambda\beta_1$,
+\[
+    \frac{\partial J_\lambda}{\partial\beta_0} = \frac13\sum_i (p_i-y_i),
+    \qquad
+    \frac{\partial J_\lambda}{\partial\beta_1} = \frac13\sum_i (p_i-y_i)\,x_i + \lambda\beta_1 .
+\]
+Evaluando en $(\beta_0,\beta_1)=(-\tfrac1{12},\tfrac16)$ con $\lambda=1$
+y $p\approx(0.4378,\,0.4792,\,0.5208)$:
+\[
+    \frac{\partial J_\lambda}{\partial\beta_0}
+    = \frac{0.4378+0.4792-0.4792}{3} \approx 0.1459,
+    \qquad
+    \frac{\partial J_\lambda}{\partial\beta_1}
+    \approx \underbrace{-0.3057}_{\partial J/\partial\beta_1} + 1\cdot0.1667 \approx -0.1390 ,
+\]
+de modo que la penalización reduce a menos de la mitad el empuje para
+seguir aumentando $\beta_1$, actuando como una fuerza que lo atrae hacia
+$0$. Sin embargo, en el primer paso no altera nada, porque al partir de
+$\beta_1=0$ el término extra $\lambda\beta_1$ vale exactamente $0$, y el
+gradiente de $J_\lambda$ coincide con el de $J$, así que la
+regularización solo empieza a actuar una vez que $\beta_1$ se aleja de
+cero.
 
 \item \textbf{$C$, regularización y escala de entrada.}
-% TODO
+En \texttt{LogisticRegression} de scikit-learn, $C$ es el
+\textbf{inverso de la intensidad de regularización}: valores pequeños de
+$C$ penalizan más los coeficientes (modelos más simples, coeficientes
+más cercanos a $0$), y valores grandes de $C$ los penalizan menos,
+acercándose al ajuste sin regularizar. Cualitativamente, $C$ juega un
+papel inverso al de $\lambda$, aunque no conviene suponer que
+$C=1/\lambda$ reproduce exactamente $J_\lambda$, porque la función
+objetivo de scikit-learn escala la pérdida como una \emph{suma} sobre
+las observaciones multiplicada por $C$ (y no como un promedio), además
+de que la constante de la penalización y el tratamiento del intercepto
+dependen del \emph{solver}, de forma que la equivalencia exacta
+dependería de $n$ y de esas convenciones. Por otra parte, la penalización
+$\beta_j^2$ actúa sobre la magnitud numérica de cada coeficiente, y esa
+magnitud depende de las unidades: si una variable se mide en milímetros
+en lugar de metros, su coeficiente sin penalizar se divide entre $1000$,
+de forma que una misma penalización la afecta de manera muy distinta.
+Así, a diferencia de mínimos cuadrados o logística sin regularizar
+(cuyas predicciones no cambian al reescalar las entradas), un ajuste
+regularizado \textbf{sí cambia} con la escala, y por eso se estandarizan
+los predictores antes de regularizar, para que todos los coeficientes
+compitan en igualdad de condiciones (como se hace en el ejercicio 8 con
+\texttt{StandardScaler} dentro del \texttt{Pipeline}).
 
 \end{enumerate}

@@ -187,3 +187,5 @@ for corte in (1.5, 3.5, 5.5):
     izq, der = yr[xr <= corte], yr[xr > corte]
     tot = np.sum((izq - izq.mean()) ** 2) + np.sum((der - der.mean()) ** 2)
     print(f"   (referencia) x<={corte}: total={f4(tot)}")
+b1r, b0r = np.polyfit(xr, yr, 1)
+print(f"Tendencia MCO de referencia (figura 5d): ŷ = {b0r:.4f} + {b1r:.4f} x")

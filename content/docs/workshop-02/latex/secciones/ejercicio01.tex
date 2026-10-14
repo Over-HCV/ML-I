@@ -1,23 +1,178 @@
 % =====================================================================
 % ejercicio01.tex
-% Responsabilidad única: derivar las ecuaciones normales de la recta de mínimos cuadrados, ajustar
-% los datos didácticos, verificar propiedades de los residuos y estudiar el
-% efecto de una observación influyente.
+% Responsabilidad única: derivar las ecuaciones normales de la recta de
+% mínimos cuadrados, ajustar los datos didácticos, verificar propiedades
+% de los residuos y estudiar el efecto de una observación influyente.
+% Cifras verificadas con verificacion/teoria.py.
 % =====================================================================
 \subsection{Ejercicio 1 --- Regresión lineal simple: ajuste e influencia de una observación}
+
+Se cuenta con $n=5$ pares (horas de funcionamiento $x$, consumo en kWh
+$y$): $x=(1,2,3,4,5)$ y $y=(2,4,5,4,5)$, y se busca la recta
+$\hat y_i=\beta_0+\beta_1x_i$ que minimiza
+$S(\beta_0,\beta_1)=\sum_{i=1}^{n}(y_i-\beta_0-\beta_1x_i)^2$.
 
 \begin{enumerate}
 
 \item \textbf{Ecuaciones normales y estimadores.}
-% TODO
+Al derivar $S$ respecto a cada parámetro e igualar a cero se obtiene
+\[
+    \frac{\partial S}{\partial \beta_0} = -2\sum_i (y_i-\beta_0-\beta_1x_i) = 0,
+    \qquad
+    \frac{\partial S}{\partial \beta_1} = -2\sum_i x_i(y_i-\beta_0-\beta_1x_i) = 0,
+\]
+de forma que, dividiendo entre $-2$ y reorganizando, quedan las
+\emph{ecuaciones normales}
+\[
+    n\beta_0 + \beta_1\sum_i x_i = \sum_i y_i,
+    \qquad
+    \beta_0\sum_i x_i + \beta_1\sum_i x_i^2 = \sum_i x_iy_i .
+\]
+Dividiendo la primera entre $n$ se tiene $\beta_0=\bar y-\beta_1\bar x$, es
+decir, la recta ajustada pasa siempre por el punto de medias
+$(\bar x,\bar y)$, y al sustituir esta expresión en la segunda ecuación
+resulta
+\[
+    \beta_1\Bigl(\sum_i x_i^2 - n\bar x^2\Bigr) = \sum_i x_iy_i - n\bar x\bar y ,
+\]
+donde, usando las identidades
+$\sum_i x_i^2-n\bar x^2=\sum_i(x_i-\bar x)^2$ y
+$\sum_i x_iy_i-n\bar x\bar y=\sum_i(x_i-\bar x)(y_i-\bar y)$, se llega a
+\[
+    \hat\beta_1 = \frac{\sum_i (x_i-\bar x)(y_i-\bar y)}{\sum_i (x_i-\bar x)^2}
+    = \frac{S_{xy}}{S_{xx}},
+    \qquad
+    \hat\beta_0 = \bar y - \hat\beta_1\bar x .
+\]
+La pendiente es única siempre que $S_{xx}=\sum_i(x_i-\bar x)^2>0$, lo
+cual equivale a que los valores de $x$ \textbf{no sean todos iguales}
+(con al menos dos valores distintos de $x$ el denominador no se anula,
+mientras que si todas las observaciones tienen el mismo $x$ cualquier
+recta que pase por $(\bar x,\bar y)$ produce el mismo error y la
+pendiente queda indeterminada), y como la matriz hessiana de $S$ es
+$2\begin{psmallmatrix} n & \sum x_i\\ \sum x_i & \sum x_i^2\end{psmallmatrix}$,
+con determinante $4nS_{xx}>0$ bajo esa misma condición, el punto crítico
+es efectivamente un mínimo.
 
 \item \textbf{Coeficientes, predicciones y residuos.}
-% TODO
+Con $\bar x=3$ y $\bar y=4$, las desviaciones son
+$x_i-\bar x=(-2,-1,0,1,2)$ y $y_i-\bar y=(-2,0,1,0,1)$, por lo tanto
+\[
+    S_{xy} = 4+0+0+0+2 = 6, \qquad S_{xx} = 4+1+0+1+4 = 10,
+\]
+\[
+    \hat\beta_1 = \frac{6}{10} = 0.6, \qquad
+    \hat\beta_0 = 4 - 0.6\cdot 3 = 2.2 .
+\]
+
+\begin{table}[H]
+\centering
+\begin{tabular}{crrrrr}
+\toprule
+$i$ & $x_i$ & $y_i$ & $\hat y_i = 2.2+0.6x_i$ & $e_i=y_i-\hat y_i$ & $e_i^2$ \\
+\midrule
+1 & 1 & 2 & 2.8 & $-0.8$ & 0.64 \\
+2 & 2 & 4 & 3.4 & $0.6$  & 0.36 \\
+3 & 3 & 5 & 4.0 & $1.0$  & 1.00 \\
+4 & 4 & 4 & 4.6 & $-0.6$ & 0.36 \\
+5 & 5 & 5 & 5.2 & $-0.2$ & 0.04 \\
+\midrule
+$\sum$ & & & & $0.0$ & 2.40 \\
+\bottomrule
+\end{tabular}
+\caption{Predicciones y residuos del ajuste $\hat y = 2.2 + 0.6x$.}
+\label{tab:ej1-residuos}
+\end{table}
+
+En efecto $\sum_ie_i=-0.8+0.6+1.0-0.6-0.2=0$, y esto no es una
+coincidencia de los datos sino exactamente la primera ecuación normal,
+pues $\partial S/\partial\beta_0=0$ equivale a
+$\sum_i(y_i-\hat\beta_0-\hat\beta_1x_i)=\sum_ie_i=0$, de modo que la
+propiedad depende de que $\beta_0$ sea un parámetro libre que se
+optimiza (si se ajustara una recta forzada por el origen,
+$\hat y=\beta_1x$, esa ecuación desaparece, solo queda
+$\sum_ix_ie_i=0$ y los residuos en general ya no suman cero).
 
 \item \textbf{MSE, $R^2$ y comparación con $\bar y$.}
-% TODO
+Se tiene
+\[
+    MSE = \frac{2.4}{5} = 0.48, \qquad
+    \sum_i (y_i-\bar y)^2 = 4+0+1+0+1 = 6, \qquad
+    R^2 = 1 - \frac{2.4}{6} = 0.6 ,
+\]
+mientras que el predictor constante $\hat y=\bar y=4$ tiene
+$MSE_{\bar y}=6/5=1.2$, de forma que la recta reduce el error cuadrático
+medio de $1.2$ a $0.48$, es decir, en un 60\,\% (lo cual es justamente
+la lectura de $R^2$: la fracción de la variabilidad de $y$ alrededor de
+su media que el modelo logra explicar). La pendiente
+$\hat\beta_1=0.6$ se interpreta como que, en estos datos, \textbf{cada
+hora adicional de funcionamiento se asocia con un aumento promedio de
+$0.6$ kWh} en el consumo, mientras que el intercepto $2.2$ kWh es el
+consumo predicho para $x=0$, valor que queda fuera del rango observado
+($1\le x\le5$) y por eso no conviene leerlo como un consumo en reposo
+real.
 
 \item \textbf{Observación influyente ($y_5 = 12$).}
-% TODO
+Al cambiar únicamente $y_5$ de $5$ a $12$ se tiene $\bar y=27/5=5.4$ y,
+como $\sum_i(x_i-\bar x)=0$,
+$S_{xy}=\sum_i(x_i-\bar x)y_i=-4-4+0+4+24=20$, por lo tanto
+\[
+    \hat\beta_1' = \frac{20}{10} = 2, \qquad
+    \hat\beta_0' = 5.4 - 2\cdot 3 = -0.6,
+\]
+\[
+    \hat y'(6) = -0.6 + 2\cdot 6 = 11.4
+    \quad\text{frente a}\quad
+    \hat y(6) = 2.2 + 0.6\cdot 6 = 5.8 .
+\]
+Una sola observación multiplicó la pendiente por más de tres y casi
+duplicó la predicción en $x=6$, y esto se explica porque la pérdida
+cuadrática penaliza cada residuo por su cuadrado, de modo que un residuo
+grande pesa desproporcionadamente y el ajuste prefiere inclinar toda la
+recta antes que dejar un único error enorme (con la recta original, el
+punto $(5,12)$ tendría residuo $6.8$ y aportaría $46.24$ al SSE, mucho
+más que los otros cuatro residuos juntos). Además el punto está en el
+extremo del rango de $x$, y como $\hat\beta_1=\sum_i(x_i-\bar x)y_i/S_{xx}$,
+el cambio en la pendiente es exactamente
+$(x_5-\bar x)\,\Delta y_5/S_{xx}=2\cdot7/10=1.4$, es decir, la influencia
+de una observación crece con su distancia a $\bar x$ (su
+\emph{apalancamiento}), por lo cual el mismo cambio en $y_3$ (con
+$x_3=\bar x$) no habría alterado la pendiente en absoluto.
+Finalmente, predecir en $x=20$ exigiría cautela adicional porque se
+trata de una \textbf{extrapolación} a cuatro veces el máximo observado:
+nada en los datos garantiza que la relación siga siendo lineal fuera de
+$[1,5]$, y ambos modelos discrepan enormemente allí
+($\hat y(20)=14.2$ frente a $\hat y'(20)=39.4$), de forma que el error
+en la pendiente se amplifica proporcionalmente a la distancia
+$|x-\bar x|$.
 
 \end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.72\textwidth, height=6.2cm,
+    xmin=0.5, xmax=6.5, ymin=0, ymax=13,
+    xlabel={$x$ (horas de funcionamiento)}, ylabel={$y$ (kWh)},
+    legend pos=north west, legend cell align=left,
+    legend style={font=\small}, tick label style={font=\small},
+]
+\addplot[only marks, mark=*, color=classblue, mark size=2.4pt]
+    coordinates {(1,2) (2,4) (3,5) (4,4) (5,5)};
+\addlegendentry{datos originales}
+\addplot[only marks, mark=square*, color=classred, mark size=2.6pt]
+    coordinates {(5,12)};
+\addlegendentry{$y_5$ modificado ($=12$)}
+\addplot[domain=0.5:6.5, thick, color=classblue] {2.2 + 0.6*x};
+\addlegendentry{$\hat y = 2.2 + 0.6x$}
+\addplot[domain=0.5:6.5, thick, dashed, color=classred] {-0.6 + 2*x};
+\addlegendentry{$\hat y' = -0.6 + 2x$}
+\addplot[only marks, mark=o, color=black, mark size=2.4pt]
+    coordinates {(6,5.8) (6,11.4)};
+\end{axis}
+\end{tikzpicture}
+\caption{Recta de mínimos cuadrados con los datos originales (azul) y
+tras cambiar solo $y_5$ a $12$ (rojo); los círculos vacíos marcan las
+predicciones en $x=6$ ($5.8$ y $11.4$).}
+\end{figure}

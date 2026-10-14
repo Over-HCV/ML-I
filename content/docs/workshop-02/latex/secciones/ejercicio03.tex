@@ -1,26 +1,152 @@
 % =====================================================================
 % ejercicio03.tex
-% Responsabilidad única: relacionar la sigmoide con los log-odds, clasificar tres máquinas bajo
-% distintos umbrales, deducir la frontera de decisión y el umbral que
-% minimiza el costo esperado.
+% Responsabilidad única: relacionar la sigmoide con los log-odds,
+% clasificar tres máquinas bajo distintos umbrales, deducir la frontera
+% de decisión y el umbral que minimiza el costo esperado. Cifras
+% verificadas con verificacion/teoria.py.
 % =====================================================================
 \subsection{Ejercicio 3 --- Regresión logística: probabilidad, odds y umbral}
+
+El modelo estima la probabilidad de falla en la próxima semana ($Y=1$)
+a partir de los años de uso $x_1$ y las alertas del último mes $x_2$:
+\[
+    z = -3 + 0.6x_1 + 1.2x_2, \qquad p = \sigma(z) = \frac{1}{1+e^{-z}} .
+\]
 
 \begin{enumerate}
 
 \item \textbf{Log-odds y factor de odds.}
-% TODO
+A partir de la definición de $p$,
+\[
+    1-p = 1 - \frac{1}{1+e^{-z}} = \frac{e^{-z}}{1+e^{-z}}
+    \;\Longrightarrow\;
+    \frac{p}{1-p} = \frac{1}{e^{-z}} = e^{z}
+    \;\Longrightarrow\;
+    \log\frac{p}{1-p} = z ,
+\]
+es decir, el modelo es \emph{lineal en los log-odds}, no en la
+probabilidad. Si $x_1$ aumenta en una unidad con $x_2$ fijo, $z$ aumenta
+exactamente $0.6$ y los odds pasan de $e^{z}$ a $e^{z+0.6}$, de forma que
+se multiplican por
+\[
+    e^{0.6} \approx 1.8221 ,
+\]
+lo cual equivale a un aumento del 82.21\,\% \emph{en los odds},
+constante sin importar el punto de partida. Esto no debe confundirse con
+un cambio en puntos porcentuales de la probabilidad, que sí depende del
+punto de partida porque la sigmoide no es lineal: pasar de $(2,1)$ a
+$(3,1)$ lleva $p$ de $0.3543$ a $0.5000$ ($+14.57$ puntos porcentuales),
+mientras que pasar de $(4,2)$ a $(5,2)$ lleva $p$ de $0.8581$ a $0.9168$
+(apenas $+5.87$ puntos), aun cuando en ambos casos los odds se
+multiplican por el mismo $1.8221$.
 
 \item \textbf{Probabilidades y clases para $A$, $B$, $C$.}
-% TODO
+Usando $\hat y=1$ cuando $p\ge t$:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{crrrrcc}
+\toprule
+Máquina & $(x_1,x_2)$ & $z$ & $p=\sigma(z)$ & odds & $\hat y$ ($t=0.5$) & $\hat y$ ($t=0.8$) \\
+\midrule
+$A$ & $(2,1)$ & $-3+1.2+1.2=-0.6$ & 0.3543 & 0.5488 & 0 & 0 \\
+$B$ & $(5,0)$ & $-3+3.0+0\phantom{.0}=\phantom{-}0.0$ & 0.5000 & 1.0000 & 1 & 0 \\
+$C$ & $(4,2)$ & $-3+2.4+2.4=\phantom{-}1.8$ & 0.8581 & 6.0496 & 1 & 1 \\
+\bottomrule
+\end{tabular}
+\caption{Puntaje lineal, probabilidad de falla y clase predicha por umbral.}
+\label{tab:ej3-maquinas}
+\end{table}
+
+Cabe mencionar el caso de $B$, que cae exactamente sobre la frontera de
+$t=0.5$ ($p=0.5$): con la regla $p\ge t$ se clasifica como falla, pero
+con una regla estricta $p>t$ se clasificaría como no falla, por lo cual
+la convención de desempate debe declararse explícitamente. Al subir el
+umbral a $0.8$ solo la máquina $C$ conserva la predicción de falla.
 
 \item \textbf{Frontera de decisión para un umbral general.}
-% TODO
+Como $\sigma$ es estrictamente creciente, $p\ge t$ equivale a
+$z\ge\sigma^{-1}(t)=\log\frac{t}{1-t}$, por lo que la frontera es la
+recta
+\[
+    0.6x_1 + 1.2x_2 = 3 + \log\frac{t}{1-t}
+    \quad\Longleftrightarrow\quad
+    x_2 = \frac{3+\log\frac{t}{1-t}}{1.2} - 0.5\,x_1 ,
+\]
+y se predice falla en el semiplano por encima de ella. Particularizando,
+\[
+    \begin{aligned}
+    t=0.5:&\quad 0.6x_1+1.2x_2 = 3 &&\Longleftrightarrow\quad x_2 = 2.5 - 0.5x_1,\\
+    t=0.8:&\quad 0.6x_1+1.2x_2 = 3+\log 4 \approx 4.3863 &&\Longleftrightarrow\quad x_2 \approx 3.6552 - 0.5x_1.
+    \end{aligned}
+\]
+Al modificar solamente el umbral \textbf{la frontera se desplaza
+paralelamente} (cambia el término independiente, de forma que con
+$t=0.8$ se exige más evidencia y la región de falla se reduce), pero su
+pendiente $-0.5=-\beta_1/\beta_2$ y su orientación quedan iguales, así
+como \textbf{las probabilidades no cambian en absoluto}: $p(x)$ depende
+solo de $\beta$, de modo que el umbral es una decisión posterior sobre
+cómo convertir probabilidades en clases, no una propiedad del modelo
+ajustado.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.66\textwidth, height=6cm,
+    xmin=0, xmax=7.5, ymin=0, ymax=4.2,
+    xlabel={$x_1$ (años de uso)}, ylabel={$x_2$ (alertas)},
+    legend pos=north east, legend cell align=left,
+    legend style={font=\small}, tick label style={font=\small},
+]
+\addplot[domain=0:7.5, thick, color=classblue] {2.5 - 0.5*x};
+\addlegendentry{$t=0.5$}
+\addplot[domain=0:7.5, thick, dashed, color=classred] {3.6552 - 0.5*x};
+\addlegendentry{$t=0.8$}
+\addplot[domain=0:7.5, thick, dotted, color=classgreen] {1.3448 - 0.5*x};
+\addlegendentry{$t=0.2$ (inciso d)}
+\addplot[only marks, mark=*, mark size=2.4pt, color=black,
+         nodes near coords, point meta=explicit symbolic,
+         every node near coord/.append style={font=\small, anchor=south west}]
+    coordinates {(2,1)[$A$] (5,0)[$B$] (4,2)[$C$]};
+\end{axis}
+\end{tikzpicture}
+\caption{Fronteras de decisión $p=t$ en el plano $(x_1,x_2)$: rectas
+paralelas de pendiente $-0.5$; por encima de cada recta se predice falla.}
+\end{figure}
 
 \item \textbf{Umbral de costo mínimo.}
-% TODO
+Con probabilidades calibradas, si se predice $0$ el único error posible
+es un falso negativo (con probabilidad $p$ y costo $8$), y si se predice
+$1$ el único error posible es un falso positivo (con probabilidad $1-p$
+y costo $2$), de forma que
+\[
+    \mathbb{E}[\text{costo}\mid\hat y=0] = 8p,
+    \qquad
+    \mathbb{E}[\text{costo}\mid\hat y=1] = 2(1-p),
+\]
+y conviene predecir $1$ cuando $2(1-p)\le8p$, es decir, cuando
+$p\ge 2/(2+8)=\mathbf{0.2}$ (en general,
+$t^*=c_{FP}/(c_{FP}+c_{FN})$). Como un falso negativo cuesta
+cuatro veces más que un falso positivo, el umbral óptimo baja de $0.5$
+a $0.2$, y aplicándolo, $A$ ($p=0.3543$), $B$ ($p=0.5$) y $C$
+($p=0.8581$) superan $0.2$, por lo cual \textbf{las tres máquinas se
+clasifican como falla}, incluida $A$, que con $t=0.5$ no se marcaba
+(su frontera aparece punteada en la figura anterior,
+$x_2\approx1.3448-0.5x_1$).
 
 \item \textbf{Mínimos cuadrados vs.\ sigmoide en $[0,1]$.}
-% TODO
+Un modelo $\hat y=\beta_0+\beta^\top x$ es una función afín no acotada:
+si algún $\beta_j\neq0$, al crecer o decrecer $x_j$ lo suficiente
+$\hat y$ supera $1$ o cae por debajo de $0$, y mínimos cuadrados no
+incluye ninguna restricción que lo evite, pues solo minimiza la
+distancia cuadrática a etiquetas $0/1$ (por ejemplo, ajustando MCO a
+$x=(0,1,2,3,10)$ con $y=(0,0,1,1,1)$ se obtiene
+$\hat y\approx0.3248+0.0860x$, que predice $\hat y(15)\approx1.6146$, un
+valor imposible como probabilidad). En cambio, la sigmoide cumple
+$\sigma(z)=1/(1+e^{-z})\in(0,1)$ para todo $z\in\mathbb{R}$, porque
+$e^{-z}>0$ hace que el denominador sea siempre mayor que $1$, de modo
+que $\sigma$ transforma el puntaje lineal no acotado en una
+probabilidad válida, tendiendo a $0$ y a $1$ solo asintóticamente.
 
 \end{enumerate}

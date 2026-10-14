@@ -1,26 +1,163 @@
 % =====================================================================
 % ejercicio02.tex
-% Responsabilidad única: plantear y resolver el sistema normal $X^\top X\hat\beta = X^\top y$,
-% interpretar coeficientes y discutir colinealidad perfecta y el efecto de
-% añadir variables sobre el error de entrenamiento y de generalización.
+% Responsabilidad única: plantear y resolver el sistema normal
+% X^T X beta = X^T y, interpretar coeficientes y discutir colinealidad
+% perfecta y el efecto de añadir variables sobre el error de
+% entrenamiento y de generalización. Cifras verificadas con
+% verificacion/teoria.py.
 % =====================================================================
 \subsection{Ejercicio 2 --- Regresión lineal múltiple: solución matricial y colinealidad}
+
+Se modela la demanda $y$ (centenas de unidades) como
+$\hat y=\beta_0+\beta_1x_1+\beta_2x_2$, donde $x_1$ es la inversión
+publicitaria (unidades de presupuesto) y $x_2\in\{0,1\}$ indica si hubo
+promoción.
 
 \begin{enumerate}
 
 \item \textbf{Matriz $X$, $X^\top X$ y $X^\top y$.}
-% TODO
+Agregando la columna de unos del intercepto,
+\[
+    X = \begin{pmatrix}
+        1 & 0 & 0\\ 1 & 1 & 0\\ 1 & 2 & 0\\ 1 & 0 & 1\\ 1 & 1 & 1\\ 1 & 2 & 1
+    \end{pmatrix}\in\mathbb{R}^{6\times 3},
+    \qquad
+    y = \begin{pmatrix} 2\\4\\5\\5\\6\\8 \end{pmatrix}\in\mathbb{R}^{6\times 1},
+    \qquad
+    \beta\in\mathbb{R}^{3\times1},
+\]
+y cada entrada de $X^\top X$ es un producto punto entre columnas de $X$
+(por ejemplo $\sum_i x_{i1}^2=0+1+4+0+1+4=10$ y
+$\sum_i x_{i1}x_{i2}=0+1+2=3$), así como cada entrada de $X^\top y$ es
+el producto punto de una columna con $y$, de forma que
+\[
+    X^\top X = \begin{pmatrix}
+        n & \sum x_{1} & \sum x_{2}\\
+        \sum x_{1} & \sum x_{1}^2 & \sum x_{1}x_{2}\\
+        \sum x_{2} & \sum x_{1}x_{2} & \sum x_{2}^2
+    \end{pmatrix}
+    = \begin{pmatrix} 6 & 6 & 3\\ 6 & 10 & 3\\ 3 & 3 & 3 \end{pmatrix},
+    \qquad
+    X^\top y = \begin{pmatrix} \sum y\\ \sum x_1y\\ \sum x_2y \end{pmatrix}
+    = \begin{pmatrix} 30\\ 36\\ 19 \end{pmatrix}.
+\]
 
 \item \textbf{Derivación y solución del sistema normal.}
-% TODO
+Expandiendo la función objetivo,
+\[
+    S(\beta) = (y-X\beta)^\top(y-X\beta)
+    = y^\top y - 2\beta^\top X^\top y + \beta^\top X^\top X\beta ,
+\]
+y usando las reglas $\nabla_\beta(\beta^\top a)=a$ y
+$\nabla_\beta(\beta^\top A\beta)=2A\beta$ para $A$ simétrica, se obtiene
+\[
+    \nabla_\beta S = -2X^\top y + 2X^\top X\beta = 0
+    \;\Longrightarrow\;
+    X^\top X\hat\beta = X^\top y ,
+\]
+que corresponde a un mínimo porque la hessiana $2X^\top X$ es semidefinida
+positiva ($v^\top X^\top Xv=\lVert Xv\rVert^2\ge0$), y definida positiva
+cuando las columnas de $X$ son linealmente independientes, como en este
+caso ($\det X^\top X=36\neq0$). El sistema a resolver es
+\[
+    \begin{aligned}
+        6\beta_0 + 6\beta_1 + 3\beta_2 &= 30 &\quad&(\mathrm{E}_1)\\
+        6\beta_0 + 10\beta_1 + 3\beta_2 &= 36 &&(\mathrm{E}_2)\\
+        3\beta_0 + 3\beta_1 + 3\beta_2 &= 19 &&(\mathrm{E}_3)
+    \end{aligned}
+\]
+y se procede por eliminación: primeramente $\mathrm{E}_2-\mathrm{E}_1$
+da $4\beta_1=6$, luego $\mathrm{E}_1-2\mathrm{E}_3$ da $-3\beta_2=-8$, y
+finalmente al sustituir ambos en $\mathrm{E}_3$ se despeja $\beta_0$:
+\[
+    \hat\beta_1 = \frac{3}{2} = 1.5, \qquad
+    \hat\beta_2 = \frac{8}{3} \approx 2.6667, \qquad
+    3\hat\beta_0 = 19 - 4.5 - 8 = 6.5
+    \;\Rightarrow\; \hat\beta_0 = \frac{13}{6} \approx 2.1667 .
+\]
 
 \item \textbf{Interpretación, predicción y MSE.}
-% TODO
+\begin{itemize}
+    \item $\hat\beta_1=1.5$: manteniendo fija la condición de promoción,
+    cada unidad adicional de presupuesto publicitario se asocia con
+    $1.5$ centenas ($150$ unidades) más de demanda predicha.
+    \item $\hat\beta_2\approx2.6667$: para un mismo nivel de inversión
+    publicitaria, realizar la promoción se asocia con unas $2.6667$
+    centenas (aproximadamente $267$ unidades) más de demanda predicha.
+\end{itemize}
+Para $(x_1,x_2)=(1.5,1)$ se predice
+$\hat y=\tfrac{13}{6}+1.5\cdot1.5+\tfrac83=\tfrac{85}{12}\approx7.0833$
+centenas, es decir, unas $708$ unidades. Con las predicciones de
+entrenamiento
+\[
+    \hat y\approx(2.1667,\;3.6667,\;5.1667,\;4.8333,\;6.3333,\;7.8333),
+\]
+los residuos son $e=\pm\tfrac16$ o $\pm\tfrac13$ y
+\[
+    MSE = \frac{1}{6}\Bigl(4\cdot\tfrac{1}{36} + 2\cdot\tfrac{1}{9}\Bigr)
+    = \frac{1}{6}\cdot\frac{1}{3} = \frac{1}{18} \approx 0.0556 .
+\]
+Estos coeficientes no prueban un efecto causal, porque solo describen
+la mejor combinación lineal \emph{en estos datos}, y los datos no
+provienen (hasta donde se sabe) de un experimento donde la inversión o
+la promoción se asignaran al azar, de forma que podría existir una
+variable omitida (temporada, precio, competencia) que mueva a la vez la
+decisión de invertir y la demanda; además con $n=6$ observaciones
+didácticas no hay forma de separar el efecto real del ruido, así que la
+lectura correcta es de \emph{asociación condicional}, no de
+intervención.
 
 \item \textbf{Colinealidad perfecta ($x_3 = 2x_1$).}
-% TODO
+Si se agrega $x_3=2x_1$, la nueva matriz
+$\tilde X=[\mathbf{1},x_1,x_2,x_3]$ satisface
+$0\cdot\mathbf{1}+2\,x_1+0\cdot x_2-1\cdot x_3=\mathbf{0}$, es decir,
+existe $v=(0,2,0,-1)^\top\neq0$ con $\tilde Xv=0$, por lo que sus
+columnas son linealmente dependientes, $\operatorname{rango}(\tilde X)=3<4$
+y $\tilde X^\top\tilde X$ (de $4\times4$) es singular. En consecuencia,
+si $\hat\beta$ es una solución, también lo es $\hat\beta+c\,v$ para todo
+$c\in\mathbb{R}$, porque $\tilde X(\hat\beta+cv)=\tilde X\hat\beta$:
+cualquier combinación con $\beta_1+2\beta_3=1.5$ (y los mismos
+$\beta_0,\beta_2$) produce \textbf{exactamente las mismas
+predicciones}, de modo que el ajuste sigue siendo único en términos de
+$\hat y$, pero no en términos de coeficientes, que dejan de ser
+interpretables individualmente (no tiene sentido preguntar ``el efecto
+de $x_1$ con $x_3$ fijo'' si $x_3$ no puede quedarse fijo mientras $x_1$
+cambia). Para ajustar sin invertir una matriz singular se puede, en
+orden de preferencia:
+\begin{itemize}
+    \item Eliminar la variable redundante: Se descarta $x_3$ (o $x_1$),
+    lo que devuelve exactamente el modelo del inciso b.
+    \item Usar la pseudoinversa de Moore--Penrose: Se calcula
+    $\hat\beta=\tilde X^{+}y$ (mediante descomposición en valores
+    singulares, \texttt{np.linalg.lstsq} o \texttt{pinv}), que elige
+    entre las infinitas soluciones la de norma mínima, en este caso
+    $\hat\beta\approx(2.1667,\,0.3,\,2.6667,\,0.6)$, con
+    $0.3+2\cdot0.6=1.5$ y las mismas predicciones.
+    \item Regularizar: Se resuelve
+    $(\tilde X^\top\tilde X+\lambda I)\beta=\tilde X^\top y$ con
+    $\lambda>0$ (regresión ridge), sistema que siempre es invertible.
+\end{itemize}
 
 \item \textbf{Más variables: error de entrenamiento vs.\ datos nuevos.}
-% TODO
+Si se añade una variable $x_{p+1}$, el modelo ampliado contiene al
+original como caso particular (basta fijar $\beta_{p+1}=0$), de forma
+que el mínimo del SSE sobre un conjunto más grande de candidatos no
+puede ser mayor:
+\[
+    \min_{\beta\in\mathbb{R}^{p+2}} \lVert y-\tilde X\beta\rVert^2
+    \;\le\;
+    \lVert y-\tilde X(\hat\beta_{\text{orig}},0)\rVert^2
+    = \min_{\beta\in\mathbb{R}^{p+1}} \lVert y-X\beta\rVert^2 ,
+\]
+y por eso el error de entrenamiento nunca aumenta (en el peor caso se
+mantiene igual, cuando la nueva variable no aporta nada en la muestra).
+Sin embargo, en datos nuevos sí puede empeorar, porque el nuevo
+coeficiente también se ajusta al ruido particular de la muestra de
+entrenamiento, lo cual aumenta la varianza de las predicciones sin
+reducir necesariamente el sesgo (sobreajuste), y con pocas
+observaciones o predictores correlacionados este efecto se vuelve más
+fuerte, razón por la cual en la Parte II la comparación entre modelos se
+decide con un conjunto de validación y no con el error de
+entrenamiento.
 
 \end{enumerate}

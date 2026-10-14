@@ -1,26 +1,160 @@
 % =====================================================================
 % ejercicio05.tex
-% Responsabilidad única: comparar divisiones por reducción de Gini, asignar clases en hojas,
-% elegir una división de regresión por suma de errores cuadrados y
-% discutir extrapolación y control de complejidad.
+% Responsabilidad única: comparar divisiones por reducción de Gini,
+% asignar clases en hojas, elegir una división de regresión por suma de
+% errores cuadrados y discutir extrapolación y control de complejidad.
+% Cifras verificadas con verificacion/teoria.py.
 % =====================================================================
 \subsection{Ejercicio 5 --- Árboles de decisión: división, predicción y complejidad}
+
+Un nodo contiene $12$ observaciones ($6$ de clase $0$ y $6$ de clase
+$1$) y se comparan dos divisiones candidatas, con conteos $(n_0,n_1)$:
+$A$ produce hijos $(5,1)$ y $(1,5)$, mientras que $B$ produce hijos
+$(4,0)$ y $(2,6)$.
 
 \begin{enumerate}
 
 \item \textbf{Impureza Gini y reducción ponderada.}
-% TODO
+Con $G=1-p_0^2-p_1^2$:
+\[
+    G_{\text{padre}} = 1 - \bigl(\tfrac{6}{12}\bigr)^2 - \bigl(\tfrac{6}{12}\bigr)^2 = 0.5 .
+\]
+\begin{table}[H]
+\centering
+\begin{tabular}{ccccccc}
+\toprule
+División & Hijo & $(n_0,n_1)$ & $n_h/n$ & $G_h$ & $\sum_h \frac{n_h}{n}G_h$ & $\Delta G$ \\
+\midrule
+\multirow{2}{*}{$A$}
+  & izq. & $(5,1)$ & $6/12$ & $\frac{5}{18}\approx0.2778$
+  & \multirow{2}{*}{$\frac{5}{18}\approx0.2778$} & \multirow{2}{*}{$\frac{2}{9}\approx0.2222$} \\
+  & der. & $(1,5)$ & $6/12$ & $\frac{5}{18}\approx0.2778$ & & \\
+\midrule
+\multirow{2}{*}{$B$}
+  & izq. & $(4,0)$ & $4/12$ & $0$
+  & \multirow{2}{*}{$\frac14=0.2500$} & \multirow{2}{*}{$\frac14=\mathbf{0.2500}$} \\
+  & der. & $(2,6)$ & $8/12$ & $\frac38=0.3750$ & & \\
+\bottomrule
+\end{tabular}
+\caption{Impureza Gini de cada hijo y reducción ponderada por división;
+por ejemplo, $G_{(5,1)}=1-\frac{25}{36}-\frac{1}{36}=\frac{5}{18}$ y
+$G_{(2,6)}=1-\frac{4}{64}-\frac{36}{64}=\frac{3}{8}$, de modo que en $B$
+la impureza ponderada es $\frac{4}{12}\cdot0+\frac{8}{12}\cdot\frac38=\frac14$.}
+\label{tab:ej5-gini}
+\end{table}
+
+Se selecciona la \textbf{división $B$}, con mayor reducción de impureza
+($0.25>0.2222$), aun cuando $A$ parece más ``simétrica'', porque $B$
+aísla un grupo completamente puro de $4$ observaciones de clase $0$. Se
+pondera por el tamaño de los hijos porque la impureza que se quiere
+reducir es la del conjunto de observaciones, no la de los nodos como
+entidades, de forma que un hijo que contiene $8$ de las $12$
+observaciones debe pesar el doble que uno que contiene $4$; sin pesos,
+$B$ se calificaría con $(0+0.375)/2=0.1875$, premiando en exceso la
+pureza de un hijo pequeño, y en el extremo cualquier división que
+aislara una única observación (hijo con $G=0$) parecería excelente sin
+haber mejorado casi nada la clasificación del resto (el promedio
+ponderado es, además, la impureza esperada de una observación tomada al
+azar del nodo tras la división).
 
 \item \textbf{Clases y probabilidades en las hojas.}
-% TODO
+En la división $B$, la hoja izquierda $(4,0)$ tiene clase mayoritaria
+$0$ y $\hat P(Y=1)=0/4=0$, mientras que la hoja derecha $(2,6)$ tiene
+clase mayoritaria $1$ y $\hat P(Y=1)=6/8=0.75$. Con el umbral
+$t=0.8$, la hoja izquierda sigue en clase $0$ ($0<0.8$) y la hoja
+derecha también pasa a clase $0$, pues $0.75<0.8$, de forma que
+\textbf{ambas hojas predicen clase $0$} y el árbol deja de predecir la
+clase positiva en absoluto, lo cual muestra que en un árbol el umbral
+actúa sobre proporciones discretas de las hojas, y entre dos valores
+consecutivos de esas proporciones el umbral no cambia ninguna
+predicción.
 
 \item \textbf{División de regresión por SSE.}
-% TODO
+Con $x=(1,\dots,6)$ y $y=(2,3,7,8,9,12)$, y la media de cada hoja como
+predicción:
+\begin{itemize}
+    \item $x\le2.5$: Se forman las hojas $\{2,3\}$ con media $2.5$ y
+    $\{7,8,9,12\}$ con media $9$, de modo que
+    $SSE=(0.25+0.25)+(4+1+0+9)=0.5+14=\mathbf{14.5}$.
+    \item $x\le4.5$: Se forman las hojas $\{2,3,7,8\}$ con media $5$ y
+    $\{9,12\}$ con media $10.5$, de modo que
+    $SSE=(9+4+4+9)+(2.25+2.25)=26+4.5=30.5$.
+\end{itemize}
+Se elige $x\le2.5$, que reduce el SSE del nodo sin dividir ($70.8333$,
+alrededor de la media $6.8333$) a $14.5$, y como $x=7>2.5$ cae en la
+hoja derecha, se predice $\hat y(7)=\mathbf{9}$.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.66\textwidth, height=5.6cm,
+    xmin=0, xmax=8.5, ymin=0, ymax=14,
+    xlabel={$x$}, ylabel={$y$},
+    legend pos=north west, legend cell align=left,
+    legend style={font=\small}, tick label style={font=\small},
+]
+\addplot[only marks, mark=*, mark size=2.4pt, color=classblue]
+    coordinates {(1,2) (2,3) (3,7) (4,8) (5,9) (6,12)};
+\addlegendentry{datos}
+\addplot[very thick, color=classred, const plot]
+    coordinates {(0,2.5) (2.5,9) (8.5,9)};
+\addlegendentry{árbol $x\le2.5$}
+\addplot[domain=0:8.5, dashed, color=gray] {-0.0667 + 1.9714*x};
+\addlegendentry{tendencia lineal (MCO)}
+\addplot[only marks, mark=o, mark size=2.6pt, color=black] coordinates {(7,9)};
+\draw[gray!70, densely dotted] (axis cs:6,0) -- (axis cs:6,14);
+\end{axis}
+\end{tikzpicture}
+\caption{Predicción constante a trozos del árbol con la división
+$x\le2.5$; a la derecha de $x=6$ (línea punteada, último valor
+observado) el árbol mantiene $\hat y=9$ mientras la tendencia lineal
+sigue creciendo. El círculo vacío marca $\hat y(7)=9$.}
+\end{figure}
 
 \item \textbf{La media minimiza el SSE; no extrapolación.}
-% TODO
+Sea $f(c)=\sum_{i\in R}(y_i-c)^2$ en una hoja $R$ con $|R|$
+observaciones. Derivando,
+\[
+    f'(c) = -2\sum_{i\in R}(y_i-c) = 0
+    \;\Longrightarrow\; |R|\,c = \sum_{i\in R}y_i
+    \;\Longrightarrow\; c^* = \bar y_R ,
+\]
+y como $f''(c)=2|R|>0$, $f$ es estrictamente convexa y $\bar y_R$ es su
+único mínimo global (equivalentemente,
+$f(c)=\sum_i(y_i-\bar y_R)^2+|R|(\bar y_R-c)^2$, donde el segundo término
+solo se anula en $c=\bar y_R$). En consecuencia, un árbol de regresión
+predice una constante por hoja, y la hoja que contiene todos los $x$
+mayores que el último corte cubre el intervalo $(2.5,\infty)$ completo,
+de forma que $\hat y(7)=\hat y(20)=\hat y(1000)=9$: el árbol \textbf{no
+puede extrapolar} una tendencia lineal, porque sus predicciones están
+siempre dentro del rango de medias de entrenamiento (en este caso
+$[2.5,9]$), aun cuando los datos sugieren un crecimiento sostenido
+(la pendiente de MCO sobre estos seis puntos es de aproximadamente $1.97$
+por unidad de $x$).
 
 \item \textbf{\texttt{max\_depth}, \texttt{min\_samples\_leaf} y sobreajuste.}
-% TODO
+\begin{itemize}
+    \item \texttt{max\_depth}: Limita el número de preguntas sucesivas
+    desde la raíz hasta una hoja, de forma que restringe el número máximo
+    de hojas ($2^{\text{profundidad}}$) y la complejidad de la partición
+    del espacio, impidiendo que el árbol siga dividiendo hasta aislar
+    observaciones individuales.
+    \item \texttt{min\_samples\_leaf}: Exige que cada hoja conserve al
+    menos ese número de observaciones de entrenamiento, por lo cual
+    cada predicción (media o proporción) se estima con más datos y es
+    menos sensible al ruido de unas pocas observaciones, suavizando la
+    función aprendida.
+\end{itemize}
+Al aumentar excesivamente la profundidad, el error de
+\textbf{entrenamiento} disminuye de forma monótona hasta llegar a
+(prácticamente) cero, pues un árbol sin límites puede asignar cada
+observación a su propia hoja, mientras que el error de
+\textbf{validación} primero disminuye (el árbol captura estructura real)
+y luego se estanca o aumenta (empieza a memorizar ruido), dando la
+típica curva en forma de U y una brecha creciente entre ambos errores,
+que es la señal de sobreajuste que se busca controlar en los ejercicios
+7 y 9 seleccionando estos hiperparámetros con el conjunto de
+validación.
 
 \end{enumerate}
