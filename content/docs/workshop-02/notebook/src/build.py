@@ -47,6 +47,10 @@ def combinar_fuentes():
 
 def construir_notebook(ejecutar: bool = True):
     nb = jupytext.read(COMBINED_PY, fmt="py:percent")
+    # Celda temporal: escribe latex/generado/resultados.tex con las cifras
+    # registradas, y se retira antes de guardar para que el notebook de
+    # entrega no muestre la maquinaria del documento LaTeX.
+    nb.cells.append(nbformat.v4.new_code_cell("escribir_macros()"))
     nb.metadata["kernelspec"] = {
         "name": "python3", "display_name": "Python 3", "language": "python",
     }
@@ -56,6 +60,7 @@ def construir_notebook(ejecutar: bool = True):
             nb, timeout=600, kernel_name="python3",
             resources={"metadata": {"path": str(OUT_DIR)}},
         ).execute()
+    nb.cells.pop()
     nbformat.write(nb, OUTPUT_IPYNB)
     print(f"\nNotebook final: {OUTPUT_IPYNB}")
 

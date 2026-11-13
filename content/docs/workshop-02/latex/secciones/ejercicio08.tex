@@ -2,24 +2,122 @@
 % ejercicio08.tex
 % Responsabilidad única: ajustar la regresión logística regularizada en el caso cáncer de mama,
 % seleccionar $C$ por ROC-AUC de validación y fijar el umbral por costo.
+% Las cifras provienen de generado/resultados.tex y generado/tabla_*.tex.
 % =====================================================================
-\subsection{Ejercicio 8 --- Caso B: regresión logística y elección del umbral}
+\subsection{Ejercicio 8: Caso B, regresión logística y elección del umbral}
 
 \begin{enumerate}
 
 \item \textbf{Particiones, recodificación y referencia.}
-% TODO
+Antes de ajustar nada quisimos estar seguros de la recodificación, así que
+hicimos una tabla cruzada entre la etiqueta original y la nueva: los 212
+tumores \texttt{malignant} quedaron con $y=1$ y los 357 \texttt{benign} con
+$y=0$, de modo que las métricas de la clase positiva corresponden a muestras
+malignas. La proporción de malignos fue $\PropMalTr$ en entrenamiento y
+$\PropMalVal$ en validación, prácticamente iguales gracias a la
+estratificación. El \texttt{DummyClassifier} con \texttt{strategy="prior"}
+asigna a todas las muestras la misma probabilidad de maligno
+($\PropMalTr$), por lo que con $t=0.5$ predice siempre benigno, sin
+verdaderos ni falsos positivos; la precisión queda indefinida ($0/0$) y
+\texttt{zero\_division=0} la reporta como 0, al igual que recall y F1. Su
+ROC-AUC, calculado con esas probabilidades, es exactamente 0.5, pues un
+puntaje constante no ordena ninguna muestra maligna por encima de una
+benigna.
 
 \item \textbf{Selección de $C$.}
-% TODO
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{generado/tabla_ex8_C}}
+\caption{Regresión logística según $C$: ROC-AUC y F1 ($t=0.5$) en entrenamiento y validación, y convergencia.}
+\label{tab:ex8-C}
+\end{table}
+
+Los cuatro ajustes convergieron (como máximo $\LogitIterMax$ iteraciones,
+lejos del límite de 5000, y sin \texttt{ConvergenceWarning}). El ROC-AUC de
+validación creció con $C$ hasta estabilizarse (Tabla~\ref{tab:ex8-C}) y nos
+encontramos con que $\LogitEmpatesC$ valores de $C$ ($C=1$ y $C=10$)
+obtuvieron exactamente el mismo máximo a precisión completa (que redondeado
+es $\LogitAUCVal$). Al principio nos pareció raro, pero es posible porque con
+$\NClfVal$ muestras el AUC es un cociente de conteos de pares. Ante ese
+empate nuestra regla fue elegir el menor, es decir $\boldsymbol{C=\LogitC}$,
+el de mayor regularización entre los empatados. En entrenamiento el ROC-AUC
+y el F1 aumentan con $C$, mientras que el F1 de validación alcanzó su máximo
+en $C=0.1$ y cayó en $C=10$, señal de que con menos regularización el modelo
+se ajusta más al entrenamiento sin ganancia en datos nuevos. Aun así no
+elegimos $C=0.1$ pese a tener el mejor F1 con umbral 0.5, porque el criterio
+que fijamos de antemano fue el ROC-AUC y no el F1.
 
 \item \textbf{Umbral por costo $L = FP + 5FN$.}
-% TODO
 
-\item \textbf{Precisión y recall vs.\ umbral.}
-% TODO
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex8_umbrales}
+\caption{Umbrales para la regresión logística con $C=\LogitC$ (validación).}
+\label{tab:ex8-umbrales}
+\end{table}
+
+El costo bajó al subir el umbral (Tabla~\ref{tab:ex8-umbrales}) y alcanzó su
+mínimo, $L=\LogitCostoSel$ ($FP=\LogitFPSel$, $FN=\LogitFNSel$), en $t=0.7$
+y $t=0.8$; como ambos tienen el mismo recall ($\LogitRecallSel$), el segundo
+desempate eligió el menor umbral, $\boldsymbol{t=\LogitT}$. Frente a $t=0.5$
+($L=\LogitCostoMedio$, con $FP=\LogitFPMedio$ y $FN=\LogitFNMedio$), el
+umbral elegido elimina los falsos positivos sin perder ningún maligno. Eso
+sí, aquí nos quedó una duda que vale la pena dejar escrita: el recall es
+igual en los siete umbrales porque el único maligno no detectado tiene
+probabilidad menor que 0.2, de modo que en validación subir el umbral solo
+elimina falsos positivos. Con probabilidades bien calibradas, el
+razonamiento del Ejercicio~3d daría para esta razón de costos un umbral
+teórico de $1/(1+5)\approx 0.167$, muy por debajo de $\LogitT$, así que la
+elección de un umbral alto descansa en unos pocos casos de validación y en
+datos nuevos podrían aparecer malignos con probabilidades intermedias que
+este umbral deje pasar.
+
+\item \textbf{Precisión y recall frente al umbral.}
+Al subir el umbral la precisión aumenta, porque se exigen probabilidades más
+altas para declarar maligno y se descartan falsos positivos, mientras que el
+recall se mantuvo constante por lo que explicamos en el inciso anterior
+(Figura~\ref{fig:ex8-pr}). El ROC-AUC ($\LogitAUCVal$) no cambia con $t$
+porque se calcula con las probabilidades y resume el ordenamiento del modelo
+sobre todos los umbrales posibles, mientras que $t$ solo elige un punto de la
+curva ROC. Por eso usamos el ROC-AUC para comparar modelos (valores de $C$)
+con independencia del punto de operación, y el costo $L$ para fijar, una vez
+congelado el modelo, el umbral que mejor equilibra falsos positivos y
+falsos negativos según sus consecuencias.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{figuras/ex8_precision_recall.png}
+    \caption{Precisión y recall según el umbral, regresión logística con $C=\LogitC$ (validación).}
+    \label{fig:ex8-pr}
+\end{figure}
 
 \item \textbf{Coeficientes estandarizados y odds.}
-% TODO
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex8_coeficientes}
+\caption{Diez mayores coeficientes estandarizados (en magnitud) de la regresión logística con $C=\LogitC$.}
+\label{tab:ex8-coef}
+\end{table}
+
+Un coeficiente positivo indica que valores más altos del predictor se asocian
+con mayores log-odds de malignidad manteniendo fijos los demás, y uno negativo
+lo contrario. \texttt{worst texture} ($\CoefTexturaPeor$) y \texttt{mean
+concave points} ($\CoefPuntosConcavos$) salieron con signo positivo, coherente
+con que núcleos de textura más irregular y con más puntos cóncavos se asocien
+con malignidad. En cambio \texttt{compactness error} ($\CoefCompactError$)
+salió con signo negativo, y nos tocó tener cuidado al leerlo: no significa
+que valores altos de esa variable se asocien marginalmente con benignidad,
+sino que es un efecto condicional al resto de las 29 variables, muchas de
+ellas casi colineales (radio, perímetro y área). Para \texttt{worst texture},
+$e^{\CoefTexturaPeor}\approx \ExpTexturaPeor$, es decir, un aumento de una
+desviación estándar de entrenamiento multiplica los odds estimados de
+malignidad por cerca de $\ExpTexturaPeor$ manteniendo fijas las demás
+variables, lo cual describe una asociación dentro del modelo y no un efecto
+causal. Con esto dejamos congelados el pipeline con $C=\LogitC$ y el umbral
+$t=\LogitT$.
 
 \end{enumerate}

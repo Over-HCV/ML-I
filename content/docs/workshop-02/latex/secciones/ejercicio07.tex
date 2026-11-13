@@ -2,24 +2,120 @@
 % ejercicio07.tex
 % Responsabilidad única: ajustar la regresión múltiple estandarizada y la cuadrícula de árboles de
 % regresión, y seleccionar con validación el candidato final de regresión.
+% Las cifras provienen de generado/resultados.tex y generado/tabla_*.tex.
 % =====================================================================
-\subsection{Ejercicio 7 --- Caso A: regresión múltiple y árbol de regresión}
+\subsection{Ejercicio 7: Caso A, regresión múltiple y árbol de regresión}
 
 \begin{enumerate}
 
 \item \textbf{Regresión múltiple con \texttt{Pipeline}.}
-% TODO
+Armamos un \texttt{Pipeline} con \texttt{StandardScaler} y
+\texttt{LinearRegression} para que las medias y desviaciones se aprendieran
+solo con entrenamiento y no se nos colara información de validación. El
+modelo múltiple obtuvo un RMSE de validación de $\RegMultiRMSEVal$ (frente a
+$\RegSimpleRMSEVal$ del simple y $\RegDummyRMSEVal$ de la constante) y un
+$R^2$ de validación de $\RegMultiRdosVal$ (frente a $\RegSimpleRdosVal$),
+como se ve en la Tabla~\ref{tab:ex7-candidatos}. La mejora en entrenamiento
+(RMSE de $\RegSimpleRMSETr$ a $\RegMultiRMSETr$) por sí sola no prueba nada,
+pues como justificamos en el Ejercicio~2e añadir predictores nunca aumenta
+el error mínimo de entrenamiento; lo que nos importó fue que la mejora se
+conservara en validación y que la brecha entre particiones no se abriera.
 
 \item \textbf{Coeficientes estandarizados y correlaciones.}
-% TODO
+Cada coeficiente (Tabla~\ref{tab:ex7-coef}) es el cambio esperado en la
+predicción ante un aumento de una desviación estándar de entrenamiento (la
+poblacional que usa \texttt{StandardScaler}) en ese predictor, manteniendo
+fijos los demás. Para \texttt{s5} un aumento de una desviación
+($\DesvMultiScinco$ en el logaritmo de los triglicéridos) se asocia con
+$\CoefMultiScinco$ unidades más de progresión, y para \texttt{bmi} un aumento
+de una desviación ($\DesvMultiBmi$\,kg/m$^2$) se asocia con
+$\CoefMultiBmi$ unidades más, equivalentes a unas $\BmiPorUnidad$ por
+kg/m$^2$. Eso es cerca de la mitad de la pendiente simple
+($\SimpleBetaUno$), y lo leímos como que allí \texttt{bmi} absorbía parte de
+lo que ahora explican predictores correlacionados con él.
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex7_coeficientes}
+\caption{Coeficientes estandarizados de la regresión múltiple, ordenados por magnitud absoluta (entrenamiento).}
+\label{tab:ex7-coef}
+\end{table}
+
+Para entender esos signos miramos la matriz de correlaciones
+(Figura~\ref{fig:ex7-corr}), que muestra pares fuertemente relacionados, en
+especial \texttt{s1} y \texttt{s2} ($\CorrSunoSdos$) y \texttt{s3} y
+\texttt{s4} ($\CorrStresScuatro$). El caso de \texttt{s1} y \texttt{s2} fue
+el que más nos llamó la atención: ambos tienen correlación positiva con la
+variable objetivo ($\CorrYSuno$ y $\CorrYSdos$), pero el modelo les asignó
+coeficientes de signo opuesto y gran magnitud ($\CoefMultiSuno$ y
+$\CoefMultiSdos$), porque al moverse casi juntos el ajuste aprovecha su
+diferencia y no el nivel de cada uno. Algo similar ocurrió con \texttt{s3},
+de correlación negativa con el \emph{target} ($\CorrYStres$) y coeficiente
+positivo ($\CoefMultiStres$). Por esto leemos los coeficientes como efectos
+parciales condicionados al resto, inestables ante colinealidad, y no como
+importancias independientes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.62\textwidth]{figuras/ex7_correlaciones.png}
+    \caption{Matriz de correlaciones de los predictores (entrenamiento).}
+    \label{fig:ex7-corr}
+\end{figure}
 
 \item \textbf{Cuadrícula de \texttt{DecisionTreeRegressor}.}
-% TODO
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex7_arboles}
+\caption{Árboles de regresión: RMSE de entrenamiento y validación, profundidad real y hojas.}
+\label{tab:ex7-arboles}
+\end{table}
+
+Con \texttt{min\_samples\_leaf} $=5$ apareció el patrón clásico de
+sobreajuste (Tabla~\ref{tab:ex7-arboles}): al aumentar la profundidad el
+RMSE de entrenamiento baja y el de validación sube, hasta
+$\ArbolProfundoRMSETr$ frente a $\ArbolProfundoRMSEVal$ con
+$\ArbolProfundoHojas$ hojas en profundidad 6. Con \texttt{min\_samples\_leaf}
+$=30$ manda la restricción de tamaño de hoja, de forma que con
+\texttt{max\_depth} $=6$ el árbol no pasa de profundidad real 4 y resultó
+idéntico al de \texttt{max\_depth} $=4$ (quedaron $\ArbolRegEmpatados$
+árboles con el mismo RMSE de validación mínimo, $\ArbolRegRMSEVal$). Ante
+ese empate nuestra regla fue quedarnos con la menor profundidad máxima, es
+decir \texttt{max\_depth} $=\ArbolRegMaxDepth$ y \texttt{min\_samples\_leaf}
+$=\ArbolRegMinLeaf$, con profundidad real $\ArbolRegProf$ y $\ArbolRegHojas$
+hojas.
 
 \item \textbf{Candidato final de regresión.}
-% TODO
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{generado/tabla_ex7_candidatos}}
+\caption{Candidatos de regresión y referencia constante (entrenamiento y validación).}
+\label{tab:ex7-candidatos}
+\end{table}
+
+Como candidato final de regresión elegimos la \textbf{regresión múltiple},
+que tuvo el menor RMSE de validación ($\CandidatoRegRMSEVal$), por delante
+del árbol seleccionado ($\ArbolRegRMSEVal$) y del modelo simple
+($\RegSimpleRMSEVal$), sin necesidad de aplicar la regla de desempate; la
+constante ($\RegDummyRMSEVal$) quedó como referencia. Esta decisión la
+congelamos antes de consultar la prueba.
 
 \item \textbf{No linealidad del árbol y brecha entrenamiento--validación.}
-% TODO
+El árbol divide el espacio con umbrales sobre los valores originales, de
+modo que solo importa el orden de los valores y no su escala (por eso no
+necesita estandarización), y al asignar una constante por región puede
+representar relaciones no lineales e interacciones sin especificarlas.
+Esperábamos que esa flexibilidad le diera ventaja, pero no fue así: con
+$\NRegTr$ observaciones de entrenamiento y un mínimo de $\ArbolRegMinLeaf$
+por hoja, el árbol seleccionado solo produce $\ArbolRegHojas$ valores
+distintos de predicción, una aproximación escalonada de una relación que
+aquí parece mayormente aditiva y cercana a lineal. Su brecha es pequeña
+($\ArbolRegRMSETr$ en entrenamiento y $\ArbolRegRMSEVal$ en validación),
+pero su error superó al del modelo múltiple en ambas particiones, y el árbol
+profundo del inciso c mostró que la flexibilidad adicional se traduce en
+memorizar el entrenamiento y no en generalizar mejor.
 
 \end{enumerate}

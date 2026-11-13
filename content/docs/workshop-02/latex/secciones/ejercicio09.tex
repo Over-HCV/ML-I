@@ -3,24 +3,172 @@
 % Responsabilidad única: ajustar la cuadrícula de árboles de clasificación, elegir árbol y umbral
 % con validación, comparar con la logística e interpretar reglas e
 % importancias.
+% Las cifras provienen de generado/resultados.tex y generado/tabla_*.tex.
 % =====================================================================
-\subsection{Ejercicio 9 --- Caso B: árbol de clasificación e interpretación}
+\subsection{Ejercicio 9: Caso B, árbol de clasificación e interpretación}
 
 \begin{enumerate}
 
 \item \textbf{Cuadrícula de \texttt{DecisionTreeClassifier}.}
-% TODO
+Ajustamos los doce árboles (criterio de Gini y \texttt{random\_state=42})
+sobre los predictores originales sin estandarizar, recorriendo la cuadrícula
+con \texttt{max\_depth} por fuera y \texttt{min\_samples\_leaf} por dentro,
+orden que dejamos como último criterio de desempate. Nos dimos cuenta de que
+\texttt{min\_samples\_leaf} limita la profundidad efectiva, de modo que con
+hojas de al menos 5 o 15 muestras los árboles con \texttt{max\_depth} igual
+a 5 y a \texttt{None} resultaron idénticos (Tabla~\ref{tab:ex9-arboles}),
+mientras que el árbol sin restricciones alcanzó ROC-AUC y F1 de
+entrenamiento de $\ArbolLibreAUCTr$, señal de que memoriza el
+entrenamiento.
 
 \item \textbf{Selección del árbol.}
-% TODO
+
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{generado/tabla_ex9_arboles}}
+\caption{Árboles de clasificación: ROC-AUC y F1 ($\hat y = \mathbf{1}[p\ge 0.5]$) en entrenamiento y validación.}
+\label{tab:ex9-arboles}
+\end{table}
+
+Seleccionamos el árbol de \texttt{max\_depth} $=\ArbolClfMaxDepth$ y
+\texttt{min\_samples\_leaf} $=\ArbolClfMinLeaf$, que tuvo el mayor ROC-AUC
+de validación ($\ArbolClfAUCVal$), con profundidad real $\ArbolClfProf$ y
+$\ArbolClfHojas$ hojas; su máximo es único (una sola fila lo alcanza), así
+que esta vez no hubo que desempatar. Los árboles con hojas de una sola
+muestra y profundidad real de 3 o más quedaron entre los peores en
+validación pese a tener los mejores valores de entrenamiento.
 
 \item \textbf{Umbral del árbol y candidato final de clasificación.}
-% TODO
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex9_umbrales}
+\caption{Umbrales para el árbol seleccionado (validación).}
+\label{tab:ex9-umbrales}
+\end{table}
+
+Al ver la Tabla~\ref{tab:ex9-umbrales} nos llamó la atención que varias
+filas coincidieran, y la razón es que el árbol solo asigna tantas
+probabilidades distintas como hojas tiene (las proporciones de malignos de
+cada hoja), de modo que todos los umbrales comprendidos entre dos de esos
+valores producen las mismas predicciones. El menor costo lo obtuvimos con
+$\boldsymbol{t=\ArbolT}$ ($L=\ArbolCostoSel$, con $FP=\ArbolFPSel$ y
+$FN=\ArbolFNSel$), donde la regla $p\ge t$ incluye la hoja cuya proporción
+de malignos es exactamente 0.2. Este costo es claramente mayor que el de la
+regresión logística ($L=\LogitCostoSel$), por lo que como candidato final de
+clasificación nos quedamos con la \textbf{regresión logística con
+$C=\LogitC$ y $t=\LogitT$}, sin necesidad de desempates; su ROC-AUC de
+validación también es mayor ($\LogitAUCVal$ frente a $\ArbolClfAUCVal$).
+
+\paragraph{Puente con el Ejercicio~3d: umbral teórico y calibración.}
+En el Ejercicio~3d demostramos que, con probabilidades bien calibradas, el
+umbral de costo mínimo es $t^*=c_{FP}/(c_{FP}+c_{FN})$, que para $L=FP+5FN$
+vale $t^*=1/6\approx\TTeorico$. Nos pareció que valía la pena contrastar esa
+predicción concreta de la teoría con lo que elegimos empíricamente
+(Tabla~\ref{tab:ex9-puente} y Figura~\ref{fig:ex9-calibracion}). Este
+contraste es solo descriptivo, pues el enunciado fija la rejilla de siete
+umbrales, así que $t^*$ no lo usamos para seleccionar ni cambia ningún
+candidato.
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex9_puente}
+\caption{Umbral teórico $t^*=1/6$ del Ejercicio~3d frente al umbral
+elegido, y puntaje de Brier (validación).}
+\label{tab:ex9-puente}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{figuras/ex9_calibracion.png}
+    \caption{Curva de calibración en validación (cinco grupos por
+    cuantiles): fracción observada de malignos frente a la probabilidad
+    predicha media de cada grupo, con $t^*=1/6$ marcado en rojo.}
+    \label{fig:ex9-calibracion}
+\end{figure}
+
+En el árbol la teoría y la práctica coincidieron, pues $t^*$ produce
+exactamente las mismas predicciones que $t=\ArbolT$ ($L=\ArbolCostoTeo$),
+ya que ninguna hoja tiene una probabilidad comprendida entre $\TTeorico$ y
+$0.2$ (el umbral elegido es el valor de la rejilla más cercano a $t^*$). En
+la regresión logística, en cambio, $t^*$ daría $L=\LogitCostoTeo$
+($FP=\LogitFPTeo$, $FN=\LogitFNTeo$), el triple que el umbral elegido, y le
+dimos varias vueltas hasta ver que la discrepancia se explica por las
+condiciones que exige el resultado teórico. Primero, la calibración no es
+perfecta, pues en el grupo de probabilidades bajas (media predicha
+$\LogitCalMedia$) la fracción observada de malignos es solo $\LogitCalFrac$,
+es decir, el modelo sobreestima el riesgo justo en la zona donde cae $t^*$,
+y bajar el umbral hasta allí agrega falsos positivos que en realidad son
+benignos. Además se suma un hecho puntual de esta validación: el único
+maligno no detectado tiene $p=\LogitPMalMin$, por debajo incluso de $t^*$,
+de modo que ningún umbral de la rejilla lo recupera y bajarlo solo cuesta
+falsos positivos. Por último, el puntaje de Brier ($\LogitBrier$ frente a
+$\ArbolBrier$) confirma que la logística entrega probabilidades más
+precisas, aunque con $\NClfVal$ muestras cada punto de la curva tiene un
+error de muestreo considerable. Lo que sacamos en limpio es que $t^*$ es una
+referencia teórica valiosa cuyo supuesto clave (calibración) hay que
+verificar antes de aplicarla, y que el umbral alto de la logística descansa
+en muy pocos casos, advertencia que retomamos al evaluar en prueba
+(Ejercicio~10b).
 
 \item \textbf{Visualización y regla de una hoja.}
-% TODO
+El árbol seleccionado tiene profundidad real $\ArbolClfProf$, de modo que la
+Figura~\ref{fig:ex9-arbol}, limitada a tres niveles, lo muestra completo y no
+está truncada. La raíz divide por \texttt{worst perimeter} y el segundo nivel
+por \texttt{worst concave points} en ambas ramas. Escrita como regla, la ruta
+hasta la hoja con más muestras malignas es la siguiente, y esa hoja contiene
+$\HojaEjMuestras$ muestras de entrenamiento con proporción de malignos
+$\HojaEjProp$:
+\input{generado/regla_ex9}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figuras/ex9_arbol.png}
+    \caption{Árbol de clasificación seleccionado, ajustado con entrenamiento (conteos por clase en cada nodo).}
+    \label{fig:ex9-arbol}
+\end{figure}
 
 \item \textbf{Importancias, coeficientes y sobreajuste.}
-% TODO
+El árbol concentra casi toda la importancia en \texttt{worst perimeter}
+($\ImpPerimetro$) y \texttt{worst concave points} ($\ImpPuntos$), con un
+aporte marginal de \texttt{area error} ($\ImpAreaError$), y solo
+$\ImpNoNulas$ de los 30 predictores tienen importancia no nula
+(Figura~\ref{fig:ex9-imp} y Tabla~\ref{tab:ex9-imp}). La regresión logística,
+en cambio, reparte el peso entre muchas variables, y nos sorprendió que
+\texttt{worst perimeter} ocupe apenas el puesto $\RangoPerimetro$ por
+magnitud de coeficiente y \texttt{worst concave points} el $\RangoPuntos$.
+Sin embargo, las escalas no son comparables: la importancia es la reducción
+total de Gini atribuida a cada variable, normalizada para sumar 1, siempre
+no negativa y sin signo, que además depende de qué variable eligió primero
+el árbol entre varias casi intercambiables (perímetro, radio y área),
+mientras que el coeficiente logístico es un cambio condicional en log-odds
+por desviación estándar, con signo. Ninguna de las dos implica efectos
+causales.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.66\textwidth]{figuras/ex9_importancias.png}
+    \caption{Cinco mayores importancias del árbol seleccionado (entrenamiento).}
+    \label{fig:ex9-imp}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex9_importancias}
+\caption{Importancias del árbol frente a coeficientes estandarizados de la logística.}
+\label{tab:ex9-imp}
+\end{table}
+
+En cuanto al sobreajuste, la Tabla~\ref{tab:ex9-arboles} muestra evidencia
+clara en los árboles con \texttt{min\_samples\_leaf} $=1$, en especial el
+árbol sin restricciones, que pasó de ROC-AUC $\ArbolLibreAUCTr$ y F1
+$\ArbolLibreFUnoTr$ en entrenamiento a $\ArbolLibreAUCVal$ y
+$\ArbolLibreFUnoVal$ en validación, mientras que los árboles con
+\texttt{min\_samples\_leaf} $=15$, incluido el seleccionado (ROC-AUC de
+$\ArbolClfAUCTr$ en entrenamiento y $\ArbolClfAUCVal$ en validación), fueron
+los que mejor trasladaron su desempeño a validación.
 
 \end{enumerate}

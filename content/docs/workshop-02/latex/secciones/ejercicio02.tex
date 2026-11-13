@@ -6,9 +6,9 @@
 % entrenamiento y de generalización. Cifras verificadas con
 % verificacion/teoria.py.
 % =====================================================================
-\subsection{Ejercicio 2 --- Regresión lineal múltiple: solución matricial y colinealidad}
+\subsection{Ejercicio 2: Regresión lineal múltiple, solución matricial y colinealidad}
 
-Se modela la demanda $y$ (centenas de unidades) como
+Modelamos la demanda $y$ (centenas de unidades) como
 $\hat y=\beta_0+\beta_1x_1+\beta_2x_2$, donde $x_1$ es la inversión
 publicitaria (unidades de presupuesto) y $x_2\in\{0,1\}$ indica si hubo
 promoción.
@@ -16,13 +16,13 @@ promoción.
 \begin{enumerate}
 
 \item \textbf{Matriz $X$, $X^\top X$ y $X^\top y$.}
-Agregando la columna de unos del intercepto,
+Agregamos la columna de unos del intercepto,
 \[
-    X = \begin{pmatrix}
+    X = \begin{bmatrix}
         1 & 0 & 0\\ 1 & 1 & 0\\ 1 & 2 & 0\\ 1 & 0 & 1\\ 1 & 1 & 1\\ 1 & 2 & 1
-    \end{pmatrix}\in\mathbb{R}^{6\times 3},
+    \end{bmatrix}\in\mathbb{R}^{6\times 3},
     \qquad
-    y = \begin{pmatrix} 2\\4\\5\\5\\6\\8 \end{pmatrix}\in\mathbb{R}^{6\times 1},
+    y = \begin{bmatrix} 2\\4\\5\\5\\6\\8 \end{bmatrix}\in\mathbb{R}^{6\times 1},
     \qquad
     \beta\in\mathbb{R}^{3\times1},
 \]
@@ -31,25 +31,27 @@ y cada entrada de $X^\top X$ es un producto punto entre columnas de $X$
 $\sum_i x_{i1}x_{i2}=0+1+2=3$), así como cada entrada de $X^\top y$ es
 el producto punto de una columna con $y$, de forma que
 \[
-    X^\top X = \begin{pmatrix}
+    X^\top X = \begin{bmatrix}
         n & \sum x_{1} & \sum x_{2}\\
         \sum x_{1} & \sum x_{1}^2 & \sum x_{1}x_{2}\\
         \sum x_{2} & \sum x_{1}x_{2} & \sum x_{2}^2
-    \end{pmatrix}
-    = \begin{pmatrix} 6 & 6 & 3\\ 6 & 10 & 3\\ 3 & 3 & 3 \end{pmatrix},
+    \end{bmatrix}
+    = \begin{bmatrix} 6 & 6 & 3\\ 6 & 10 & 3\\ 3 & 3 & 3 \end{bmatrix},
     \qquad
-    X^\top y = \begin{pmatrix} \sum y\\ \sum x_1y\\ \sum x_2y \end{pmatrix}
-    = \begin{pmatrix} 30\\ 36\\ 19 \end{pmatrix}.
+    X^\top y = \begin{bmatrix} \sum y\\ \sum x_1y\\ \sum x_2y \end{bmatrix}
+    = \begin{bmatrix} 30\\ 36\\ 19 \end{bmatrix},
 \]
+con $X^\top X\in\mathbb{R}^{3\times3}$ (simétrica) y
+$X^\top y\in\mathbb{R}^{3\times1}$.
 
 \item \textbf{Derivación y solución del sistema normal.}
-Expandiendo la función objetivo,
+Expandimos la función objetivo,
 \[
-    S(\beta) = (y-X\beta)^\top(y-X\beta)
+    S(\beta) = \lVert y-X\beta\rVert_2^2 = (y-X\beta)^\top(y-X\beta)
     = y^\top y - 2\beta^\top X^\top y + \beta^\top X^\top X\beta ,
 \]
 y usando las reglas $\nabla_\beta(\beta^\top a)=a$ y
-$\nabla_\beta(\beta^\top A\beta)=2A\beta$ para $A$ simétrica, se obtiene
+$\nabla_\beta(\beta^\top A\beta)=2A\beta$ para $A$ simétrica, obtenemos
 \[
     \nabla_\beta S = -2X^\top y + 2X^\top X\beta = 0
     \;\Longrightarrow\;
@@ -58,7 +60,7 @@ $\nabla_\beta(\beta^\top A\beta)=2A\beta$ para $A$ simétrica, se obtiene
 que corresponde a un mínimo porque la hessiana $2X^\top X$ es semidefinida
 positiva ($v^\top X^\top Xv=\lVert Xv\rVert^2\ge0$), y definida positiva
 cuando las columnas de $X$ son linealmente independientes, como en este
-caso ($\det X^\top X=36\neq0$). El sistema a resolver es
+caso ($\det X^\top X=36\neq0$). El sistema que nos queda por resolver es
 \[
     \begin{aligned}
         6\beta_0 + 6\beta_1 + 3\beta_2 &= 30 &\quad&(\mathrm{E}_1)\\
@@ -66,15 +68,80 @@ caso ($\det X^\top X=36\neq0$). El sistema a resolver es
         3\beta_0 + 3\beta_1 + 3\beta_2 &= 19 &&(\mathrm{E}_3)
     \end{aligned}
 \]
-y se procede por eliminación: primeramente $\mathrm{E}_2-\mathrm{E}_1$
+y lo resolvimos por eliminación: primero $\mathrm{E}_2-\mathrm{E}_1$
 da $4\beta_1=6$, luego $\mathrm{E}_1-2\mathrm{E}_3$ da $-3\beta_2=-8$, y
-finalmente al sustituir ambos en $\mathrm{E}_3$ se despeja $\beta_0$:
+al sustituir ambos en $\mathrm{E}_3$ despejamos $\beta_0$:
 \[
     \hat\beta_1 = \frac{3}{2} = 1.5, \qquad
     \hat\beta_2 = \frac{8}{3} \approx 2.6667, \qquad
     3\hat\beta_0 = 19 - 4.5 - 8 = 6.5
     \;\Rightarrow\; \hat\beta_0 = \frac{13}{6} \approx 2.1667 .
 \]
+Geométricamente, las ecuaciones normales equivalen a
+$X^\top(y-X\hat\beta)=X^\top e=\mathbf{0}$, es decir, el residuo
+$e=y-\hat y$ es ortogonal a cada columna de $X$, de forma que
+$\hat y=X\hat\beta$ es la proyección ortogonal de $y$ sobre el espacio
+columna $\operatorname{col}(X)$ y, por lo tanto, el punto de ese
+subespacio más cercano a $y$ (figura~\ref{fig:ej2-proyeccion}); en
+particular se cumple el teorema de Pitágoras
+$\lVert y\rVert^2=\lVert\hat y\rVert^2+\lVert e\rVert^2$, que con estos
+datos es $170=169.6667+0.3333$.
+
+\begin{figure}[H]
+\centering
+\small
+\begin{tikzpicture}[scale=1.2, >={Stealth[length=2.4mm]}]
+    % plano col(X) en perspectiva
+    \coordinate (P1) at (0,0);
+    \coordinate (P2) at (6.2,0);
+    \coordinate (P3) at (7.6,2.0);
+    \coordinate (P4) at (1.4,2.0);
+    \fill[classblue!10] (P1) -- (P2) -- (P3) -- (P4) -- cycle;
+    \draw[classblue!70] (P1) -- (P2) -- (P3) -- (P4) -- cycle;
+    \node[classblue, anchor=south east]
+        at ($(P2)+(-0.1,0.08)$)
+        {$\operatorname{col}(X)=\{X\beta:\beta\in\mathbb{R}^3\}$};
+    % puntos
+    \coordinate (O) at (1.6,0.9);
+    \coordinate (yhat) at (5.0,1.25);
+    \coordinate (y) at (5.0,4.1);
+    \coordinate (Xb) at (3.2,1.55);
+    \fill (O) circle (1.3pt) node[below left=0pt] {$\mathbf{0}$};
+    % vectores
+    \draw[->, thick, classblue] (O) -- (yhat)
+        node[midway, below, yshift=-1pt] {$\hat y=X\hat\beta$};
+    \draw[->, thick] (O) -- (y) node[pos=0.7, above left] {$y$};
+    \draw[->, thick, classred] (yhat) -- (y)
+        node[midway, right, align=left]
+        {$e=y-\hat y$\\[1pt]$\lVert e\rVert^2=\mathrm{SSE}=\tfrac13$};
+    % otro candidato X beta (más lejano)
+    \fill[classgreen!70!black] (Xb) circle (1.4pt)
+        node[below, yshift=-1pt] {$X\beta$};
+    \draw[dashed, classgreen!70!black] (Xb) -- (y);
+    % ángulo recto
+    \coordinate (u) at ($(yhat)+(0,0.3)$);
+    \coordinate (w) at ($(yhat)!0.3cm!(O)$);
+    \draw[classred] (u) -- ($(u)+(w)-(yhat)$) -- (w);
+    \fill[classblue] (yhat) circle (1.4pt);
+    % ecuaciones
+    \node[anchor=west, align=left, font=\small] at (6.3,3.65)
+        {$e\perp\operatorname{col}(X)$\\[2pt]
+         $\Longleftrightarrow\; X^\top e=\mathbf{0}$\\[2pt]
+         $\Longleftrightarrow\; X^\top X\hat\beta=X^\top y$};
+    \node[anchor=east, align=right, font=\small, classgreen!70!black]
+        at (3.0,3.7)
+        {$\lVert y-X\beta\rVert>\lVert e\rVert$\\si $X\beta\neq\hat y$};
+\end{tikzpicture}
+\caption{Interpretación geométrica de mínimos cuadrados (esquema: el
+espacio columna de $X$ es un subespacio de dimensión $3$ dentro de
+$\mathbb{R}^6$, representado aquí como un plano). La predicción
+$\hat y$ es la proyección ortogonal de $y$ sobre $\operatorname{col}(X)$,
+de forma que el residuo $e$ (rojo) es perpendicular al plano, lo cual
+equivale a $X^\top e=\mathbf{0}$, es decir, a las ecuaciones normales,
+y cualquier otro candidato $X\beta$ del plano (verde) queda más lejos
+de $y$.}
+\label{fig:ej2-proyeccion}
+\end{figure}
 
 \item \textbf{Interpretación, predicción y MSE.}
 \begin{itemize}
@@ -85,9 +152,70 @@ finalmente al sustituir ambos en $\mathrm{E}_3$ se despeja $\beta_0$:
     publicitaria, realizar la promoción se asocia con unas $2.6667$
     centenas (aproximadamente $267$ unidades) más de demanda predicha.
 \end{itemize}
-Para $(x_1,x_2)=(1.5,1)$ se predice
+Como $x_2$ es binaria, el modelo ajustado equivale a dos rectas
+paralelas en el plano $(x_1,y)$, $\hat y=\tfrac{13}{6}+1.5\,x_1$ sin
+promoción y $\hat y=\tfrac{29}{6}+1.5\,x_1$ con promoción, de forma que
+$\hat\beta_1$ es la pendiente común y $\hat\beta_2$ la distancia
+vertical constante entre ambas (figura~\ref{fig:ej2-rectas}).
+Para $(x_1,x_2)=(1.5,1)$ predecimos
 $\hat y=\tfrac{13}{6}+1.5\cdot1.5+\tfrac83=\tfrac{85}{12}\approx7.0833$
-centenas, es decir, unas $708$ unidades. Con las predicciones de
+centenas, es decir, unas $708$ unidades.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.72\textwidth, height=6.2cm,
+    xmin=-0.25, xmax=2.35, ymin=1, ymax=9.2,
+    xtick={0,0.5,1,1.5,2},
+    xlabel={$x_1$ (inversión publicitaria)}, ylabel={$y$ (centenas)},
+    legend cell align=left, legend columns=2,
+    legend style={font=\small, at={(0.5,1.03)}, anchor=south},
+    tick label style={font=\small}, clip=false,
+]
+% residuos
+\addplot[gray, thin, forget plot] coordinates {(0,2) (0,13/6)};
+\addplot[gray, thin, forget plot] coordinates {(1,4) (1,11/3)};
+\addplot[gray, thin, forget plot] coordinates {(2,5) (2,31/6)};
+\addplot[gray, thin, forget plot] coordinates {(0,5) (0,29/6)};
+\addplot[gray, thin, forget plot] coordinates {(1,6) (1,19/3)};
+\addplot[gray, thin, forget plot] coordinates {(2,8) (2,47/6)};
+\addplot[only marks, mark=*, color=classblue, mark size=2.4pt]
+    coordinates {(0,2) (1,4) (2,5)};
+\addlegendentry{$x_2=0$ (sin promoción)}
+\addplot[only marks, mark=square*, color=classred, mark size=2.6pt]
+    coordinates {(0,5) (1,6) (2,8)};
+\addlegendentry{$x_2=1$ (con promoción)}
+\addplot[domain=-0.25:2.35, thick, color=classblue] {13/6 + 1.5*x};
+\addlegendentry{$\hat y = 2.1667 + 1.5x_1$}
+\addplot[domain=-0.25:2.35, thick, dashed, color=classred] {29/6 + 1.5*x};
+\addlegendentry{$\hat y = 4.8333 + 1.5x_1$}
+% separación beta2
+\draw[<->, >={Stealth[length=2mm]}, classgreen!70!black, thick]
+    (axis cs:0.5,35/12) -- (axis cs:0.5,67/12)
+    node[midway, right, font=\small] {$\hat\beta_2=\tfrac83$};
+% pendiente beta1
+\draw[classblue, thin] (axis cs:1.2,119/30) -- (axis cs:1.6,119/30)
+    -- (axis cs:1.6,137/30);
+\node[classblue, font=\small, below] at (axis cs:1.4,119/30) {$0.4$};
+\node[classblue, font=\small, right] at (axis cs:1.6,4.2667)
+    {$0.6=1.5\cdot0.4$};
+% predicción
+\addplot[only marks, mark=o, color=black, mark size=2.6pt, forget plot]
+    coordinates {(1.5,85/12)};
+\node[font=\small, above left] at (axis cs:1.5,85/12)
+    {$\hat y(1.5,1)=7.0833$};
+\end{axis}
+\end{tikzpicture}
+\caption{Datos del ejercicio en el plano $(x_1,y)$ con el modelo
+ajustado, que se reduce a dos rectas paralelas (una por cada valor de
+$x_2$): la pendiente común $\hat\beta_1=1.5$ es el efecto de $x_1$
+manteniendo fija la promoción, mientras que la separación vertical
+constante $\hat\beta_2=8/3$ es el efecto de la promoción para cualquier
+nivel de inversión; los segmentos grises son los residuos y el círculo
+vacío marca la predicción en $(1.5,1)$.}
+\label{fig:ej2-rectas}
+\end{figure} Con las predicciones de
 entrenamiento
 \[
     \hat y\approx(2.1667,\;3.6667,\;5.1667,\;4.8333,\;6.3333,\;7.8333),
@@ -99,7 +227,7 @@ los residuos son $e=\pm\tfrac16$ o $\pm\tfrac13$ y
 \]
 Estos coeficientes no prueban un efecto causal, porque solo describen
 la mejor combinación lineal \emph{en estos datos}, y los datos no
-provienen (hasta donde se sabe) de un experimento donde la inversión o
+provienen (hasta donde sabemos) de un experimento donde la inversión o
 la promoción se asignaran al azar, de forma que podría existir una
 variable omitida (temporada, precio, competencia) que mueva a la vez la
 decisión de invertir y la demanda; además con $n=6$ observaciones
@@ -108,7 +236,7 @@ lectura correcta es de \emph{asociación condicional}, no de
 intervención.
 
 \item \textbf{Colinealidad perfecta ($x_3 = 2x_1$).}
-Si se agrega $x_3=2x_1$, la nueva matriz
+Si agregamos $x_3=2x_1$, la nueva matriz
 $\tilde X=[\mathbf{1},x_1,x_2,x_3]$ satisface
 $0\cdot\mathbf{1}+2\,x_1+0\cdot x_2-1\cdot x_3=\mathbf{0}$, es decir,
 existe $v=(0,2,0,-1)^\top\neq0$ con $\tilde Xv=0$, por lo que sus
@@ -120,26 +248,33 @@ cualquier combinación con $\beta_1+2\beta_3=1.5$ (y los mismos
 $\beta_0,\beta_2$) produce \textbf{exactamente las mismas
 predicciones}, de modo que el ajuste sigue siendo único en términos de
 $\hat y$, pero no en términos de coeficientes, que dejan de ser
-interpretables individualmente (no tiene sentido preguntar ``el efecto
-de $x_1$ con $x_3$ fijo'' si $x_3$ no puede quedarse fijo mientras $x_1$
-cambia). Para ajustar sin invertir una matriz singular se puede, en
-orden de preferencia:
+interpretables individualmente (no tiene sentido preguntar por el
+\emph{efecto de $x_1$ con $x_3$ fijo} si $x_3$ no puede quedarse fijo
+mientras $x_1$ cambia). En términos de la figura~\ref{fig:ej2-proyeccion}, la nueva
+columna ya pertenece a $\operatorname{col}(X)$, de forma que
+$\operatorname{col}(\tilde X)=\operatorname{col}(X)$, la proyección
+$\hat y$ es la misma y lo único que cambia es que el plano queda
+descrito por cuatro vectores generadores redundantes, con infinitas
+maneras de escribir $\hat y$ como combinación de ellos. Para ajustar sin invertir una matriz singular vemos tres salidas, en
+nuestro orden de preferencia:
 \begin{itemize}
-    \item Eliminar la variable redundante: Se descarta $x_3$ (o $x_1$),
-    lo que devuelve exactamente el modelo del inciso b.
-    \item Usar la pseudoinversa de Moore--Penrose: Se calcula
+    \item Eliminar la variable redundante: descartamos $x_3$, lo que
+    devuelve exactamente el modelo del inciso b (descartar $x_1$ también
+    funciona, pero da la reparametrización equivalente
+    $\hat\beta_3=0.75=\hat\beta_1/2$, con las mismas predicciones).
+    \item Usar la pseudoinversa de Moore--Penrose: calculamos
     $\hat\beta=\tilde X^{+}y$ (mediante descomposición en valores
     singulares, \texttt{np.linalg.lstsq} o \texttt{pinv}), que elige
     entre las infinitas soluciones la de norma mínima, en este caso
     $\hat\beta\approx(2.1667,\,0.3,\,2.6667,\,0.6)$, con
     $0.3+2\cdot0.6=1.5$ y las mismas predicciones.
-    \item Regularizar: Se resuelve
+    \item Regularizar: resolvemos
     $(\tilde X^\top\tilde X+\lambda I)\beta=\tilde X^\top y$ con
     $\lambda>0$ (regresión ridge), sistema que siempre es invertible.
 \end{itemize}
 
 \item \textbf{Más variables: error de entrenamiento vs.\ datos nuevos.}
-Si se añade una variable $x_{p+1}$, el modelo ampliado contiene al
+Si añadimos una variable $x_{p+1}$, el modelo ampliado contiene al
 original como caso particular (basta fijar $\beta_{p+1}=0$), de forma
 que el mínimo del SSE sobre un conjunto más grande de candidatos no
 puede ser mayor:
@@ -150,14 +285,18 @@ puede ser mayor:
     = \min_{\beta\in\mathbb{R}^{p+1}} \lVert y-X\beta\rVert^2 ,
 \]
 y por eso el error de entrenamiento nunca aumenta (en el peor caso se
-mantiene igual, cuando la nueva variable no aporta nada en la muestra).
+mantiene igual, cuando la nueva columna es ortogonal al residuo actual,
+$x_{p+1}^\top e=0$), lo cual, en términos de la
+figura~\ref{fig:ej2-proyeccion}, equivale a proyectar $y$ sobre un
+subespacio más grande que contiene al anterior, cuyo punto más cercano
+a $y$ no puede estar más lejos.
 Sin embargo, en datos nuevos sí puede empeorar, porque el nuevo
 coeficiente también se ajusta al ruido particular de la muestra de
 entrenamiento, lo cual aumenta la varianza de las predicciones sin
 reducir necesariamente el sesgo (sobreajuste), y con pocas
 observaciones o predictores correlacionados este efecto se vuelve más
-fuerte, razón por la cual en la Parte II la comparación entre modelos se
-decide con un conjunto de validación y no con el error de
+fuerte, razón por la cual en la Parte II decidimos la comparación entre
+modelos con un conjunto de validación y no con el error de
 entrenamiento.
 
 \end{enumerate}

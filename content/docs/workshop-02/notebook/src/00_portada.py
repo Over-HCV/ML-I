@@ -56,7 +56,7 @@ COLORES = {"azul": "#4C72B0", "rojo": "#C44E52", "verde": "#55A868", "gris": "#8
 FIG_DIR = Path("../latex/figuras")
 MACROS_PATH = Path("../latex/generado/resultados.tex")
 
-pd.Series(
+VERSIONES = pd.Series(
     {
         "Python": platform.python_version(),
         "numpy": np.__version__,
@@ -65,7 +65,8 @@ pd.Series(
         "scikit-learn": sklearn.__version__,
     },
     name="Versión",
-).to_frame()
+)
+VERSIONES.to_frame()
 
 # %% [markdown]
 # ### Funciones auxiliares
@@ -147,6 +148,42 @@ def registrar(nombre, valor, decimales=4):
     return valor
 
 
+def _latex_celda(v, decimales):
+    """Formatea una celda para LaTeX (números con signo menos tipográfico)."""
+    if isinstance(v, (bool, np.bool_)):
+        return "Sí" if v else "No"
+    if isinstance(v, (int, np.integer)):
+        texto = str(int(v))
+    elif isinstance(v, (float, np.floating)):
+        if np.isnan(v):
+            return "---"
+        texto = f"{v:.{decimales}f}"
+    else:
+        texto = str(v)
+        for a, b in [("_", r"\_"), ("%", r"\%"), ("&", r"\&"), ("#", r"\#"),
+                     ("−", "$-$"), ("✓", r"$\checkmark$"), ("R2", "$R^2$"), ("≥", r"$\ge$"), ("Δ", r"$\Delta$")]:
+            texto = texto.replace(a, b)
+        return texto
+    return texto.replace("-", "$-$", 1) if texto.startswith("-") else texto
+
+
+def exportar_tabla(tabla, nombre, decimales=4, indice=True, alineacion=None):
+    """Escribe latex/generado/tabla_<nombre>.tex con un `tabular` booktabs de
+    la tabla, para que el PDF muestre exactamente las cifras del notebook."""
+    df = tabla.reset_index() if indice else tabla.copy()
+    alineacion = alineacion or "".join("r" if pd.api.types.is_numeric_dtype(df[c]) and not pd.api.types.is_bool_dtype(df[c])
+                         else "l" for c in df.columns)
+    filas = [" & ".join(_latex_celda(str(c), decimales) for c in df.columns) + r" \\"]
+    filas += [" & ".join(_latex_celda(v, decimales) for v in fila) + r" \\" for fila in df.itertuples(index=False)]
+    cuerpo = "\n".join([f"\\begin{{tabular}}{{{alineacion}}}", r"\toprule", filas[0], r"\midrule",
+                        *filas[1:], r"\bottomrule", r"\end{tabular}"])
+    MACROS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    (MACROS_PATH.parent / f"tabla_{nombre}.tex").write_text(
+        "% Archivo generado automáticamente por el notebook (no editar a mano).\n" + cuerpo + "\n",
+        encoding="utf-8",
+    )
+
+
 def escribir_macros():
     """Escribe latex/generado/resultados.tex con todas las cifras registradas."""
     MACROS_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -156,6 +193,13 @@ def escribir_macros():
     ]
     MACROS_PATH.write_text("\n".join(lineas) + "\n", encoding="utf-8")
     print(f"{len(RESULTADOS)} macros escritas en {MACROS_PATH}")
+
+# %%
+# Versiones y semilla para el apéndice de reproducibilidad del documento LaTeX.
+for lib, clave in [("Python", "Python"), ("numpy", "Numpy"), ("pandas", "Pandas"),
+                   ("matplotlib", "Matplotlib"), ("scikit-learn", "Sklearn")]:
+    registrar(f"Ver{clave}", VERSIONES[lib])
+_ = registrar("Semilla", RANDOM_STATE)
 
 # %% [markdown]
 # ### Carga y partición de los datos
@@ -194,5 +238,8 @@ tamanos = pd.DataFrame(
     },
     index=["Caso A (diabetes)", "Caso B (cáncer de mama)"],
 )
+for caso, clave in [("Caso A (diabetes)", "Reg"), ("Caso B (cáncer de mama)", "Clf")]:
+    for col, suf in [("Entrenamiento", "Tr"), ("Validación", "Val"), ("Prueba", "Test")]:
+        registrar(f"N{clave}{suf}", int(tamanos.loc[caso, col]))
 print("Tabla 0.1 — Tamaño de las particiones")
 tamanos
