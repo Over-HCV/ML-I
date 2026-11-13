@@ -7,65 +7,177 @@
 % =====================================================================
 \subsection{Ejercicio 1: Regresión lineal simple, ajuste e influencia de una observación}
 
-Contamos con $n=5$ pares (horas de funcionamiento $x$, consumo en kWh
-$y$): $x=(1,2,3,4,5)$ y $y=(2,4,5,4,5)$, y buscamos la recta
-$\hat y_i=\beta_0+\beta_1x_i$ que minimiza
-$S(\beta_0,\beta_1)=\sum_{i=1}^{n}(y_i-\beta_0-\beta_1x_i)^2$.
+\paragraph{La situación.} Una empresa quiere saber cuánta energía consume
+un equipo según las horas que pasa encendido. Para cada uno de $n=5$ días
+anotamos las horas de funcionamiento $x_i$ y el consumo $y_i$ en kWh:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{c|ccccc}
+\toprule
+Día $i$ & 1 & 2 & 3 & 4 & 5 \\
+\midrule
+Horas $x_i$ & 1 & 2 & 3 & 4 & 5 \\
+Consumo $y_i$ (kWh) & 2 & 4 & 5 & 4 & 5 \\
+\bottomrule
+\end{tabular}
+\caption{Datos del Ejercicio 1.}
+\label{tab:ej1-datos}
+\end{table}
+
+Queremos resumir la relación con una recta
+$\hat y_i=\beta_0+\beta_1x_i$, donde $\beta_0$ (el \emph{intercepto}) es la
+altura de la recta cuando $x=0$ y $\beta_1$ (la \emph{pendiente}) es cuánto
+sube el consumo predicho por cada hora adicional. Ninguna recta pasa por
+los cinco puntos, así que cada predicción tendrá un error
+$y_i-\hat y_i$. El criterio de \emph{mínimos cuadrados} elige la recta que
+hace más pequeña la suma de esos errores elevados al cuadrado,
+\[
+    S(\beta_0,\beta_1)=\sum_{i=1}^{n}\bigl(y_i-\beta_0-\beta_1x_i\bigr)^2 .
+\]
+Elevar al cuadrado cumple dos funciones: evita que los errores positivos y
+negativos se cancelen entre sí y castiga mucho más un error grande que
+varios pequeños (un error de $4$ cuenta $16$, mientras que dos errores de
+$2$ cuentan $4+4=8$).
 
 \begin{enumerate}
 
 \item \textbf{Ecuaciones normales y estimadores.}
-Derivamos $S$ respecto a cada parámetro e igualamos a cero, con lo que
-obtenemos
+$S$ es una función de dos variables, $\beta_0$ y $\beta_1$, que tiene forma
+de tazón. En el fondo del tazón la superficie es plana en todas las
+direcciones, así que ahí las dos derivadas parciales valen cero. Para
+derivar usamos la regla de la cadena: la derivada de $(u)^2$ es $2u$
+multiplicado por la derivada de $u$.
+
+\emph{Paso 1: derivada respecto a $\beta_0$.} Dentro del paréntesis,
+$u_i=y_i-\beta_0-\beta_1x_i$, cuya derivada respecto a $\beta_0$ es $-1$,
+luego
 \[
-    \frac{\partial S}{\partial \beta_0} = -2\sum_i (y_i-\beta_0-\beta_1x_i) = 0,
-    \qquad
-    \frac{\partial S}{\partial \beta_1} = -2\sum_i x_i(y_i-\beta_0-\beta_1x_i) = 0,
+    \frac{\partial S}{\partial \beta_0}
+    = \sum_i 2\,(y_i-\beta_0-\beta_1x_i)\cdot(-1)
+    = -2\sum_i (y_i-\beta_0-\beta_1x_i) .
 \]
-de forma que, dividiendo entre $-2$ y reorganizando, nos quedan las
-\emph{ecuaciones normales}
+
+\emph{Paso 2: derivada respecto a $\beta_1$.} Ahora la derivada de $u_i$
+respecto a $\beta_1$ es $-x_i$, luego
 \[
-    n\beta_0 + \beta_1\sum_i x_i = \sum_i y_i,
-    \qquad
+    \frac{\partial S}{\partial \beta_1}
+    = \sum_i 2\,(y_i-\beta_0-\beta_1x_i)\cdot(-x_i)
+    = -2\sum_i x_i(y_i-\beta_0-\beta_1x_i) .
+\]
+
+\emph{Paso 3: igualar a cero y ordenar.} Al igualar ambas a cero podemos
+dividir entre $-2$ y repartir la suma término a término (recordando que
+$\sum_i\beta_0=n\beta_0$, pues $\beta_0$ se suma $n$ veces):
+\begin{align*}
+    \sum_i y_i - n\beta_0 - \beta_1\sum_i x_i = 0
+    &\quad\Longrightarrow\quad
+    n\beta_0 + \beta_1\sum_i x_i = \sum_i y_i, \\
+    \sum_i x_iy_i - \beta_0\sum_i x_i - \beta_1\sum_i x_i^2 = 0
+    &\quad\Longrightarrow\quad
     \beta_0\sum_i x_i + \beta_1\sum_i x_i^2 = \sum_i x_iy_i .
-\]
-Al dividir la primera entre $n$ tenemos $\beta_0=\bar y-\beta_1\bar x$, es
-decir, la recta ajustada pasa siempre por el punto de medias
-$(\bar x,\bar y)$, y al sustituir esta expresión en la segunda ecuación
-resulta
+\end{align*}
+Estas dos igualdades son las \emph{ecuaciones normales}: un sistema de dos
+ecuaciones con dos incógnitas.
+
+\emph{Paso 4: despejar $\beta_0$.} Dividimos la primera ecuación entre $n$
+y usamos que $\frac1n\sum_i x_i=\bar x$ y $\frac1n\sum_i y_i=\bar y$:
 \[
-    \beta_1\Bigl(\sum_i x_i^2 - n\bar x^2\Bigr) = \sum_i x_iy_i - n\bar x\bar y ,
+    \beta_0 + \beta_1\bar x = \bar y
+    \quad\Longrightarrow\quad
+    \beta_0=\bar y-\beta_1\bar x .
 \]
-donde, usando las identidades
-$\sum_i x_i^2-n\bar x^2=\sum_i(x_i-\bar x)^2$ y
-$\sum_i x_iy_i-n\bar x\bar y=\sum_i(x_i-\bar x)(y_i-\bar y)$, llegamos a
+Esto dice algo útil por sí solo: la recta ajustada siempre pasa por el
+punto de promedios $(\bar x,\bar y)$, porque al reemplazar $x=\bar x$
+queda $\hat y=\bar y-\beta_1\bar x+\beta_1\bar x=\bar y$.
+
+\emph{Paso 5: despejar $\beta_1$.} Sustituimos $\beta_0=\bar y-\beta_1\bar x$
+en la segunda ecuación y usamos $\sum_i x_i=n\bar x$:
+\begin{align*}
+    (\bar y-\beta_1\bar x)\,n\bar x + \beta_1\sum_i x_i^2 &= \sum_i x_iy_i \\
+    n\bar x\bar y - \beta_1 n\bar x^2 + \beta_1\sum_i x_i^2 &= \sum_i x_iy_i \\
+    \beta_1\Bigl(\sum_i x_i^2 - n\bar x^2\Bigr) &= \sum_i x_iy_i - n\bar x\bar y .
+\end{align*}
+
+\emph{Paso 6: escribirlo con desviaciones.} Las dos expresiones entre
+paréntesis se pueden escribir de forma más intuitiva. Expandiendo el
+cuadrado y usando de nuevo $\sum_i x_i=n\bar x$,
 \[
+    \sum_i (x_i-\bar x)^2
+    = \sum_i x_i^2 - 2\bar x\sum_i x_i + n\bar x^2
+    = \sum_i x_i^2 - 2n\bar x^2 + n\bar x^2
+    = \sum_i x_i^2 - n\bar x^2 ,
+\]
+y de la misma forma
+\[
+    \sum_i (x_i-\bar x)(y_i-\bar y)
+    = \sum_i x_iy_i - \bar y\sum_i x_i - \bar x\sum_i y_i + n\bar x\bar y
+    = \sum_i x_iy_i - n\bar x\bar y .
+\]
+Llamamos $S_{xx}=\sum_i(x_i-\bar x)^2$ (qué tanto varían las horas
+alrededor de su promedio) y $S_{xy}=\sum_i(x_i-\bar x)(y_i-\bar y)$ (qué
+tanto varían juntas horas y consumo: es positivo si cuando $x$ está por
+encima de su promedio $y$ también suele estarlo). Con esto llegamos a
+\[
+    \boxed{\;
     \hat\beta_1 = \frac{\sum_i (x_i-\bar x)(y_i-\bar y)}{\sum_i (x_i-\bar x)^2}
     = \frac{S_{xy}}{S_{xx}},
     \qquad
-    \hat\beta_0 = \bar y - \hat\beta_1\bar x .
+    \hat\beta_0 = \bar y - \hat\beta_1\bar x .\;}
 \]
-La pendiente es única siempre que $S_{xx}=\sum_i(x_i-\bar x)^2>0$, lo
-cual equivale a que los valores de $x$ \textbf{no sean todos iguales}
-(con al menos dos valores distintos de $x$ el denominador no se anula,
-mientras que si todas las observaciones tienen el mismo $x$ cualquier
-recta que pase por $(\bar x,\bar y)$ produce el mismo error y la
-pendiente queda indeterminada), y como la matriz hessiana de $S$ es
-$2\begin{bsmallmatrix} n & \sum x_i\\ \sum x_i & \sum x_i^2\end{bsmallmatrix}$,
-con primer menor $2n>0$ y determinante $4nS_{xx}>0$ bajo esa misma
-condición, es definida positiva, de forma que $S$ es estrictamente convexa
-y el punto crítico es el mínimo global.
+
+\emph{Condición para que la pendiente sea única.} La fórmula de
+$\hat\beta_1$ solo tiene sentido si $S_{xx}>0$, es decir, si los valores de
+$x$ \textbf{no son todos iguales}. Si todos los días el equipo hubiera
+funcionado las mismas horas, todos los puntos estarían en una misma línea
+vertical y no habría forma de saber cómo cambia el consumo al cambiar las
+horas: cualquier recta que pase por $(\bar x,\bar y)$ daría el mismo error.
+
+\emph{Comprobación de que es un mínimo.} Que las derivadas valgan cero
+también ocurre en un máximo o en un punto de silla, así que revisamos las
+segundas derivadas, que se organizan en la matriz hessiana:
+\[
+    \frac{\partial^2 S}{\partial \beta_0^2}=2n,\qquad
+    \frac{\partial^2 S}{\partial \beta_0\partial\beta_1}=2\sum_i x_i,\qquad
+    \frac{\partial^2 S}{\partial \beta_1^2}=2\sum_i x_i^2
+    \quad\Longrightarrow\quad
+    H = 2\begin{bmatrix} n & \sum_i x_i\\ \sum_i x_i & \sum_i x_i^2\end{bmatrix}.
+\]
+Su primer elemento $2n$ es positivo y su determinante es
+$4\bigl(n\sum_i x_i^2-(\sum_i x_i)^2\bigr)=4n\bigl(\sum_i x_i^2-n\bar x^2\bigr)=4nS_{xx}$,
+también positivo cuando $S_{xx}>0$. Una matriz $2\times2$ con esas dos
+condiciones es \emph{definida positiva}, lo que en palabras quiere decir
+que $S$ se curva hacia arriba en todas las direcciones (el tazón), así que
+el punto que encontramos es el mínimo global.
 
 \item \textbf{Coeficientes, predicciones y residuos.}
-Con $\bar x=3$ y $\bar y=4$, las desviaciones son
-$x_i-\bar x=(-2,-1,0,1,2)$ y $y_i-\bar y=(-2,0,1,0,1)$, por lo tanto
+\emph{Paso 1: promedios.} $\bar x=(1+2+3+4+5)/5=15/5=3$ horas y
+$\bar y=(2+4+5+4+5)/5=20/5=4$ kWh.
+
+\emph{Paso 2: desviaciones respecto al promedio.}
+$x_i-\bar x=(-2,-1,0,1,2)$ y $y_i-\bar y=(-2,0,1,0,1)$.
+
+\emph{Paso 3: $S_{xy}$ y $S_{xx}$.} Multiplicamos las desviaciones día a
+día y sumamos:
 \[
-    S_{xy} = 4+0+0+0+2 = 6, \qquad S_{xx} = 4+1+0+1+4 = 10,
+    S_{xy} = (-2)(-2)+(-1)(0)+(0)(1)+(1)(0)+(2)(1) = 4+0+0+0+2 = 6,
+    \qquad
+    S_{xx} = 4+1+0+1+4 = 10 .
 \]
+
+\emph{Paso 4: coeficientes.}
 \[
     \hat\beta_1 = \frac{6}{10} = 0.6, \qquad
     \hat\beta_0 = 4 - 0.6\cdot 3 = 2.2 .
 \]
+Como control, estos valores cumplen las ecuaciones normales del inciso a
+con $\sum_i x_i=15$, $\sum_i x_i^2=55$, $\sum_i y_i=20$ y
+$\sum_i x_iy_i=66$: $5(2.2)+15(0.6)=20$ y $15(2.2)+55(0.6)=66$.
+
+\emph{Paso 5: predicciones y residuos.} Con la recta
+$\hat y=2.2+0.6x$ calculamos la predicción de cada día y el residuo
+$e_i=y_i-\hat y_i$, que es lo que la recta no alcanzó a explicar
+(Tabla~\ref{tab:ej1-residuos}).
 
 \begin{table}[H]
 \centering
@@ -86,38 +198,79 @@ $\sum$ & & & & $0.0$ & 2.40 \\
 \label{tab:ej1-residuos}
 \end{table}
 
-En efecto $\sum_ie_i=-0.8+0.6+1.0-0.6-0.2=0$, y al revisarlo vimos que no
-es una coincidencia de los datos sino exactamente la primera ecuación normal,
-pues $\partial S/\partial\beta_0=0$ equivale a
-$\sum_i(y_i-\hat\beta_0-\hat\beta_1x_i)=\sum_ie_i=0$, de modo que la
-propiedad depende de que $\beta_0$ sea un parámetro libre que se
-optimiza (si ajustáramos una recta forzada por el origen,
-$\hat y=\beta_1x$, esa ecuación desaparece, solo queda
-$\sum_ix_ie_i=0$ y los residuos en general ya no suman cero).
+\emph{Paso 6: los residuos suman cero.} En efecto
+$\sum_ie_i=-0.8+0.6+1.0-0.6-0.2=0$, y al revisarlo vimos que no es una
+coincidencia de estos datos sino la primera ecuación normal disfrazada.
+Esa ecuación salió de $\partial S/\partial\beta_0=0$, que es
+\[
+    \sum_i(y_i-\hat\beta_0-\hat\beta_1x_i)=\sum_i(y_i-\hat y_i)=\sum_ie_i=0 .
+\]
+En palabras: como el intercepto es libre de moverse, el ajuste lo sube o
+lo baja hasta que los errores por encima y por debajo de la recta se
+compensan exactamente. Por eso la propiedad depende de incluir el
+intercepto: si ajustáramos una recta obligada a pasar por el origen,
+$\hat y=\beta_1x$, no existiría $\beta_0$, desaparecería esa ecuación y
+solo quedaría $\sum_ix_ie_i=0$, de modo que en general los residuos ya no
+sumarían cero.
 
 \item \textbf{MSE, $R^2$ y comparación con $\bar y$.}
-Calculamos
+\emph{Paso 1: error cuadrático medio.} Es el promedio de los errores al
+cuadrado de la Tabla~\ref{tab:ej1-residuos}:
 \[
-    MSE = \frac{2.4}{5} = 0.48, \qquad
-    \sum_i (y_i-\bar y)^2 = 4+0+1+0+1 = 6, \qquad
-    R^2 = 1 - \frac{2.4}{6} = 0.6 ,
+    \mathrm{MSE} = \frac{1}{n}\sum_i e_i^2 = \frac{2.4}{5} = 0.48 \ \text{kWh}^2 .
 \]
-mientras que el predictor constante $\hat y=\bar y=4$ tiene
-$MSE_{\bar y}=6/5=1.2$, de forma que la recta reduce el error cuadrático
-medio de $1.2$ a $0.48$, es decir, en un 60\,\% (lo cual es justamente
-la lectura de $R^2$: la fracción de la variabilidad de $y$ alrededor de
-su media que el modelo logra explicar). La pendiente
-$\hat\beta_1=0.6$ la leemos como que, en estos datos, \textbf{cada
-hora adicional de funcionamiento se asocia con un aumento promedio de
-$0.6$ kWh} en el consumo (unidades de $\hat\beta_1$: kWh por hora), mientras que el intercepto $2.2$ kWh es el
-consumo predicho para $x=0$, valor que queda fuera del rango observado
-($1\le x\le5$) y por eso preferimos no leerlo como un consumo en reposo
-real.
+
+\emph{Paso 2: el punto de comparación.} El modelo más ingenuo posible
+ignora las horas y predice siempre el consumo promedio, $\hat y=\bar y=4$.
+Sus errores son las desviaciones $y_i-\bar y=(-2,0,1,0,1)$, cuya suma de
+cuadrados es la variabilidad total
+\[
+    \mathrm{SST}=\sum_i (y_i-\bar y)^2 = 4+0+1+0+1 = 6,
+    \qquad
+    \mathrm{MSE}_{\bar y}=\frac{6}{5}=1.2\ \text{kWh}^2 .
+\]
+
+\emph{Paso 3: coeficiente de determinación.} $R^2$ compara cuánto error
+le queda a la recta frente al que tenía el promedio:
+\[
+    R^2 = 1 - \frac{\mathrm{SSE}}{\mathrm{SST}} = 1 - \frac{2.4}{6} = 1-0.4 = 0.6 .
+\]
+La recta reduce el error cuadrático medio de $1.2$ a $0.48$, es decir, en
+un 60\,\%, y eso es justamente lo que mide $R^2$: el 60\,\% de la
+variabilidad del consumo alrededor de su promedio queda explicada por las
+horas de funcionamiento, y el 40\,\% restante se debe a otras cosas que el
+modelo no ve.
+
+\emph{Paso 4: interpretación con unidades.} La pendiente tiene unidades de
+kWh por hora, porque divide un cambio de consumo entre un cambio de horas.
+Así, $\hat\beta_1=0.6$ significa que, en estos datos, \textbf{cada hora
+adicional de funcionamiento se asocia con un aumento promedio de $0.6$ kWh}
+en el consumo. El intercepto, $2.2$ kWh, sería el consumo predicho con el
+equipo encendido cero horas, pero ese valor está fuera del rango que
+observamos ($1\le x\le5$), así que preferimos no leerlo como un consumo
+real en reposo: es solo la altura a la que la recta corta el eje.
 
 \item \textbf{Observación influyente ($y_5 = 12$).}
-Al cambiar únicamente $y_5$ de $5$ a $12$ tenemos $\bar y=27/5=5.4$ y,
-como $\sum_i(x_i-\bar x)=0$,
-$S_{xy}=\sum_i(x_i-\bar x)y_i=-4-4+0+4+24=20$, por lo tanto
+Ahora cambiamos un solo dato: el consumo del día 5 pasa de $5$ a $12$ kWh,
+y repetimos el ajuste.
+
+\emph{Paso 1: nuevo promedio de $y$.} $\bar y'=(2+4+5+4+12)/5=27/5=5.4$.
+Las $x$ no cambiaron, así que $\bar x=3$ y $S_{xx}=10$ siguen igual.
+
+\emph{Paso 2: nuevo $S_{xy}$.} Aquí usamos un atajo: como las desviaciones
+de $x$ suman cero, $\sum_i(x_i-\bar x)=0$, el término con $\bar y$
+desaparece,
+\[
+    S_{xy}=\sum_i(x_i-\bar x)(y_i-\bar y)
+    =\sum_i(x_i-\bar x)y_i-\bar y\underbrace{\sum_i(x_i-\bar x)}_{=0}
+    =\sum_i(x_i-\bar x)y_i ,
+\]
+y basta multiplicar cada desviación de $x$ por el nuevo $y$:
+\[
+    S_{xy}' = (-2)(2)+(-1)(4)+(0)(5)+(1)(4)+(2)(12) = -4-4+0+4+24 = 20 .
+\]
+
+\emph{Paso 3: nuevos coeficientes y predicciones en $x=6$.}
 \[
     \hat\beta_1' = \frac{20}{10} = 2, \qquad
     \hat\beta_0' = 5.4 - 2\cdot 3 = -0.6,
@@ -128,34 +281,52 @@ $S_{xy}=\sum_i(x_i-\bar x)y_i=-4-4+0+4+24=20$, por lo tanto
     \hat y(6) = 2.2 + 0.6\cdot 6 = 5.8 .
 \]
 Nos sorprendió que una sola observación multiplicara la pendiente por más
-de tres y casi duplicara la predicción en $x=6$, y esto se explica porque
-la pérdida
-cuadrática penaliza cada residuo por su cuadrado, de modo que un residuo
-grande pesa desproporcionadamente y el ajuste prefiere inclinar toda la
-recta antes que dejar un único error enorme (con la recta original, el
-punto $(5,12)$ tendría residuo $6.8$ y aportaría $46.24$ al SSE, mucho
-más que los otros cuatro residuos juntos, que suman $2.36$). Tras el
-reajuste, el residuo de ese punto baja de $6.8$ a $2.6$ a costa de
-empeorar los demás, sobre todo el del punto $(4,4)$, que pasa de $-0.6$ a
-$-3.4$, y aun así el SSE sobre los datos modificados cae de $48.6$ a
-$19.2$ (figura~\ref{fig:ej1-cuadrados}). Además el punto está en el
-extremo del rango de $x$, y como $\hat\beta_1=\sum_i(x_i-\bar x)y_i/S_{xx}$,
-el cambio en la pendiente es exactamente
-$(x_5-\bar x)\,\Delta y_5/S_{xx}=2\cdot7/10=1.4$, es decir, la influencia
-de una observación crece con su distancia a $\bar x$, que es lo que
-mide su \emph{apalancamiento} $h_i=1/n+(x_i-\bar x)^2/S_{xx}$ (aquí
-$h_5=0.6$ frente a $h_3=0.2$), por lo cual el mismo cambio en $y_3$ (con
-$x_3=\bar x$) no habría alterado la pendiente en absoluto.
-Por último, predecir en $x=20$ exigiría cautela adicional porque se
-trata de una \textbf{extrapolación} a cuatro veces el máximo observado:
-nada en los datos garantiza que la relación siga siendo lineal fuera de
-$[1,5]$, y ambos modelos discrepan enormemente allí
-($\hat y(20)=14.2$ frente a $\hat y'(20)=39.4$), pues como cada recta
-pasa por su propio punto de medias, la diferencia entre ambas es
-$\hat y'(x)-\hat y(x)=\Delta\bar y+\Delta\hat\beta_1(x-\bar x)=1.4+1.4(x-3)$,
-de forma que la parte debida al error en la pendiente crece linealmente
-con la distancia $|x-\bar x|$ (la brecha es $5.6$ kWh en $x=6$ y
-$25.2$ kWh en $x=20$).
+de tres (de $0.6$ a $2$) y casi duplicara la predicción en $x=6$ (figura~\ref{fig:ej1-rectas}).
+
+\emph{Paso 4: por qué la pérdida cuadrática reacciona tanto.} Con la recta
+original, el punto $(5,12)$ tendría residuo $12-5.2=6.8$ y aportaría
+$6.8^2=46.24$ al SSE, mucho más que los otros cuatro residuos juntos, que
+suman $2.36$. Como el criterio eleva al cuadrado, ese único error domina la
+suma, y al ajuste le conviene inclinar toda la recta para reducirlo aunque
+empeore a los demás. Tras el reajuste, el residuo de ese punto baja de
+$6.8$ a $2.6$ (su cuadrado de $46.24$ a $6.76$), mientras que el punto
+$(4,4)$ pasa de $-0.6$ a $-3.4$, y aun así el SSE sobre los datos
+modificados cae de $48.6$ a $19.2$ (figura~\ref{fig:ej1-cuadrados}).
+
+\emph{Paso 5: por qué importa dónde está el punto.} El punto modificado
+está en el extremo derecho del rango de $x$. Como vimos en el paso 2,
+$\hat\beta_1=\sum_i(x_i-\bar x)y_i/S_{xx}$, así que si solo cambia $y_5$
+en $\Delta y_5=12-5=7$, la pendiente cambia en
+\[
+    \Delta\hat\beta_1 = \frac{(x_5-\bar x)\,\Delta y_5}{S_{xx}}
+    = \frac{2\cdot7}{10}=1.4 ,
+\]
+que es exactamente $2-0.6$. El peso de cada punto sobre la pendiente es
+proporcional a su distancia horizontal al promedio, $x_i-\bar x$, como
+una palanca: entre más lejos del centro, más fuerza hace. Esa idea se mide
+con el \emph{apalancamiento}
+$h_i=\frac1n+\frac{(x_i-\bar x)^2}{S_{xx}}$, que aquí vale
+$h_5=\frac15+\frac{4}{10}=0.6$ para el día 5 frente a $h_3=\frac15+0=0.2$
+para el día 3. Por eso el mismo cambio en $y_3$ (con $x_3=\bar x$) no
+habría movido la pendiente en absoluto, solo habría subido la recta.
+
+\emph{Paso 6: el problema de predecir en $x=20$.} Predecir para $20$ horas
+es una \textbf{extrapolación}: cuatro veces el máximo que observamos. Nada
+en los datos garantiza que la relación siga siendo una recta fuera de
+$[1,5]$, y además allí los dos modelos discrepan enormemente
+($\hat y(20)=2.2+0.6\cdot20=14.2$ frente a
+$\hat y'(20)=-0.6+2\cdot20=39.4$). La razón es que cada recta pasa por su
+propio punto de promedios, de modo que la diferencia entre ambas es
+\[
+    \hat y'(x)-\hat y(x)
+    =\underbrace{(\bar y'-\bar y)}_{=1.4}
+    +\underbrace{(\hat\beta_1'-\hat\beta_1)}_{=1.4}\,(x-\bar x)
+    =1.4+1.4(x-3) ,
+\]
+y la parte que viene de la pendiente crece en línea recta con la distancia
+$|x-\bar x|$: la brecha es $5.6$ kWh en $x=6$ y $25.2$ kWh en $x=20$. Una
+pequeña duda sobre la pendiente se vuelve una duda enorme lejos de los
+datos.
 
 \end{enumerate}
 

@@ -7,18 +7,65 @@
 % =====================================================================
 \subsection{Ejercicio 5: Árboles de decisión, división, predicción y complejidad}
 
-Un nodo contiene $12$ observaciones ($6$ de clase $0$ y $6$ de clase
-$1$) y comparamos dos divisiones candidatas, con conteos $(n_0,n_1)$:
-$A$ produce hijos $(5,1)$ y $(1,5)$, mientras que $B$ produce hijos
-$(4,0)$ y $(2,6)$.
+\paragraph{La situación.} Un árbol de decisión predice haciendo preguntas
+de sí o no sobre las variables, por ejemplo \emph{¿el equipo tiene más de
+3 años?}, y cada respuesta manda a la observación por una rama distinta.
+Cada pregunta parte un grupo de observaciones (un \emph{nodo}) en dos
+grupos \emph{hijos}, y los grupos finales, donde ya no se pregunta más, se
+llaman \emph{hojas}. En clasificación, la hoja predice la clase que más se
+repite en ella; en regresión, el promedio de $y$ en ella. Para decidir qué
+pregunta hacer, el árbol busca la que deje a los hijos lo más
+\emph{puros} posible, es decir, con observaciones de una sola clase.
+
+Para medir qué tan mezclado está un nodo usamos la \emph{impureza de
+Gini}, $G=1-p_0^2-p_1^2$, donde $p_0$ y $p_1$ son las proporciones de
+observaciones de clase $0$ y de clase $1$ en el nodo. Si el nodo es puro
+(todo de una clase), $G=1-1^2-0^2=0$; si está mitad y mitad,
+$G=1-0.25-0.25=0.5$, el máximo posible con dos clases. Una forma de leerla
+es como la probabilidad de que, al sacar dos observaciones al azar del
+nodo (devolviendo la primera), sean de clases distintas.
+
+En este ejercicio un nodo tiene $12$ observaciones, $6$ de clase $0$ y $6$
+de clase $1$, y comparamos dos preguntas candidatas. Escribimos cada hijo
+con sus conteos $(n_0,n_1)$: la división $A$ produce hijos $(5,1)$ y
+$(1,5)$, y la $B$ produce $(4,0)$ y $(2,6)$.
 
 \begin{enumerate}
 
 \item \textbf{Impureza Gini y reducción ponderada.}
-Con $G=1-p_0^2-p_1^2$:
+\emph{Paso 1: impureza del padre.} Con $6$ de cada clase,
+$p_0=p_1=\frac{6}{12}=\frac12$, y
 \[
-    G_{\text{padre}} = 1 - \bigl(\tfrac{6}{12}\bigr)^2 - \bigl(\tfrac{6}{12}\bigr)^2 = 0.5 .
+    G_{\text{padre}} = 1 - \bigl(\tfrac{1}{2}\bigr)^2 - \bigl(\tfrac{1}{2}\bigr)^2 = 1-\tfrac14-\tfrac14 = 0.5 .
 \]
+
+\emph{Paso 2: impureza de cada hijo.} Para cada hijo calculamos sus
+proporciones y aplicamos la fórmula:
+\begin{align*}
+    (5,1):&\quad p_0=\tfrac56,\ p_1=\tfrac16, &
+    G&=1-\tfrac{25}{36}-\tfrac{1}{36}=\tfrac{10}{36}=\tfrac{5}{18}\approx0.2778,\\
+    (1,5):&\quad p_0=\tfrac16,\ p_1=\tfrac56, &
+    G&=\tfrac{5}{18}\approx0.2778\quad\text{(simétrico al anterior)},\\
+    (4,0):&\quad p_0=1,\ p_1=0, &
+    G&=1-1-0=0\quad\text{(puro)},\\
+    (2,6):&\quad p_0=\tfrac28=\tfrac14,\ p_1=\tfrac68=\tfrac34, &
+    G&=1-\tfrac{1}{16}-\tfrac{9}{16}=\tfrac{6}{16}=\tfrac38=0.375 .
+\end{align*}
+
+\emph{Paso 3: reducción ponderada.} La mejora de una división es la
+impureza del padre menos el promedio de las impurezas de los hijos,
+ponderado por la fracción de observaciones que se lleva cada uno
+($n_L$ y $n_R$ son los tamaños de los hijos izquierdo y derecho, y $n=12$):
+\[
+    \Delta G = G_{\text{padre}} - \frac{n_L}{n}G_L - \frac{n_R}{n}G_R .
+\]
+Para $A$, cada hijo tiene $6$ de las $12$ observaciones:
+$\Delta G_A=0.5-\frac{6}{12}\cdot\frac{5}{18}-\frac{6}{12}\cdot\frac{5}{18}
+=\frac12-\frac{5}{18}=\frac{9}{18}-\frac{5}{18}=\frac{2}{9}\approx0.2222$.
+Para $B$, los hijos tienen $4$ y $8$ observaciones:
+$\Delta G_B=0.5-\frac{4}{12}\cdot0-\frac{8}{12}\cdot\frac38
+=\frac12-\frac14=0.25$. La Tabla~\ref{tab:ej5-gini} resume las cuentas.
+
 \begin{table}[H]
 \centering
 \begin{tabular}{ccccccc}
@@ -43,20 +90,23 @@ la impureza ponderada es $\frac{4}{12}\cdot0+\frac{8}{12}\cdot\frac38=\frac14$.}
 \label{tab:ej5-gini}
 \end{table}
 
-Elegimos la \textbf{división $B$}, con mayor reducción de impureza
-($0.25>0.2222$). A primera vista nos parecía mejor $A$ por sus dos hijos
-simétricos, pero $B$ aísla un grupo completamente puro de $4$
-observaciones de clase $0$ (Figura~\ref{fig:ej5-arboles}). Ponderamos
-por el tamaño de los hijos porque la impureza que se quiere reducir es la del conjunto de observaciones, no la de los nodos como
-entidades, de forma que un hijo que contiene $8$ de las $12$
-observaciones debe pesar el doble que uno que contiene $4$; sin pesos,
-$B$ se calificaría con $(0+0.375)/2=0.1875$ (es decir, una reducción de
-$0.3125$ en lugar de $0.25$), premiando en exceso la
-pureza de un hijo pequeño, y en el extremo cualquier división que
-aislara una única observación (hijo con $G=0$) parecería excelente sin
-haber mejorado casi nada la clasificación del resto (el promedio
-ponderado es, además, la impureza esperada de una observación tomada al
-azar del nodo tras la división).
+\emph{Paso 4: elección.} Elegimos la \textbf{división $B$}, con mayor
+reducción de impureza ($0.25>0.2222$). A primera vista nos parecía mejor
+$A$ por sus dos hijos simétricos, pero $B$ aísla un grupo completamente
+puro de $4$ observaciones de clase $0$ (Figura~\ref{fig:ej5-arboles}), y
+eso vale más que dejar dos grupos moderadamente mezclados.
+
+\emph{Paso 5: por qué ponderar por el tamaño.} Lo que queremos reducir es
+la mezcla que sufren las \emph{observaciones}, no la de los nodos como si
+fueran unidades, así que un hijo con $8$ de las $12$ observaciones debe
+pesar el doble que uno con $4$. Si promediáramos sin pesos, $B$ se
+calificaría con $(0+0.375)/2=0.1875$, es decir, una reducción de $0.3125$ en
+lugar de $0.25$: estaríamos premiando de más la pureza de un hijo pequeño.
+Llevado al extremo, cualquier división que aislara una sola observación
+(un hijo con $G=0$) parecería excelente sin haber mejorado casi nada la
+clasificación del resto. Además, el promedio ponderado tiene una lectura
+natural: es la impureza que en promedio encuentra una observación tomada
+al azar del nodo después de la división.
 
 \begin{figure}[H]
 \centering
@@ -115,31 +165,54 @@ que elegimos.}
 \end{figure}
 
 \item \textbf{Clases y probabilidades en las hojas.}
-En la división $B$, la hoja izquierda $(4,0)$ tiene clase mayoritaria
-$0$ y $\hat P(Y=1)=0/4=0$, mientras que la hoja derecha $(2,6)$ tiene
-clase mayoritaria $1$ y $\hat P(Y=1)=6/8=0.75$. Con el umbral
-$t=0.8$, la hoja izquierda sigue en clase $0$ ($0<0.8$) y la hoja
-derecha también pasa a clase $0$, pues $0.75<0.8$, de forma que
-\textbf{ambas hojas predicen clase $0$} y el árbol deja de predecir la
-clase positiva en absoluto, lo cual muestra que en un árbol el umbral
-actúa sobre proporciones discretas de las hojas, y entre dos valores
-consecutivos de esas proporciones el umbral no cambia ninguna
-predicción.
+En la división $B$, cada hijo es una hoja. La probabilidad estimada de
+clase $1$ en una hoja es simplemente la proporción de observaciones de
+clase $1$ que cayeron en ella:
+\begin{itemize}
+    \item Hoja izquierda $(4,0)$: clase mayoritaria $0$ y
+    $\hat P(Y=1)=0/4=0$.
+    \item Hoja derecha $(2,6)$: clase mayoritaria $1$ y
+    $\hat P(Y=1)=6/8=0.75$.
+\end{itemize}
+Usar la clase mayoritaria equivale a usar el umbral $t=0.5$. Con el umbral
+$t=0.8$ la hoja izquierda sigue en clase $0$ ($0<0.8$) y la hoja derecha
+\emph{también} pasa a clase $0$, pues $0.75<0.8$. Así \textbf{ambas hojas
+predicen clase $0$} y el árbol deja de predecir la clase positiva en
+absoluto. Esto muestra algo propio de los árboles: sus probabilidades solo
+pueden tomar unos pocos valores (uno por hoja), así que mover el umbral
+entre dos de esos valores no cambia ninguna predicción, y cuando cruza uno
+de ellos cambia una hoja entera de golpe.
 
 \item \textbf{División de regresión por SSE.}
-Con $x=(1,\dots,6)$ y $y=(2,3,7,8,9,12)$, y la media de cada hoja como
-predicción:
-\begin{itemize}
-    \item $x\le2.5$: quedan las hojas $\{2,3\}$ con media $2.5$ y
-    $\{7,8,9,12\}$ con media $9$, de modo que
-    $SSE=(0.25+0.25)+(4+1+0+9)=0.5+14=\mathbf{14.5}$.
-    \item $x\le4.5$: quedan las hojas $\{2,3,7,8\}$ con media $5$ y
-    $\{9,12\}$ con media $10.5$, de modo que
-    $SSE=(9+4+4+9)+(2.25+2.25)=26+4.5=30.5$.
-\end{itemize}
-Elegimos $x\le2.5$, que reduce el SSE del nodo sin dividir ($70.8333$,
-alrededor de la media $6.8333$) a $14.5$, y como $x=7>2.5$ cae en la
-hoja derecha, predecimos $\hat y(7)=\mathbf{9}$.
+Ahora la respuesta es numérica: $x=(1,\dots,6)$ y $y=(2,3,7,8,9,12)$. Cada
+hoja predice el promedio de sus $y$, y medimos la calidad de una división
+con la suma de errores al cuadrado (SSE) de las dos hojas.
+
+\emph{División $x\le2.5$.} Quedan las hojas $\{2,3\}$ (los $x=1,2$) y
+$\{7,8,9,12\}$ (los $x=3,\dots,6$):
+\begin{align*}
+    \text{izquierda: } & \bar y=\tfrac{2+3}{2}=2.5, &
+    SSE&=(2-2.5)^2+(3-2.5)^2=0.25+0.25=0.5,\\
+    \text{derecha: } & \bar y=\tfrac{7+8+9+12}{4}=9, &
+    SSE&=(-2)^2+(-1)^2+0^2+3^2=4+1+0+9=14,
+\end{align*}
+para un total de $0.5+14=\mathbf{14.5}$.
+
+\emph{División $x\le4.5$.} Quedan las hojas $\{2,3,7,8\}$ y $\{9,12\}$:
+\begin{align*}
+    \text{izquierda: } & \bar y=\tfrac{2+3+7+8}{4}=5, &
+    SSE&=(-3)^2+(-2)^2+2^2+3^2=9+4+4+9=26,\\
+    \text{derecha: } & \bar y=\tfrac{9+12}{2}=10.5, &
+    SSE&=(-1.5)^2+1.5^2=2.25+2.25=4.5,
+\end{align*}
+para un total de $26+4.5=30.5$.
+
+\emph{Elección y predicción.} Elegimos $x\le2.5$, que baja el SSE del nodo
+sin dividir (que es $70.8333$, alrededor de su promedio $41/6\approx6.8333$)
+a $14.5$, frente a $30.5$ de la otra. Por curiosidad revisamos también los
+otros cortes posibles ($1.5$, $3.5$ y $5.5$ dan $42.8$, $22.6667$ y $38.8$),
+y ninguno le gana a $2.5$. Como $x=7>2.5$, cae en la hoja derecha y
+predecimos $\hat y(7)=\mathbf{9}$.
 
 \begin{figure}[H]
 \centering
@@ -170,49 +243,68 @@ sigue creciendo. El círculo vacío marca $\hat y(7)=9$.}
 \end{figure}
 
 \item \textbf{La media minimiza el SSE; no extrapolación.}
-Tomamos $f(c)=\sum_{i\in R}(y_i-c)^2$ en una hoja $R$ con $|R|$
-observaciones y derivamos,
+\emph{Paso 1: plantear.} En una hoja $R$ con $|R|$ observaciones (las
+barras indican cuántas hay), el árbol predice un mismo número $c$ para
+todas. El error de esa hoja es $f(c)=\sum_{i\in R}(y_i-c)^2$, donde
+$i\in R$ quiere decir \emph{las observaciones que están en la hoja}.
+Queremos el $c$ que lo hace mínimo.
+
+\emph{Paso 2: derivar e igualar a cero.} La derivada de $(y_i-c)^2$
+respecto a $c$ es $2(y_i-c)\cdot(-1)$, así que
 \[
     f'(c) = -2\sum_{i\in R}(y_i-c) = 0
-    \;\Longrightarrow\; |R|\,c = \sum_{i\in R}y_i
-    \;\Longrightarrow\; c^* = \bar y_R ,
+    \;\Longrightarrow\; \sum_{i\in R}y_i - |R|\,c = 0
+    \;\Longrightarrow\; c^* = \frac{1}{|R|}\sum_{i\in R}y_i = \bar y_R ,
 \]
-y como $f''(c)=2|R|>0$, $f$ es estrictamente convexa y $\bar y_R$ es su
-único mínimo global (equivalentemente,
-$f(c)=\sum_i(y_i-\bar y_R)^2+|R|(\bar y_R-c)^2$, donde el segundo término
-solo se anula en $c=\bar y_R$). En consecuencia, un árbol de regresión
-predice una constante por hoja, y la hoja que contiene todos los $x$
-mayores que el último corte cubre el intervalo $(2.5,\infty)$ completo,
-de forma que $\hat y(7)=\hat y(20)=\hat y(1000)=9$: el árbol \textbf{no
-puede extrapolar} una tendencia lineal, porque sus predicciones están
-siempre dentro del rango de medias de entrenamiento (en este caso
-$[2.5,9]$), aun cuando los datos sugieren un crecimiento sostenido
-(la pendiente de MCO que calculamos sobre estos seis puntos es de
-aproximadamente $1.97$ por unidad de $x$).
+es decir, el promedio de la hoja.
+
+\emph{Paso 3: es un mínimo.} La segunda derivada es $f''(c)=2|R|>0$, de
+modo que $f$ es una parábola que abre hacia arriba y $\bar y_R$ es su único
+mínimo. Otra forma de verlo, sin derivadas, es sumar y restar $\bar y_R$
+dentro del cuadrado:
+\[
+    f(c)=\sum_{i\in R}\bigl[(y_i-\bar y_R)+(\bar y_R-c)\bigr]^2
+    =\sum_{i\in R}(y_i-\bar y_R)^2
+     +2(\bar y_R-c)\underbrace{\sum_{i\in R}(y_i-\bar y_R)}_{=0}
+     +|R|(\bar y_R-c)^2 .
+\]
+El primer término no depende de $c$ y el último es un cuadrado que solo
+vale cero cuando $c=\bar y_R$; cualquier otro valor de $c$ suma error.
+
+\emph{Paso 4: por qué no extrapola.} Como cada hoja predice una
+constante, la hoja que recibe todos los $x$ mayores que el último corte
+cubre el intervalo $(2.5,\infty)$ completo, y entonces
+$\hat y(7)=\hat y(20)=\hat y(1000)=9$. El árbol \textbf{no puede
+extrapolar} una tendencia: sus predicciones siempre son promedios de datos
+de entrenamiento, así que nunca salen del rango de esos promedios (aquí
+$[2.5,9]$). Y eso que los datos sugieren un crecimiento sostenido: la
+recta de mínimos cuadrados sobre estos seis puntos sube aproximadamente
+$1.97$ por cada unidad de $x$, y seguiría subiendo más allá de $x=6$.
 
 \item \textbf{\texttt{max\_depth}, \texttt{min\_samples\_leaf} y sobreajuste.}
+Si dejamos que un árbol siga preguntando sin límite, termina con una hoja
+para cada observación y se aprende de memoria los datos de entrenamiento,
+incluido su ruido. Los dos hiperparámetros le ponen freno de formas
+distintas:
 \begin{itemize}
-    \item \texttt{max\_depth}: Limita el número de preguntas sucesivas
-    desde la raíz hasta una hoja, de forma que restringe el número máximo
-    de hojas (a lo sumo $2^{\text{profundidad}}$, pues cada nivel de un
-árbol binario a lo sumo duplica las hojas) y la complejidad de la partición
-    del espacio, impidiendo que el árbol siga dividiendo hasta aislar
-    observaciones individuales.
-    \item \texttt{min\_samples\_leaf}: Exige que cada hoja conserve al
-    menos ese número de observaciones de entrenamiento, por lo cual
-    cada predicción (media o proporción) se estima con más datos y es
-    menos sensible al ruido de unas pocas observaciones, suavizando la
-    función aprendida.
+    \item \texttt{max\_depth} (profundidad máxima) limita cuántas preguntas
+    seguidas puede haber desde la raíz hasta una hoja. Como cada nivel a lo
+    sumo duplica el número de hojas, un árbol de profundidad $d$ tiene a lo
+    sumo $2^{d}$ hojas, y eso limita qué tan fina puede ser la partición e
+    impide llegar a aislar observaciones individuales.
+    \item \texttt{min\_samples\_leaf} (mínimo de observaciones por hoja)
+    exige que cada hoja conserve al menos ese número de observaciones de
+    entrenamiento. Así cada predicción (promedio o proporción) se calcula
+    con más datos y es menos sensible al ruido de unas pocas observaciones.
 \end{itemize}
-Al aumentar excesivamente la profundidad, el error de
-\textbf{entrenamiento} disminuye de forma monótona hasta llegar a
-(prácticamente) cero, pues un árbol sin límites puede asignar cada
-observación a su propia hoja, mientras que el error de
-\textbf{validación} primero disminuye (el árbol captura estructura real)
-y luego se estanca o aumenta (empieza a memorizar ruido), dando la
-típica curva en forma de U y una brecha creciente entre ambos errores,
-que es la señal de sobreajuste que buscamos controlar en los ejercicios
-7 y 9 al seleccionar estos hiperparámetros con el conjunto de
-validación.
+Si aumentamos demasiado la profundidad, esperamos este patrón: el error de
+\textbf{entrenamiento} baja siempre, hasta llegar prácticamente a cero,
+porque un árbol sin límites puede dar a cada observación su propia hoja;
+el error de \textbf{validación}, en cambio, primero baja (el árbol está
+capturando estructura real) y luego se estanca o sube (empieza a memorizar
+ruido). Se forma la típica curva en U para validación y una brecha cada vez
+mayor entre ambos errores, que es la señal de sobreajuste que buscamos
+controlar en los ejercicios 7 y 9 al seleccionar estos hiperparámetros con
+el conjunto de validación.
 
 \end{enumerate}

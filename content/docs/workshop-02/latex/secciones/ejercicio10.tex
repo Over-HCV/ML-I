@@ -6,10 +6,15 @@
 % =====================================================================
 \subsection{Ejercicio 10: Evaluación final y recomendación sustentada}
 
-Antes de abrir la prueba dejamos registrados los candidatos finales
+\paragraph{Qué buscamos.} Este es el examen final de los modelos. Hasta
+aquí todo lo decidimos con entrenamiento y validación; ahora abrimos por
+primera y única vez la partición de prueba, que ningún modelo ha visto,
+para medir de forma honesta cómo les iría con pacientes nuevos. Antes de
+abrirla dejamos registrados los candidatos finales
 (Tabla~\ref{tab:ex10-candidatos}), ambos con todos los predictores de su
 caso, y conservamos los modelos tal como quedaron ajustados con
-entrenamiento.
+entrenamiento. Evaluamos también los demás modelos, pero solo como
+contexto: la prueba no se usa para cambiar de candidato.
 
 \begin{table}[H]
 \centering
@@ -36,10 +41,10 @@ $\TestMultiRMSE$ y $R^2$ de $\TestMultiRdos$), seguida del árbol
 (Tabla~\ref{tab:ex10-reg}). El candidato elegido pasó de un RMSE de
 validación de $\CandidatoRegRMSEVal$ a uno de prueba de
 $\CandidatoRegRMSETest$, y su $R^2$ de $\RegMultiRdosVal$ a
-$\TestMultiRdos$. Esa caída no nos tomó por sorpresa, porque desde el
-Ejercicio~6 habíamos notado que la validación resultó una partición algo más
-favorable para todos los modelos, y en cualquier caso no cambiamos de
-candidato a la luz de estos resultados.
+$\TestMultiRdos$: en prueba se equivoca un poco más. Esa caída no nos tomó
+por sorpresa, porque desde el Ejercicio~6 habíamos notado que la validación
+resultó una partición algo más fácil para todos los modelos, y en
+cualquier caso no cambiamos de candidato a la luz de estos resultados.
 
 \item \textbf{Clasificación en prueba.}
 
@@ -60,30 +65,48 @@ candidato a la luz de estos resultados.
 \end{table}
 
 La regresión logística con $t=\LogitT$ obtuvo en prueba precisión
-$\TestLogitPrec$, recall $\TestLogitRecall$, F1 $\TestLogitFUno$ y ROC-AUC
-$\TestLogitAUC$, con $FP=\TestLogitFP$ y $FN=\TestLogitFN$
-($L=\TestLogitCosto$), mientras que el árbol con $t=\ArbolT$ obtuvo
-precisión $\TestArbolClfPrec$, recall $\TestArbolClfRecall$, F1
-$\TestArbolClfFUno$ y ROC-AUC $\TestArbolClfAUC$, con $FP=\TestArbolClfFP$ y
-$FN=\TestArbolClfFN$ ($L=\TestArbolClfCosto$); la referencia predice todo
-benigno y acumuló $L=\TestDummyCosto$. Aquí vino la parte incómoda: en
-prueba el árbol tuvo un costo algo menor que el candidato elegido. La
-diferencia se explica por los falsos negativos adicionales de la logística,
-compensados solo en parte por sus menos falsos positivos, y coincide con la
-advertencia que dejamos en el Ejercicio~8c sobre un umbral alto elegido con
-pocos malignos de validación. Lo discutimos y decidimos mantener el
-candidato, pues la decisión la tomamos con validación y cambiarla ahora
-sería usar la prueba para seleccionar; además, con $\NClfTest$ muestras una
-diferencia de pocas unidades de costo es compatible con la variabilidad
-muestral, y la logística conserva un ROC-AUC claramente superior.
+$\TestLogitPrec$ (todas las muestras que marcó como malignas lo eran),
+recall $\TestLogitRecall$, F1 $\TestLogitFUno$ y ROC-AUC $\TestLogitAUC$, con
+$FP=\TestLogitFP$ y $FN=\TestLogitFN$ ($L=\TestLogitCosto$). El árbol con
+$t=\ArbolT$ obtuvo precisión $\TestArbolClfPrec$, recall
+$\TestArbolClfRecall$, F1 $\TestArbolClfFUno$ y ROC-AUC $\TestArbolClfAUC$,
+con $FP=\TestArbolClfFP$ y $FN=\TestArbolClfFN$ ($L=\TestArbolClfCosto$). La
+referencia predice todo benigno y acumuló $L=\TestDummyCosto$, porque cada
+uno de los malignos de prueba le cuesta 5.
+
+Aquí vino la parte incómoda: en prueba el árbol tuvo un costo algo menor
+que el candidato elegido. La diferencia se explica porque la logística dejó
+escapar más malignos (cada uno cuesta 5), algo que sus menos falsas
+alarmas no alcanzan a compensar, y coincide con la advertencia que dejamos
+en el Ejercicio~8c sobre un umbral alto elegido con pocos malignos de
+validación. Lo discutimos y decidimos mantener el candidato, por dos
+razones. La decisión la tomamos con validación, y cambiarla ahora sería
+usar la prueba para seleccionar, con lo que dejaría de ser una medición
+honesta. Y con $\NClfTest$ muestras, una diferencia de pocas unidades de
+costo puede deberse al azar de qué pacientes cayeron en la prueba, como
+mostramos enseguida; además la logística conserva un ROC-AUC claramente
+superior.
 
 \paragraph{Incertidumbre de la evaluación final.}
-No quisimos quedarnos solo con afirmar esa variabilidad, así que la
-cuantificamos: remuestreamos con reemplazo cada conjunto de prueba
-($B=\BootB$ réplicas, semilla $\Semilla$) recalculando las métricas con las
-\emph{mismas predicciones congeladas}, sin reajustar nada, y comparamos los
-modelos mediante diferencias \emph{pareadas} (ambos evaluados sobre la misma
-réplica), que descuentan la variabilidad común (Tabla~\ref{tab:ex10-boot} y
+No quisimos quedarnos solo con afirmar que la diferencia puede ser azar,
+así que la medimos con \emph{bootstrap}. La idea es la siguiente: solo
+tenemos un conjunto de prueba, pero podemos simular otros conjuntos
+parecidos sacando muestras al azar \emph{con reemplazo} del que tenemos,
+del mismo tamaño (en cada simulación algunos pacientes salen repetidos y
+otros no salen). En cada una de las $B=\BootB$ réplicas (con semilla
+$\Semilla$ para poder repetirlas) recalculamos las métricas usando las
+\emph{mismas predicciones congeladas}, sin reajustar nada. Así obtenemos
+$\BootB$ valores de cada métrica, y el intervalo que deja por fuera el
+2.5\,\% más bajo y el 2.5\,\% más alto (los percentiles 2.5 y 97.5) es un
+intervalo al 95\,\%: el rango en el que razonablemente podría haber caído la
+métrica con otra muestra de pacientes.
+
+Para comparar dos modelos usamos diferencias \emph{pareadas}: en cada
+réplica calculamos la métrica de los dos modelos sobre los mismos pacientes
+y restamos. Si una réplica salió con pacientes difíciles, salió difícil para
+los dos, y esa mala suerte compartida se cancela en la resta. Si el
+intervalo de la diferencia incluye el cero, la prueba no permite decir cuál
+de los dos es mejor (Tabla~\ref{tab:ex10-boot} y
 Figura~\ref{fig:ex10-boot}).
 
 \begin{table}[H]
@@ -104,24 +127,34 @@ Figura~\ref{fig:ex10-boot}).
     \label{fig:ex10-boot}
 \end{figure}
 
-En el caso A la regresión múltiple superó a la simple con un intervalo para
-la diferencia de RMSE de $[\BootDifRMSEMultiSimpleInf,\ \BootDifRMSEMultiSimpleSup]$,
-que excluye el cero, de forma que esa mejora es robusta, mientras que frente
-al árbol el intervalo $[\BootDifRMSEMultiArbolInf,\ \BootDifRMSEMultiArbolSup]$
-sí incluye el cero, por lo cual la prueba por sí sola no nos permite afirmar
-que la múltiple sea mejor que el árbol (la elección se sostiene en la
-validación y en su menor complejidad). En el caso B la diferencia pareada de
-costo (logística menos árbol) fue de $\BootDifLLogitArbolInf$ a
-$\BootDifLLogitArbolSup$, con la logística más costosa en una fracción
-$\BootPropLogitPeor$ de las réplicas, es decir, la ventaja del árbol en
-prueba es compatible con el azar del muestreo, mientras que la superioridad
-de la logística en ordenamiento es más clara (ROC-AUC con intervalo
+En el caso A, la regresión múltiple superó a la simple con un intervalo
+para la diferencia de RMSE (múltiple menos simple) de
+$[\BootDifRMSEMultiSimpleInf,\ \BootDifRMSEMultiSimpleSup]$: todo el
+intervalo es negativo, o sea que la múltiple se equivoca menos en
+prácticamente cualquier muestra de pacientes y esa mejora es robusta.
+Frente al árbol, en cambio, el intervalo
+$[\BootDifRMSEMultiArbolInf,\ \BootDifRMSEMultiArbolSup]$ sí incluye el
+cero, por lo cual la prueba por sí sola no nos permite afirmar que la
+múltiple sea mejor que el árbol; la elección se sostiene en la validación y
+en que es un modelo más sencillo de interpretar.
+
+En el caso B, la diferencia pareada de costo (logística menos árbol) fue de
+$\BootDifLLogitArbolInf$ a $\BootDifLLogitArbolSup$, con la logística más
+costosa en una fracción $\BootPropLogitPeor$ de las réplicas, es decir, un
+poco más de la mitad de las veces: la ventaja del árbol en prueba es
+compatible con el azar del muestreo. La superioridad de la logística para
+ordenar las muestras sí es más clara (ROC-AUC con intervalo
 $[\BootAUCLogitInf,\ \BootAUCLogitSup]$ frente a
 $[\BootAUCArbolInf,\ \BootAUCArbolSup]$ del árbol). Los intervalos de $L$
 salieron tan anchos porque $L$ depende de unos pocos falsos negativos que
-valen 5 cada uno.
+valen 5 cada uno: que una réplica tenga un maligno escapado más o menos
+mueve el costo 5 unidades de golpe.
 
 \item \textbf{Matrices de confusión y costo.}
+La matriz de confusión cruza los aciertos y errores: las filas son la
+clase real y las columnas la predicha, en el orden $[0,1]$, de modo que la
+casilla superior izquierda es $TN$, la superior derecha $FP$, la inferior
+izquierda $FN$ y la inferior derecha $TP$.
 
 \begin{figure}[H]
     \centering
@@ -134,11 +167,11 @@ En este conjunto, un \textbf{falso positivo} es una muestra de tejido
 benigno clasificada como maligna, lo que en un uso hipotético implicaría
 exámenes adicionales innecesarios y angustia para la paciente, mientras que
 un \textbf{falso negativo} es una muestra maligna clasificada como benigna,
-lo que retrasaría un diagnóstico y un tratamiento, consecuencia mucho más
-grave y razón por la cual el costo didáctico la pondera cinco veces. Para el
-candidato elegido, la matriz de la Figura~\ref{fig:ex10-cm} quedó con
-$TN=\TestLogitTN$, $FP=\TestLogitFP$, $FN=\TestLogitFN$ y $TP=\TestLogitTP$,
-de modo que
+lo que retrasaría un diagnóstico y un tratamiento, una consecuencia mucho
+más grave y la razón por la cual el costo didáctico la pesa cinco veces.
+Para el candidato elegido, la matriz de la Figura~\ref{fig:ex10-cm} quedó
+con $TN=\TestLogitTN$, $FP=\TestLogitFP$, $FN=\TestLogitFN$ y
+$TP=\TestLogitTP$, de modo que
 \[
     L = FP + 5\,FN = \TestLogitFP + 5\cdot\TestLogitFN = \TestLogitCosto,
 \]

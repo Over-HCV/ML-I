@@ -1,0 +1,84 @@
+% =====================================================================
+% notacion.tex
+% Responsabilidad única: presentar la Parte I en palabras sencillas y
+% reunir en una tabla la notación que se usa en los ejercicios 1 a 5,
+% para que ningún símbolo aparezca sin haberse definido antes.
+% =====================================================================
+\noindent En esta primera parte resolvemos a mano cinco ejercicios con
+datos pequeños e inventados (cinco o seis observaciones). La idea no es
+que los datos sean realistas sino poder seguir cada cuenta con lápiz y
+papel, para entender qué hace por dentro un programa como scikit-learn
+cuando, en la Parte II, le pedimos que ajuste un modelo con cientos de
+datos reales. Los cinco ejercicios recorren los cuatro modelos del taller:
+la regresión lineal simple (una variable explica a otra con una recta), la
+regresión lineal múltiple (varias variables a la vez), la regresión
+logística (predecir la probabilidad de que algo pase, por ejemplo que una
+máquina falle) y los árboles de decisión (predecir haciendo preguntas
+sucesivas de sí o no).
+
+Todos los modelos de este taller son \emph{supervisados}: tenemos ejemplos
+en los que conocemos tanto los datos de entrada (las \emph{variables
+explicativas} o \emph{predictores}, que llamamos $x$) como el resultado que
+queremos predecir (la \emph{variable respuesta}, que llamamos $y$), y
+buscamos una regla que, a partir de $x$, se equivoque lo menos posible al
+predecir $y$. La Tabla~\ref{tab:notacion} reúne los símbolos que usamos;
+cada uno se vuelve a explicar la primera vez que aparece en un ejercicio.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{11.3cm}}
+\toprule
+Símbolo & Significado \\
+\midrule
+$n$ & Número de observaciones (filas de datos). \\
+$i=1,\dots,n$ & Índice que recorre las observaciones; $x_i$ y $y_i$ son
+los valores de la observación número $i$. \\
+$\sum_{i=1}^{n} a_i$ & Suma $a_1+a_2+\dots+a_n$. Cuando no hay ambigüedad
+escribimos solo $\sum_i a_i$. \\
+$\bar x,\ \bar y$ & Promedios: $\bar x=\frac1n\sum_i x_i$ y
+$\bar y=\frac1n\sum_i y_i$. \\
+$\beta_0,\ \beta_1,\dots$ & Parámetros del modelo, los números que el
+ajuste debe encontrar ($\beta_0$ es el intercepto y $\beta_1,\beta_2,\dots$
+las pendientes o coeficientes). \\
+$\hat\beta_0,\ \hat\beta_1$ & Los valores de los parámetros que encontramos
+con los datos (el gorro $\hat{\ }$ indica \emph{estimado a partir de los
+datos}). \\
+$\hat y_i$ & Predicción del modelo para la observación $i$. \\
+$e_i = y_i-\hat y_i$ & Residuo: lo que el modelo no logró explicar en la
+observación $i$ (positivo si el modelo se quedó corto, negativo si se
+pasó). \\
+$\mathrm{SSE}=\sum_i e_i^2$ & Suma de errores al cuadrado (\emph{sum of
+squared errors}). \\
+$\mathrm{MSE}=\mathrm{SSE}/n$ & Error cuadrático medio: el promedio de los
+errores al cuadrado. \\
+$\mathrm{SST}=\sum_i (y_i-\bar y)^2$ & Variabilidad total de $y$ alrededor
+de su promedio. \\
+$R^2=1-\mathrm{SSE}/\mathrm{SST}$ & Coeficiente de determinación: fracción
+de la variabilidad de $y$ que el modelo explica (entre $0$ y $1$ en
+entrenamiento). \\
+$\partial S/\partial \beta$ & Derivada parcial: cuánto cambia $S$ cuando
+movemos solo $\beta$ y dejamos fijo lo demás. En un mínimo todas valen
+cero. \\
+$X,\ \beta,\ y$ (negrita implícita) & En el Ejercicio~2, matriz de datos
+(una fila por observación, una columna por variable), vector de parámetros
+y vector de respuestas. \\
+$X^\top$ & Transpuesta de $X$: intercambia filas por columnas. \\
+$p$ & Probabilidad estimada de que ocurra el evento ($Y=1$). \\
+$\sigma(z)=\frac{1}{1+e^{-z}}$ & Función sigmoide: convierte cualquier
+número real $z$ en un valor entre $0$ y $1$. \\
+$\log$ & Logaritmo natural (base $e\approx2.718$). \\
+$t$ & Umbral: se predice la clase $1$ cuando $p\ge t$. \\
+$FP,\ FN$ & Falsos positivos (se predijo $1$ y era $0$) y falsos negativos
+(se predijo $0$ y era $1$). \\
+$\nabla J$ & Gradiente: el vector con todas las derivadas parciales de
+$J$; apunta hacia donde $J$ crece más rápido. \\
+$\eta$ & Tasa de aprendizaje: el tamaño del paso en descenso de gradiente. \\
+$\lambda,\ C$ & Intensidad de la regularización ($\lambda$ grande o $C$
+pequeño castigan más los coeficientes grandes). \\
+$G$ & Impureza de Gini de un nodo de un árbol. \\
+\bottomrule
+\end{tabular}
+\caption{Notación de la Parte I.}
+\label{tab:notacion}
+\end{table}

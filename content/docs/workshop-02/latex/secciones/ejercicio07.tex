@@ -6,33 +6,61 @@
 % =====================================================================
 \subsection{Ejercicio 7: Caso A, regresión múltiple y árbol de regresión}
 
+\paragraph{Qué buscamos.} El Ejercicio~6 dejó claro que \texttt{bmi} solo
+no alcanza. Aquí probamos dos maneras de usar los diez predictores a la
+vez: una regresión lineal múltiple (como la del Ejercicio~2, ahora con
+diez variables) y un árbol de regresión (como el del Ejercicio~5c, ahora
+con muchas preguntas posibles). Al final elegimos, con validación, cuál
+de los dos llevamos a la evaluación final.
+
 \begin{enumerate}
 
 \item \textbf{Regresión múltiple con \texttt{Pipeline}.}
-Armamos un \texttt{Pipeline} con \texttt{StandardScaler} y
-\texttt{LinearRegression} para que las medias y desviaciones se aprendieran
-solo con entrenamiento y no se nos colara información de validación. El
-modelo múltiple obtuvo un RMSE de validación de $\RegMultiRMSEVal$ (frente a
-$\RegSimpleRMSEVal$ del simple y $\RegDummyRMSEVal$ de la constante) y un
-$R^2$ de validación de $\RegMultiRdosVal$ (frente a $\RegSimpleRdosVal$),
-como se ve en la Tabla~\ref{tab:ex7-candidatos}. La mejora en entrenamiento
-(RMSE de $\RegSimpleRMSETr$ a $\RegMultiRMSETr$) por sí sola no prueba nada,
-pues como justificamos en el Ejercicio~2e añadir predictores nunca aumenta
-el error mínimo de entrenamiento; lo que nos importó fue que la mejora se
-conservara en validación y que la brecha entre particiones no se abriera.
+El modelo es
+\[
+    \hat y = \beta_0 + \beta_1 z_{\texttt{age}} + \beta_2 z_{\texttt{sex}}
+             + \dots + \beta_{10} z_{\texttt{s6}} ,
+\]
+donde cada $z$ es la variable estandarizada con \texttt{StandardScaler}
+(su valor menos el promedio de entrenamiento, dividido entre la desviación
+estándar de entrenamiento). Armamos un \texttt{Pipeline} con
+\texttt{StandardScaler} y \texttt{LinearRegression} para que esos promedios
+y desviaciones se aprendieran solo con entrenamiento y no se nos colara
+información de validación. Estandarizar no cambia las predicciones de una
+regresión sin regularizar (Ejercicio~4e), pero sí deja los coeficientes en
+una escala común, lo que facilita compararlos en el inciso b.
+
+El modelo múltiple obtuvo un RMSE de validación de $\RegMultiRMSEVal$
+(frente a $\RegSimpleRMSEVal$ del simple y $\RegDummyRMSEVal$ de la
+constante) y un $R^2$ de validación de $\RegMultiRdosVal$ (frente a
+$\RegSimpleRdosVal$), como se ve en la Tabla~\ref{tab:ex7-candidatos}: pasó
+de explicar cerca de un tercio de la variabilidad a explicar cerca de la
+mitad. La mejora en entrenamiento (RMSE de $\RegSimpleRMSETr$ a
+$\RegMultiRMSETr$) por sí sola no prueba nada, pues como justificamos en el
+Ejercicio~2e añadir predictores nunca aumenta el error de entrenamiento. Lo
+que nos importó fue que la mejora se conservara en validación, con datos
+que el modelo no vio, y que la brecha entre las dos particiones no se
+abriera, señal de que el modelo no está memorizando.
 
 \item \textbf{Coeficientes estandarizados y correlaciones.}
-Cada coeficiente (Tabla~\ref{tab:ex7-coef}) es el cambio esperado en la
-predicción ante un aumento de una desviación estándar de entrenamiento (la
-poblacional que usa \texttt{StandardScaler}) en ese predictor, manteniendo
-fijos los demás. Para \texttt{s5} un aumento de una desviación
-($\DesvMultiScinco$ en el logaritmo de los triglicéridos) se asocia con
-$\CoefMultiScinco$ unidades más de progresión, y para \texttt{bmi} un aumento
-de una desviación ($\DesvMultiBmi$\,kg/m$^2$) se asocia con
-$\CoefMultiBmi$ unidades más, equivalentes a unas $\BmiPorUnidad$ por
-kg/m$^2$. Eso es cerca de la mitad de la pendiente simple
-($\SimpleBetaUno$), y lo leímos como que allí \texttt{bmi} absorbía parte de
-lo que ahora explican predictores correlacionados con él.
+\emph{Cómo se lee un coeficiente estandarizado.} Cada coeficiente
+(Tabla~\ref{tab:ex7-coef}) es el cambio esperado en la progresión predicha
+cuando ese predictor sube una desviación estándar de entrenamiento
+(\texttt{StandardScaler} usa la desviación poblacional, que divide entre
+$n$), manteniendo fijos los otros nueve. Para \texttt{s5}, subir una
+desviación ($\DesvMultiScinco$ en el logaritmo de los triglicéridos) se
+asocia con $\CoefMultiScinco$ unidades más de progresión, y para
+\texttt{bmi}, subir una desviación ($\DesvMultiBmi$\,kg/m$^2$) se asocia con
+$\CoefMultiBmi$ unidades más.
+
+\emph{Cómo volver a unidades originales.} Como $z=(x-\text{promedio})/s$,
+el término $\beta z$ es igual a $(\beta/s)(x-\text{promedio})$, de modo que
+por cada unidad de $x$ el efecto es $\beta/s$. Para \texttt{bmi} eso da
+$\CoefMultiBmi/\DesvMultiBmi\approx\BmiPorUnidad$ unidades por kg/m$^2$,
+cerca de la mitad de la pendiente simple del Ejercicio~6
+($\SimpleBetaUno$). Lo leímos como que en el modelo simple \texttt{bmi}
+cargaba con parte de lo que ahora explican otros predictores
+correlacionados con él.
 
 \begin{table}[H]
 \centering
@@ -42,19 +70,26 @@ lo que ahora explican predictores correlacionados con él.
 \label{tab:ex7-coef}
 \end{table}
 
-Para entender esos signos miramos la matriz de correlaciones
-(Figura~\ref{fig:ex7-corr}), que muestra pares fuertemente relacionados, en
-especial \texttt{s1} y \texttt{s2} ($\CorrSunoSdos$) y \texttt{s3} y
-\texttt{s4} ($\CorrStresScuatro$). El caso de \texttt{s1} y \texttt{s2} fue
-el que más nos llamó la atención: ambos tienen correlación positiva con la
-variable objetivo ($\CorrYSuno$ y $\CorrYSdos$), pero el modelo les asignó
-coeficientes de signo opuesto y gran magnitud ($\CoefMultiSuno$ y
-$\CoefMultiSdos$), porque al moverse casi juntos el ajuste aprovecha su
-diferencia y no el nivel de cada uno. Algo similar ocurrió con \texttt{s3},
-de correlación negativa con el \emph{target} ($\CorrYStres$) y coeficiente
-positivo ($\CoefMultiStres$). Por esto leemos los coeficientes como efectos
-parciales condicionados al resto, inestables ante colinealidad, y no como
-importancias independientes.
+\emph{Por qué algunos signos sorprenden.} Para entender los signos miramos
+la matriz de correlaciones (Figura~\ref{fig:ex7-corr}), donde cada casilla
+es la correlación de Pearson entre dos predictores (los colores intensos
+indican relación fuerte). Hay pares muy relacionados, en especial
+\texttt{s1} y \texttt{s2} ($\CorrSunoSdos$), que tiene sentido porque el
+colesterol LDL es parte del colesterol total, y \texttt{s3} y \texttt{s4}
+($\CorrStresScuatro$), porque \texttt{s4} es el total dividido entre el HDL
+(\texttt{s3}). El caso de \texttt{s1} y \texttt{s2} fue el que más nos
+llamó la atención: los dos tienen correlación positiva con la progresión
+($\CorrYSuno$ y $\CorrYSdos$), pero el modelo les asignó coeficientes de
+signo opuesto y grandes ($\CoefMultiSuno$ y $\CoefMultiSdos$). La razón es
+la del Ejercicio~2d en versión suave: como las dos variables se mueven casi
+juntas, el modelo no tiene cómo separar el efecto de cada una y termina
+aprovechando su \emph{diferencia}, con un coeficiente muy positivo y otro
+muy negativo que en buena parte se compensan. Algo similar ocurrió con
+\texttt{s3}, de correlación negativa con la progresión ($\CorrYStres$) y
+coeficiente positivo ($\CoefMultiStres$). Por esto leemos los coeficientes
+como efectos parciales (el efecto de una variable con todas las demás
+fijas), inestables cuando hay colinealidad, y no como la importancia
+independiente de cada variable.
 
 \begin{figure}[H]
     \centering
@@ -64,6 +99,17 @@ importancias independientes.
 \end{figure}
 
 \item \textbf{Cuadrícula de \texttt{DecisionTreeRegressor}.}
+Un árbol de regresión hace lo del Ejercicio~5c a gran escala: busca entre
+todos los predictores y todos los cortes posibles la pregunta que más
+reduce el SSE, la repite dentro de cada hijo, y cada hoja predice el
+promedio de la progresión de sus pacientes. Como no sabíamos de antemano
+qué tan grande debía ser el árbol, probamos una \emph{cuadrícula} de nueve
+combinaciones de sus dos hiperparámetros: \texttt{max\_depth} $\in\{2,4,6\}$
+y \texttt{min\_samples\_leaf} $\in\{5,15,30\}$. En la
+Tabla~\ref{tab:ex7-arboles}, \emph{Prof.\ real} es la profundidad que el
+árbol alcanzó de verdad, \emph{Hojas} cuántos grupos finales tiene y
+\emph{Brecha} es el RMSE de validación menos el de entrenamiento (si es
+grande, el árbol rinde mucho mejor con los datos que ya vio).
 
 \begin{table}[H]
 \centering
@@ -74,18 +120,19 @@ importancias independientes.
 \end{table}
 
 Con \texttt{min\_samples\_leaf} $=5$ apareció el patrón clásico de
-sobreajuste (Tabla~\ref{tab:ex7-arboles}): al aumentar la profundidad el
-RMSE de entrenamiento baja y el de validación sube, hasta
+sobreajuste que anticipamos en el Ejercicio~5e: al aumentar la profundidad
+el RMSE de entrenamiento baja y el de validación sube, hasta
 $\ArbolProfundoRMSETr$ frente a $\ArbolProfundoRMSEVal$ con
-$\ArbolProfundoHojas$ hojas en profundidad 6. Con \texttt{min\_samples\_leaf}
-$=30$ manda la restricción de tamaño de hoja, de forma que con
-\texttt{max\_depth} $=6$ el árbol no pasa de profundidad real 4 y resultó
-idéntico al de \texttt{max\_depth} $=4$ (quedaron $\ArbolRegEmpatados$
-árboles con el mismo RMSE de validación mínimo, $\ArbolRegRMSEVal$). Ante
-ese empate nuestra regla fue quedarnos con la menor profundidad máxima, es
-decir \texttt{max\_depth} $=\ArbolRegMaxDepth$ y \texttt{min\_samples\_leaf}
-$=\ArbolRegMinLeaf$, con profundidad real $\ArbolRegProf$ y $\ArbolRegHojas$
-hojas.
+$\ArbolProfundoHojas$ hojas en profundidad 6. Con
+\texttt{min\_samples\_leaf} $=30$, en cambio, manda la restricción de
+tamaño de hoja: con \texttt{max\_depth} $=6$ el árbol no consigue pasar de
+profundidad real 4 porque ya no hay grupos de al menos 30 pacientes que
+partir, y resultó idéntico al de \texttt{max\_depth} $=4$. Por eso quedaron
+$\ArbolRegEmpatados$ árboles con el mismo RMSE de validación mínimo,
+$\ArbolRegRMSEVal$. Ante ese empate nuestra regla fue quedarnos con la
+menor profundidad máxima, es decir \texttt{max\_depth}
+$=\ArbolRegMaxDepth$ y \texttt{min\_samples\_leaf} $=\ArbolRegMinLeaf$, con
+profundidad real $\ArbolRegProf$ y $\ArbolRegHojas$ hojas.
 
 \item \textbf{Candidato final de regresión.}
 
@@ -104,18 +151,20 @@ constante ($\RegDummyRMSEVal$) quedó como referencia. Esta decisión la
 congelamos antes de consultar la prueba.
 
 \item \textbf{No linealidad del árbol y brecha entrenamiento--validación.}
-El árbol divide el espacio con umbrales sobre los valores originales, de
-modo que solo importa el orden de los valores y no su escala (por eso no
-necesita estandarización), y al asignar una constante por región puede
-representar relaciones no lineales e interacciones sin especificarlas.
-Esperábamos que esa flexibilidad le diera ventaja, pero no fue así: con
-$\NRegTr$ observaciones de entrenamiento y un mínimo de $\ArbolRegMinLeaf$
-por hoja, el árbol seleccionado solo produce $\ArbolRegHojas$ valores
-distintos de predicción, una aproximación escalonada de una relación que
-aquí parece mayormente aditiva y cercana a lineal. Su brecha es pequeña
+El árbol tiene dos ventajas en teoría. Como solo pregunta si una variable
+está por encima o por debajo de un corte, le da igual la escala de las
+variables (por eso no necesita estandarización). Y como asigna un valor
+distinto a cada región, puede representar relaciones curvas e
+\emph{interacciones} (que el efecto de una variable dependa de otra) sin
+que se las tengamos que especificar. Esperábamos que esa flexibilidad le
+diera ventaja, pero no fue así. Con $\NRegTr$ pacientes de entrenamiento y
+un mínimo de $\ArbolRegMinLeaf$ por hoja, el árbol seleccionado solo puede
+dar $\ArbolRegHojas$ predicciones distintas, una aproximación en escalones
+de una relación que aquí parece mayormente aditiva y cercana a lineal, que
+es justo lo que la regresión múltiple describe bien. Su brecha es pequeña
 ($\ArbolRegRMSETr$ en entrenamiento y $\ArbolRegRMSEVal$ en validación),
-pero su error superó al del modelo múltiple en ambas particiones, y el árbol
-profundo del inciso c mostró que la flexibilidad adicional se traduce en
-memorizar el entrenamiento y no en generalizar mejor.
+pero su error superó al del modelo múltiple en ambas particiones. Y el
+árbol profundo del inciso c mostró que darle más flexibilidad solo lo lleva
+a memorizar el entrenamiento, no a generalizar mejor.
 
 \end{enumerate}

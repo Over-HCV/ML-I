@@ -1,0 +1,198 @@
+% =====================================================================
+% conceptos.tex
+% Responsabilidad única: presentar, en lenguaje sencillo, los dos
+% conjuntos de datos y sus variables, el protocolo de partición y las
+% métricas que se usan en los ejercicios 6 a 10. Los tamaños de
+% partición son macros que escribe el notebook.
+% =====================================================================
+\subsection{Antes de empezar: datos, protocolo y métricas}
+
+\noindent En esta parte pasamos de los datos de juguete a dos conjuntos
+reales que vienen incluidos en scikit-learn, la biblioteca de Python con
+la que hicimos todo el trabajo. El notebook que entregamos por separado se
+ejecuta de principio a fin y produce todas las figuras, tablas y cifras
+que citamos aquí, así que ningún número está copiado a mano.
+
+\paragraph{Caso A: progresión de la diabetes (regresión).}
+El conjunto \texttt{load\_diabetes} tiene $442$ pacientes con diabetes a
+los que se les midieron diez variables al inicio de un estudio, y la
+respuesta es una medida numérica de cuánto avanzó la enfermedad un año
+después (entre más alto, peor). Como la respuesta es un número, este es un
+problema de \emph{regresión}. Lo cargamos con \texttt{scaled=False} para
+trabajar con las unidades originales y no con la versión ya transformada
+que trae la biblioteca por defecto. La Tabla~\ref{tab:vars-diabetes}
+explica cada variable.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{l>{\raggedright\arraybackslash}p{11.5cm}}
+\toprule
+Variable & Qué mide \\
+\midrule
+\texttt{age} & Edad en años. \\
+\texttt{sex} & Sexo, codificado como 1 o 2. \\
+\texttt{bmi} & Índice de masa corporal: peso (kg) dividido por la estatura
+(m) al cuadrado, en kg/m$^2$. \\
+\texttt{bp} & Presión arterial promedio. \\
+\texttt{s1} & Colesterol total en sangre. \\
+\texttt{s2} & Colesterol LDL (el llamado \emph{colesterol malo}). \\
+\texttt{s3} & Colesterol HDL (el llamado \emph{colesterol bueno}). \\
+\texttt{s4} & Razón entre colesterol total y HDL. \\
+\texttt{s5} & Logaritmo del nivel de triglicéridos en sangre. \\
+\texttt{s6} & Nivel de glucosa (azúcar) en sangre. \\
+\texttt{target} ($y$) & Progresión de la enfermedad un año después; la
+documentación no da su unidad, así que hablamos de \emph{unidades de la
+escala del target}. \\
+\bottomrule
+\end{tabular}
+\caption{Variables del caso A (\texttt{load\_diabetes}).}
+\label{tab:vars-diabetes}
+\end{table}
+
+\paragraph{Caso B: diagnóstico de cáncer de mama (clasificación).}
+El conjunto \texttt{load\_breast\_cancer} tiene $569$ muestras de tejido
+tomadas con una aguja fina de masas en el seno; cada muestra se fotografió
+al microscopio y un programa midió la forma de los núcleos de las células.
+La respuesta es si el tumor resultó maligno o benigno, así que es un
+problema de \emph{clasificación}. La biblioteca codifica maligno como 0,
+pero nosotros lo recodificamos como $1$ = maligno y $0$ = benigno, porque
+por convención la clase $1$ (la \emph{positiva}) es la que nos interesa
+detectar. Hay $30$ predictores que salen de medir diez características de
+los núcleos (Tabla~\ref{tab:vars-cancer}) y resumir cada una de tres
+maneras: el promedio sobre los núcleos de la imagen (prefijo
+\texttt{mean}), su error estándar, que indica qué tanto varía entre núcleos
+(sufijo \texttt{error}), y el promedio de los tres valores más grandes
+(prefijo \texttt{worst}, \emph{el peor}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{l>{\raggedright\arraybackslash}p{11.5cm}}
+\toprule
+Característica & Qué mide del núcleo \\
+\midrule
+\texttt{radius} & Radio: distancia promedio del centro al borde. \\
+\texttt{texture} & Textura: qué tan disparejos son los tonos de gris dentro
+del núcleo. \\
+\texttt{perimeter}, \texttt{area} & Perímetro y área del contorno. \\
+\texttt{smoothness} & Suavidad: qué tanto varía el radio de un punto a otro
+del borde. \\
+\texttt{compactness} & Compacidad: $\text{perímetro}^2/\text{área}-1$; es
+mínima para un círculo. \\
+\texttt{concavity} & Concavidad: qué tan profundas son las partes hundidas
+del contorno. \\
+\texttt{concave points} & Puntos cóncavos: cuántas partes hundidas tiene el
+contorno. \\
+\texttt{symmetry} & Simetría del núcleo. \\
+\texttt{fractal dimension} & Dimensión fractal: qué tan irregular o
+\emph{dentado} es el borde. \\
+\bottomrule
+\end{tabular}
+\caption{Las diez características del caso B; cada una aparece como
+\texttt{mean}, \texttt{error} y \texttt{worst}, para $30$ predictores.}
+\label{tab:vars-cancer}
+\end{table}
+
+\paragraph{Por qué partimos los datos en tres.}
+Un modelo siempre se ve mejor sobre los datos con los que aprendió, igual
+que un estudiante al que le ponen en el examen las mismas preguntas del
+taller. Para saber cómo le irá con datos nuevos hay que guardar datos que
+el modelo nunca haya visto. Por eso dividimos cada conjunto en tres partes
+con papeles distintos:
+\begin{itemize}
+    \item \textbf{Entrenamiento} (60\,\%): con estos datos el modelo aprende
+    sus parámetros (por ejemplo, los coeficientes $\beta$).
+    \item \textbf{Validación} (20\,\%): con estos comparamos modelos y
+    tomamos decisiones, como cuánto regularizar o qué umbral usar.
+    \item \textbf{Prueba} (20\,\%): la abrimos una sola vez al final, en el
+    Ejercicio~10, para medir de forma honesta el modelo ya elegido.
+\end{itemize}
+En la práctica apartamos primero el 20\,\% para prueba y luego el 25\,\% de
+lo que quedaba para validación ($0.25\times0.8=0.2$), con
+\texttt{random\_state=42} para que la partición sea siempre la misma. En el
+caso B además \emph{estratificamos}, es decir, obligamos a que las tres
+partes tengan la misma proporción de malignos que el conjunto completo.
+Así quedaron $\NRegTr/\NRegVal/\NRegTest$ observaciones en el caso A y
+$\NClfTr/\NClfVal/\NClfTest$ en el caso B (entrenamiento, validación y
+prueba). Tampoco reentrenamos al final con entrenamiento más validación,
+porque eso habría cambiado los modelos justo después de haberlos elegido.
+La Figura~\ref{fig:protocolo} resume el protocolo.
+
+\paragraph{Parámetros e hiperparámetros.}
+Los \emph{parámetros} los aprende el modelo solo a partir de los datos (los
+coeficientes de una regresión, las preguntas de un árbol). Los
+\emph{hiperparámetros} los fijamos nosotros antes de ajustar y controlan
+qué tan flexible puede ser el modelo: en la regresión logística, $C$
+(cuánto se castigan los coeficientes grandes); en los árboles,
+\texttt{max\_depth} (cuántas preguntas seguidas puede hacer) y
+\texttt{min\_samples\_leaf} (cuántas observaciones debe tener como mínimo
+cada grupo final). Los hiperparámetros los elegimos con validación.
+
+\paragraph{Estandarizar y encadenar pasos.}
+Varias técnicas, como la regularización, se ven afectadas por las unidades
+de las variables (no es lo mismo medir en metros que en milímetros). Para
+ponerlas a todas en la misma escala usamos \texttt{StandardScaler}, que
+transforma cada variable en
+\[
+    z = \frac{x - \text{promedio de } x \text{ en entrenamiento}}
+             {\text{desviación estándar de } x \text{ en entrenamiento}},
+\]
+de modo que $z$ dice a cuántas desviaciones estándar del promedio está cada
+dato ($z=1$ significa una desviación por encima). El promedio y la
+desviación se calculan solo con entrenamiento y luego se \emph{aplican} a
+validación y prueba, para no filtrar información de los datos que deben
+quedar ocultos. Esto lo garantiza un \texttt{Pipeline}, que encadena la
+estandarización y el modelo como si fueran un solo paso.
+
+\paragraph{Modelos de referencia.}
+Para saber si un modelo aporta algo lo comparamos con uno que no mira los
+predictores: \texttt{DummyRegressor} predice siempre el promedio de $y$ en
+entrenamiento y \texttt{DummyClassifier} asigna a todos la misma
+probabilidad (la proporción de malignos). Un modelo útil debe ganarle
+claramente a esta referencia.
+
+\paragraph{Cómo medimos el error.}
+La Tabla~\ref{tab:metricas} reúne las métricas que usamos. En regresión,
+$y_i$ es el valor real, $\hat y_i$ el predicho y $n$ el número de
+observaciones de la partición que se evalúa. En clasificación, cada
+predicción cae en una de las cuatro casillas de la \emph{matriz de
+confusión}: verdadero positivo ($TP$, maligno detectado), falso positivo
+($FP$, benigno marcado como maligno), falso negativo ($FN$, maligno que se
+nos escapó) y verdadero negativo ($TN$, benigno bien identificado).
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{l>{\centering\arraybackslash}p{4.3cm}>{\raggedright\arraybackslash}p{7.2cm}}
+\toprule
+Métrica & Fórmula & Cómo se lee \\
+\midrule
+RMSE & $\sqrt{\frac1n\sum_i (y_i-\hat y_i)^2}$ & Error típico, en las
+mismas unidades de $y$; castiga más los errores grandes. Menor es mejor. \\
+MAE & $\frac1n\sum_i |y_i-\hat y_i|$ & Error promedio en valor absoluto,
+en unidades de $y$. Menor es mejor. \\
+$R^2$ & $1-\frac{\sum_i (y_i-\hat y_i)^2}{\sum_i (y_i-\bar y)^2}$ &
+Fracción de la variabilidad de $y$ que explica el modelo; $0$ equivale a
+predecir siempre el promedio y puede ser negativo si el modelo es peor que
+eso. \\
+\midrule
+Precisión & $\frac{TP}{TP+FP}$ & De los que marcamos como malignos,
+cuántos lo eran. \\
+Recall (sensibilidad) & $\frac{TP}{TP+FN}$ & De los malignos reales,
+cuántos detectamos. \\
+F1 & $\frac{2\cdot\text{Precisión}\cdot\text{Recall}}{\text{Precisión}+\text{Recall}}$
+& Resume precisión y recall en un número; solo es alto si ambos lo son. \\
+ROC-AUC & Área bajo la curva ROC & Probabilidad de que, tomando un maligno y un benigno al
+azar, el modelo le asigne mayor probabilidad al maligno. $0.5$ es azar y
+$1$ es perfecto. No depende del umbral. \\
+Brier & $\frac1n\sum_i (p_i-y_i)^2$ & Qué tan cerca están las
+probabilidades $p_i$ de lo que pasó ($0$ o $1$). Menor es mejor. \\
+Costo $L$ & $FP+5\,FN$ & Costo didáctico del enunciado: dejar escapar un
+maligno pesa cinco veces más que una falsa alarma. \\
+\bottomrule
+\end{tabular}
+\caption{Métricas de la Parte II.}
+\label{tab:metricas}
+\end{table}
