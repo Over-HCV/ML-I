@@ -1,0 +1,195 @@
+{
+  "_instrucciones": [
+    "Plantilla del mapeo entre la exportación real del laboratorio y el contrato de datos.",
+    "1. Copie los archivos exportados en datos/reales/ y escriba su nombre en «archivo».",
+    "2. En «columnas», reemplace cada valor por el nombre que tiene esa columna en la exportación. La clave (izquierda) es el nombre canónico y no se cambia. Si el laboratorio no tiene esa columna, déjela en null: solo las obligatorias son imprescindibles.",
+    "3. En «valores», traduzca las etiquetas de la exportación (izquierda) a las canónicas (derecha). Puede añadir tantas entradas como sinónimos existan; mayúsculas, tildes y espacios no importan.",
+    "4. «opciones» es opcional: separador, codificación del archivo y orden día/mes de las fechas.",
+    "5. Active la lectura con la variable de entorno PROYECTO_ORIGEN=real (o ORIGEN_DATOS = \"real\" en proyecto/base/config.py) y ejecute la etapa 01_datos.",
+    "Dos tablas pueden leerse del mismo archivo (por ejemplo, clientes dentro de la exportación de muestras)."
+  ],
+  "clientes": {
+    "archivo": "clientes.csv",
+    "_obligatorias": [
+      "id_cliente",
+      "sector"
+    ],
+    "columnas": {
+      "id_cliente": "id_cliente",
+      "sector": "sector",
+      "zona": "zona",
+      "tamano": "tamano",
+      "tipo_contrato": "tipo_contrato",
+      "certificacion_bpm": "certificacion_bpm",
+      "plan_muestreo": "plan_muestreo",
+      "fecha_vinculacion": "fecha_vinculacion",
+      "distancia_km": "distancia_km",
+      "canal_captacion": "canal_captacion",
+      "ejecutivo_cuenta": "ejecutivo_cuenta"
+    },
+    "valores": {
+      "certificacion_bpm": {
+        "sí": "sí",
+        "no": "no"
+      }
+    },
+    "opciones": {
+      "separador": null,
+      "codificacion": "utf-8",
+      "dia_primero": true,
+      "hoja": 0
+    }
+  },
+  "muestreos": {
+    "archivo": "muestreos.csv",
+    "_obligatorias": [
+      "id_muestreo",
+      "id_cliente",
+      "fecha_programada"
+    ],
+    "columnas": {
+      "id_muestreo": "id_muestreo",
+      "id_cliente": "id_cliente",
+      "fecha_programada": "fecha_programada",
+      "puntos_programados": "puntos_programados",
+      "tecnico": "tecnico",
+      "fecha_visita": "fecha_visita",
+      "duracion_horas": "duracion_horas"
+    },
+    "valores": {},
+    "opciones": {
+      "separador": null,
+      "codificacion": "utf-8",
+      "dia_primero": true,
+      "hoja": 0
+    }
+  },
+  "muestras": {
+    "archivo": "muestras.csv",
+    "_obligatorias": [
+      "id_muestra",
+      "id_cliente",
+      "ensayo",
+      "fecha_recepcion",
+      "resultado"
+    ],
+    "columnas": {
+      "id_muestra": "id_muestra",
+      "id_cliente": "id_cliente",
+      "id_lote_envio": "id_lote_envio",
+      "id_muestreo": "id_muestreo",
+      "fecha_toma": "fecha_toma",
+      "origen": "origen",
+      "matriz": "matriz",
+      "tipo_producto": "tipo_producto",
+      "codigo_producto": "codigo_producto",
+      "ensayo": "ensayo",
+      "actividad_agua": "actividad_agua",
+      "ph": "ph",
+      "conservante": "conservante",
+      "volumen_ml": "volumen_ml",
+      "urgencia": "urgencia",
+      "fecha_recepcion": "fecha_recepcion",
+      "hora_recepcion": "hora_recepcion",
+      "temperatura_transporte_c": "temperatura_transporte_c",
+      "horas_transporte": "horas_transporte",
+      "envase_integro": "envase_integro",
+      "documentacion_completa": "documentacion_completa",
+      "recepcionista": "recepcionista",
+      "estado_recepcion": "estado_recepcion",
+      "dias_prometidos": "dias_prometidos",
+      "fecha_siembra": "fecha_siembra",
+      "analista": "analista",
+      "turno": "turno",
+      "cabina": "cabina",
+      "incubadora": "incubadora",
+      "lote_medio": "lote_medio",
+      "carga_dia": "carga_dia",
+      "fecha_lectura": "fecha_lectura",
+      "control_ambiental_ufc": "control_ambiental_ufc",
+      "recuento_reportado": "recuento_reportado",
+      "limite_ufc": "limite_ufc",
+      "resultado": "resultado",
+      "reensayo": "reensayo",
+      "resultado_reensayo": "resultado_reensayo",
+      "fecha_reporte": "fecha_reporte"
+    },
+    "valores": {
+      "origen": {
+        "enviada por el cliente": "enviada por el cliente",
+        "muestreo en planta": "muestreo en planta"
+      },
+      "conservante": {
+        "sí": "sí",
+        "no": "no",
+        "no aplica": "no aplica"
+      },
+      "envase_integro": {
+        "sí": "sí",
+        "no": "no"
+      },
+      "documentacion_completa": {
+        "sí": "sí",
+        "no": "no"
+      },
+      "estado_recepcion": {
+        "aceptada": "aceptada",
+        "rechazada": "rechazada"
+      },
+      "resultado": {
+        "conforme": "conforme",
+        "no conforme": "no conforme"
+      },
+      "reensayo": {
+        "sí": "sí",
+        "no": "no"
+      },
+      "resultado_reensayo": {
+        "conforme": "conforme",
+        "no conforme": "no conforme"
+      }
+    },
+    "opciones": {
+      "separador": null,
+      "codificacion": "utf-8",
+      "dia_primero": true,
+      "hoja": 0
+    }
+  },
+  "controles": {
+    "archivo": "controles.csv",
+    "_obligatorias": [
+      "id_control",
+      "fecha",
+      "ensayo",
+      "tipo_control",
+      "resultado_control"
+    ],
+    "columnas": {
+      "id_control": "id_control",
+      "fecha": "fecha",
+      "ensayo": "ensayo",
+      "tipo_control": "tipo_control",
+      "analista": "analista",
+      "incubadora": "incubadora",
+      "lote_medio": "lote_medio",
+      "resultado_control": "resultado_control"
+    },
+    "valores": {
+      "tipo_control": {
+        "positivo": "positivo",
+        "negativo": "negativo"
+      },
+      "resultado_control": {
+        "crecimiento": "crecimiento",
+        "sin crecimiento": "sin crecimiento"
+      }
+    },
+    "opciones": {
+      "separador": null,
+      "codificacion": "utf-8",
+      "dia_primero": true,
+      "hoja": 0
+    }
+  }
+}

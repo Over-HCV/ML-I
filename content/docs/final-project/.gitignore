@@ -1,0 +1,11 @@
+# Datos (generados o traídos a mano) y resultados intermedios: se reconstruyen.
+datos/
+artefactos/
+
+# Cachés
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# Se versionan: figuras/ y los notebooks construidos (notebooks/*.ipynb).
