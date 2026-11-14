@@ -1,0 +1,72 @@
+% Generado por la etapa 01_datos (no editar a mano). Diccionario de datos completo (contrato)
+\begin{tabular}{lllllll}
+\toprule
+Tabla & Columna & Tipo & Papel & Momento & Obligatoria & Descripción \\
+\midrule
+clientes & id\_cliente & id & id & maestro & sí & Identificador del cliente \\
+clientes & sector & categoria & variable & maestro & sí & Línea de negocio del cliente \\
+clientes & zona & categoria & variable & maestro & no & Municipio o zona de la planta \\
+clientes & tamano & categoria & variable & maestro & no & Tamaño de la empresa \\
+clientes & tipo\_contrato & categoria & variable & maestro & no & Contrato marco o servicio por demanda \\
+clientes & certificacion\_bpm & categoria & variable & maestro & no & Cuenta con certificación BPM (sí/no) \\
+clientes & plan\_muestreo & categoria & variable & maestro & no & Frecuencia pactada de muestreo en planta \\
+clientes & fecha\_vinculacion & fecha & fecha & maestro & no & Fecha de vinculación como cliente \\
+clientes & distancia\_km & numero & variable & maestro & no & Distancia de la planta al laboratorio (km) \\
+clientes & canal\_captacion & categoria & variable & maestro & no & Canal por el que llegó el cliente \\
+clientes & ejecutivo\_cuenta & categoria & variable & maestro & no & Ejecutivo comercial asignado \\
+muestreos & id\_muestreo & id & id & programacion & sí & Identificador de la visita \\
+muestreos & id\_cliente & id & id & programacion & sí & Cliente visitado \\
+muestreos & fecha\_programada & fecha & fecha & programacion & sí & Fecha agendada de la visita \\
+muestreos & puntos\_programados & numero & variable & programacion & no & Puntos de muestreo previstos \\
+muestreos & tecnico & categoria & variable & programacion & no & Técnico asignado \\
+muestreos & fecha\_visita & fecha & fecha & toma & no & Fecha en que se hizo la visita \\
+muestreos & duracion\_horas & numero & variable & toma & no & Duración de la visita (h) \\
+muestras & id\_muestra & id & id & toma & sí & Identificador de la muestra \\
+muestras & id\_cliente & id & id & toma & sí & Cliente que envía la muestra \\
+muestras & id\_lote\_envio & id & id & toma & no & Envío en el que llegó la muestra \\
+muestras & id\_muestreo & id & id & toma & no & Visita de muestreo de origen (si aplica) \\
+muestras & fecha\_toma & fecha & fecha & toma & no & Fecha de toma de la muestra \\
+muestras & origen & categoria & variable & toma & no & Enviada por el cliente o tomada en planta \\
+muestras & matriz & categoria & variable & toma & no & Tipo de muestra (producto, materia prima, agua, superficie...) \\
+muestras & tipo\_producto & categoria & variable & toma & no & Familia de producto \\
+muestras & codigo\_producto & texto & auxiliar & toma & no & Referencia del producto del cliente \\
+muestras & ensayo & categoria & variable & toma & sí & Ensayo microbiológico solicitado \\
+muestras & actividad\_agua & numero & variable & toma & no & Actividad de agua declarada (aw) \\
+muestras & ph & numero & variable & toma & no & pH declarado \\
+muestras & conservante & categoria & variable & toma & no & El producto tiene sistema conservante (sí/no) \\
+muestras & volumen\_ml & numero & variable & toma & no & Cantidad de muestra (mL o g) \\
+muestras & urgencia & categoria & variable & toma & no & Prioridad solicitada \\
+muestras & fecha\_recepcion & fecha & fecha & llegada & sí & Fecha de llegada al laboratorio \\
+muestras & hora\_recepcion & numero & variable & llegada & no & Hora de llegada (decimal) \\
+muestras & temperatura\_transporte\_c & numero & variable & llegada & no & Temperatura al llegar (°C) \\
+muestras & horas\_transporte & numero & variable & llegada & no & Horas entre la toma y la llegada \\
+muestras & envase\_integro & categoria & variable & llegada & no & El envase llegó íntegro (sí/no) \\
+muestras & documentacion\_completa & categoria & variable & llegada & no & La solicitud llegó completa (sí/no) \\
+muestras & recepcionista & categoria & variable & llegada & no & Persona que recibe \\
+muestras & estado\_recepcion & categoria & resultado & recepcion & no & Aceptada o rechazada \\
+muestras & dias\_prometidos & numero & variable & recepcion & no & Plazo de entrega prometido (días) \\
+muestras & fecha\_siembra & fecha & fecha & siembra & no & Fecha de montaje del ensayo \\
+muestras & analista & categoria & variable & siembra & no & Analista que monta el ensayo \\
+muestras & turno & categoria & variable & siembra & no & Turno de siembra \\
+muestras & cabina & categoria & variable & siembra & no & Cabina de flujo laminar \\
+muestras & incubadora & categoria & variable & siembra & no & Incubadora \\
+muestras & lote\_medio & texto & auxiliar & siembra & no & Lote del medio de cultivo \\
+muestras & carga\_dia & numero & variable & siembra & no & Muestras sembradas ese día \\
+muestras & fecha\_lectura & fecha & fecha & lectura & no & Fecha de lectura \\
+muestras & control\_ambiental\_ufc & numero & variable & lectura & no & Recuento de la placa de control ambiental de la cabina \\
+muestras & recuento\_reportado & texto & resultado & lectura & no & Recuento tal como se reporta (admite «<10», «Ausencia»...) \\
+muestras & limite\_ufc & numero & variable & toma & no & Límite de especificación (UFC/g o mL) \\
+muestras & resultado & categoria & resultado & lectura & sí & Conforme o no conforme \\
+muestras & reensayo & categoria & resultado & reensayo & no & Se repitió el ensayo (sí/no) \\
+muestras & resultado\_reensayo & categoria & resultado & reensayo & no & Resultado de la repetición \\
+muestras & fecha\_reporte & fecha & fecha & reporte & no & Fecha de entrega del informe \\
+controles & id\_control & id & id & siembra & sí & Identificador del control \\
+controles & fecha & fecha & fecha & siembra & sí & Fecha del control \\
+controles & ensayo & categoria & variable & siembra & sí & Ensayo controlado \\
+controles & tipo\_control & categoria & variable & siembra & sí & Control positivo o negativo \\
+controles & analista & categoria & variable & siembra & no & Analista \\
+controles & incubadora & categoria & variable & siembra & no & Incubadora \\
+controles & lote\_medio & texto & auxiliar & siembra & no & Lote del medio de cultivo \\
+controles & resultado\_control & categoria & resultado & lectura & sí & Crecimiento o sin crecimiento \\
+\bottomrule
+\end{tabular}

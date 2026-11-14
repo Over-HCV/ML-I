@@ -1,0 +1,11 @@
+% Generado por la etapa 07_evaluacion_final (no editar a mano). Pregunta del laboratorio, respuesta, evidencia y limitación
+\begin{tabular}{llll}
+\toprule
+Pregunta del laboratorio & Respuesta & Evidencia & Limitación \\
+\midrule
+¿Cuántas muestras llegarán mañana? & Regresión lineal con un error típico de 9.8 muestras sobre una media de 44.1 & RMSE 12.47 en prueba (14.59 en validación); habilidad 0.334 & el 38 \% de los días queda fuera de la tolerancia \\
+¿Qué muestras están en riesgo? & alerta en recepción con umbral 0.167, unas 21 por semana & AUC 0.724; costo 3295 frente a 3875 sin modelo & solo el 27 \% de las alertas acierta \\
+¿Qué tan probable es un falso positivo? & uno de cada 5 positivos, según controles y clasificador; reensayar si el recuento es menor que 1.66 veces el límite & reensayo conforme 23.3 \% observado frente a 24.1 \% esperado & el reensayo no es una verdad: también falla \\
+¿Qué grupos existen? & 4 perfiles de muestra y 3 segmentos de clientes & silueta 0.148, Hopkins 0.714 & fronteras difusas; uso descriptivo \\
+\bottomrule
+\end{tabular}

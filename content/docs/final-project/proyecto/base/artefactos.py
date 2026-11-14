@@ -84,10 +84,14 @@ def cerrar_etapa(resumen=None):
 
 
 def reiniciar_etapas():
-    """Borra las marcas de etapa (reconstrucción completa)."""
+    """Borra las marcas de etapa y el registro de lecturas de la prueba
+    (reconstrucción completa)."""
     if rutas.DIR_ETAPAS.exists():
         for marca in rutas.DIR_ETAPAS.glob("*.json"):
             marca.unlink()
+        registro = rutas.DIR_ETAPAS / "lecturas_prueba.log"
+        if registro.exists():
+            registro.unlink()
 
 
 # ----------------------------------------------------------------------

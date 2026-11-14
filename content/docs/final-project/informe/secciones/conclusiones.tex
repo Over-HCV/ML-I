@@ -1,0 +1,99 @@
+% =====================================================================
+% conclusiones.tex
+% Responsabilidad única: responder las preguntas del laboratorio con las
+% cifras de prueba, proponer acciones modestas, declarar limitaciones y
+% trazar el trabajo futuro con la exportación real. Cifras: macros Fin*.
+% =====================================================================
+\section{Conclusiones, limitaciones y trabajo futuro}
+\label{sec:conclusiones}
+
+\subsection{Respuestas a las preguntas del laboratorio}
+
+\begin{itemize}
+    \item \textbf{Carga diaria:} una regresión lineal con calendario, puntos de
+          muestreo programados y medias móviles predice la carga del día con
+          un error absoluto medio de \FinMAEPrueba{} muestras sobre una media
+          de \FinMediaPrueba{}, y una habilidad de \FinHabilidadPrueba{} frente
+          a la media de los cinco días anteriores; aun así, el
+          \FinDiasFueraPct{}\,\% de los días queda fuera de la tolerancia
+          práctica.
+    \item \textbf{Riesgo de no conformidad:} una regresión logística calibrada,
+          con el umbral \FinUmbral{} que dicta la razón de costos, ordena las
+          muestras con un ROC-AUC de \FinAUCPrueba{} y emite unas
+          \FinAlertasSemana{} alertas por semana, de las cuales acierta una
+          fracción de \FinPrecisionPrueba{} y que detectan una fracción de
+          \FinRecallPrueba{} de las no conformes, con un ahorro del
+          \FinAhorroPct{}\,\% frente a no alertar.
+    \item \textbf{Falso positivo:} según los controles y el clasificador, uno de
+          cada \FinUnoDeCadaFalso{} positivos sería falso, cifra que la
+          fracción de reensayos conformes de prueba confirma
+          (\FinReensayoConformeObservadoPct{}\,\% observada frente a
+          \FinReensayoConformeEsperadoPct{}\,\% esperada), y los reensayos
+          conformes se concentran en los recuentos que superan el límite en
+          menos de \ClfReglaVecesLimite{} veces.
+    \item \textbf{Grupos:} existen \FinAgrK{} perfiles de muestra y
+          \FinAgrSegmentos{} segmentos de clientes, estables entre semillas
+          pero con fronteras difusas (silueta de \FinAgrSilueta{}), útiles
+          para describir, no para decidir de forma automática.
+\end{itemize}
+
+\subsection{Recomendaciones}
+
+Las recomendaciones son deliberadamente modestas, porque las cifras vienen de
+datos simulados y lo primero es comprobarlas con los reales:
+
+\begin{itemize}
+    \item \textbf{Planeación de turnos:} usar la predicción diaria como apoyo
+          para asignar personal de recepción y siembra, con una revisión manual
+          en las primeras semanas del año, donde el modelo sobreestima.
+    \item \textbf{Piloto de alertas en recepción:} marcar las muestras que
+          superan el umbral durante algunas semanas, sin cambiar el flujo,
+          y medir con los datos reales la precisión, el recall y la carga de
+          alertas por semana antes de adoptarlas.
+    \item \textbf{Regla de reensayo:} priorizar el reensayo de los no conformes
+          cuyo recuento quede por debajo de \ClfReglaVecesLimite{} veces el
+          límite, que es donde se concentran los reensayos conformes.
+    \item \textbf{Seguimiento de clientes:} revisar con el área comercial y de
+          calidad el segmento con más no conformidad y más entregas tardías.
+\end{itemize}
+
+\subsection{Limitaciones}
+
+\begin{itemize}
+    \item \textbf{Datos simulados:} las métricas muestran que el procedimiento
+          funciona de punta a punta y que no hay fugas, pero no miden la
+          operación real; el generador fija relaciones que los modelos luego
+          encuentran, así que con datos reales las habilidades pueden ser más
+          modestas, y las razones de odds o los perfiles no deben leerse como
+          hallazgos sobre el laboratorio.
+    \item \textbf{Pocos casos en algunos ensayos:} \textit{Salmonella} y
+          esterilidad tienen pocos positivos, de forma que su VPP y su
+          fracción de reensayos conformes tienen intervalos anchos y, en
+          prueba, no se interpretan.
+    \item \textbf{Reensayo como referencia:} un reensayo conforme no equivale a
+          un falso positivo, porque el reensayo también falla; con datos
+          reales no existe otra verdad contra la cual comparar.
+    \item \textbf{Siluetas bajas:} los grupos tienen fronteras difusas y la
+          silueta del cribado no era comparable con la del estudio a fondo,
+          por un cambio de preprocesamiento que el cribado debió compartir.
+    \item \textbf{Intervalos bootstrap:} remuestrean filas como si fueran
+          independientes, lo que en la serie diaria ignora la autocorrelación
+          y hace que los intervalos de la regresión sean probablemente
+          demasiado estrechos.
+    \item \textbf{Un solo corte de prueba:} la prueba cubre un único periodo
+          (\FinPruebaDesde{} a \FinPruebaHasta{}), así que las diferencias
+          entre validación y prueba mezclan el desempeño del modelo con los
+          cambios de nivel de la serie.
+\end{itemize}
+
+\subsection{Trabajo futuro con la exportación real}
+
+El siguiente paso es conectar la exportación real, que solo requiere copiar
+los archivos, completar el mapeo de columnas y reconstruir los notebooks,
+revisar primero la tabla de cobertura y la auditoría de limpieza, y ajustar
+las fechas de corte para que caigan dentro del periodo exportado. Después,
+conviene repetir el cribado con el mismo preprocesamiento del estudio a
+fondo, usar intervalos por bloques (bootstrap de bloques móviles) en la serie
+diaria y, si el piloto de alertas confirma su utilidad, recalibrar el modelo
+periódicamente, ya que la tasa de no conformidad cambia con la mezcla de
+clientes.

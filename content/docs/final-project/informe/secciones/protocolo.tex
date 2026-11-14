@@ -1,0 +1,71 @@
+% =====================================================================
+% protocolo.tex
+% Responsabilidad única: dibujar el protocolo temporal del proyecto
+% (entrenamiento, validación y prueba por fechas; qué se hace con cada bloque;
+% validación cruzada de ventana creciente y punto de congelamiento). Fechas y
+% tamaños son macros generadas por los notebooks.
+% =====================================================================
+\begin{figure}[!htbp]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small},
+    caja/.style={draw, rounded corners=2pt, align=center, minimum height=1.05cm, inner sep=4pt},
+    paso/.style={draw, rounded corners=2pt, align=center, fill=gray!6, text width=4.2cm,
+                 minimum height=1.9cm, inner sep=4pt},
+    flecha/.style={-{Stealth[length=2.2mm]}, thick},
+]
+% --- Datos y partición por fechas ------------------------------------------
+\node[caja, fill=gray!10, text width=15.2cm] (datos) at (0,0)
+    {\textbf{Datos:}\enspace \ExpMuestrasLimpias{} muestras limpias recibidas entre \DatDesde{} y \DatHasta{}\\[1pt]
+     {\scriptsize\color{gray!70!black}partición por fecha de recepción, sin mezclar: cortes en \DatCorteValidacion{} y \DatCortePrueba{}}};
+
+\node[caja, fill=classblue!14, draw=classblue, text width=4.2cm] (tr) at (-5.3,-2.2)
+    {\textbf{Entrenamiento}\\ antes de \DatCorteValidacion{}\\ \ExpFilasEntrenamiento{} muestras, \RegDiasEntrenamiento{} días};
+\node[caja, fill=classgreen!16, draw=classgreen, text width=4.2cm] (val) at (0,-2.2)
+    {\textbf{Validación}\\ \DatCorteValidacion{} a \DatCortePrueba{}\\ \ExpFilasValidacion{} muestras, \RegDiasValidacion{} días};
+\node[caja, fill=classred!12, draw=classred, text width=4.2cm] (te) at (5.3,-2.2)
+    {\textbf{Prueba}\\ desde \DatCortePrueba{}\\ \ExpFilasPrueba{} muestras, \FinDiasPrueba{} días};
+
+\foreach \n in {tr, val, te} \draw[flecha, gray] (datos.south -| \n) -- (\n.north);
+
+% --- Qué se hace con cada bloque ------------------------------------------
+\node[paso, below=0.75cm of tr] (ajuste)
+    {\textbf{Ajustar y explorar}\\ cribado, L16 de Taguchi y rejilla, con validación cruzada temporal};
+\node[paso, below=0.75cm of val] (decidir)
+    {\textbf{Decidir y congelar}\\ modelo, calibración y umbral por costo; reajuste con entrenamiento + validación};
+\node[paso, below=0.75cm of te] (evaluar)
+    {\textbf{Evaluar una sola vez}\\ etapa 07: métricas con intervalos bootstrap, sin cambiar nada};
+
+\draw[flecha, classblue] (tr) -- (ajuste);
+\draw[flecha, classgreen] (val) -- (decidir);
+\draw[flecha, classred] (te) -- (evaluar);
+\draw[flecha] (ajuste) -- (decidir);
+\draw[flecha] (decidir) -- (evaluar);
+
+% --- Barrera de congelamiento ----------------------------------------------
+\coordinate (barrera) at ($(te.west)+(-0.28,0)$);
+\draw[classred, very thick, dashed] ($(barrera)+(0,0.9)$) -- ($(barrera |- evaluar.south)+(0,-0.1)$);
+\node[classred, font=\scriptsize\bfseries, align=center, fill=white, inner sep=1pt]
+    at ($(barrera)+(0,1.2)$) {lectura única y registrada};
+
+% --- Validación cruzada de ventana creciente (dentro de entrenamiento) ------
+\begin{scope}[shift={($(ajuste.south)+(-2.1,-0.55)$)}]
+  \node[font=\scriptsize, anchor=west, gray!70!black] at (0,0)
+      {\DatBloquesCV{} bloques de ventana creciente (solo entrenamiento):};
+  \foreach \i/\a in {1/1.6, 2/2.3, 3/3.0, 4/3.7} {
+    \fill[classblue!45] (0,-0.28*\i-0.12) rectangle (\a,-0.28*\i+0.04);
+    \fill[classgreen!70] (\a,-0.28*\i-0.12) rectangle (\a+0.7,-0.28*\i+0.04);
+  }
+  \node[font=\scriptsize, anchor=west] at (4.6,-0.55) {\textcolor{classblue}{ajusta}};
+  \node[font=\scriptsize, anchor=west] at (4.6,-0.9) {\textcolor{classgreen!70!black}{valida}};
+\end{scope}
+\end{tikzpicture}
+\caption{Protocolo temporal del proyecto. Cada bloque de fechas cumple un único
+papel: con entrenamiento se ajusta y se exploran configuraciones mediante
+validación cruzada de ventana creciente (abajo a la izquierda: cada pliegue
+entrena con el pasado y valida con el tramo siguiente, nunca al revés); con
+validación se decide y se congela, y los modelos congelados se reajustan con
+entrenamiento más validación; la prueba se abre una sola vez, en la etapa~07,
+que deja cada lectura registrada.}
+\label{fig:protocolo}
+\end{figure}

@@ -1,0 +1,99 @@
+% =====================================================================
+% preambulo.tex
+% Responsabilidad única: cargar paquetes y definir la configuración y los
+% estilos reutilizables del informe (idioma, convención numérica, tablas,
+% figuras, enlaces, pie institucional y macros de resultados). No contiene
+% contenido propio del proyecto.
+% =====================================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% es-tabla: los cuadros se titulan «Tabla»; es-nodecimaldot: punto decimal
+% en matemáticas (convención de todo el documento: punto decimal, sin
+% separador de miles, igual que en las macros generadas).
+\usepackage[spanish,es-noshorthands,es-tabla,es-nodecimaldot]{babel}
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\listtablename}{Índice de tablas}
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{microtype}
+\setlength{\emergencystretch}{2em}
+
+% --- Índice: espacio para números de sección de dos cifras ---------------------
+\usepackage[titles]{tocloft}
+\setlength{\cftsecnumwidth}{2.1em}
+
+% --- Matemáticas ------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+% --- Tablas y figuras ---------------------------------------------------
+\usepackage{graphicx}
+\graphicspath{{../figuras/}}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, margin=0.5cm}
+\usepackage{float}
+\usepackage{enumitem}
+\setlist{itemsep=2pt, topsep=4pt}
+
+% --- Diagramas vectoriales -----------------------------------------------
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc}
+% Misma paleta que las figuras de matplotlib del proyecto.
+\definecolor{classblue}{HTML}{4C72B0}
+\definecolor{classred}{HTML}{C44E52}
+\definecolor{classgreen}{HTML}{55A868}
+\definecolor{classorange}{HTML}{DD8452}
+
+% --- Color y enlaces ----------------------------------------------------
+\usepackage{xcolor}
+\definecolor{urosariored}{RGB}{255,11,38}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks = true,
+    linkcolor  = urosariored!75!black,
+    citecolor  = urosariored!75!black,
+    urlcolor   = urosariored!75!black,
+    pdftitle   = {Analítica predictiva sobre la base de muestras de un laboratorio de microbiología},
+    pdfauthor  = {Tania Fernanda Mora Cubillos, Daniel Arias Mutis, Over Haider Castrillón Valencia},
+}
+
+% --- Espaciado de tablas y párrafos ---------------------------------------
+\renewcommand{\arraystretch}{1.2}
+\setlength{\parskip}{0.3em}
+\setlength{\parindent}{0pt}
+
+% --- Colocación de flotantes (menos páginas a medio llenar) -----------------
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{5}
+\setlength{\textfloatsep}{10pt plus 2pt minus 4pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+
+% --- Pie de página institucional -----------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyfoot[C]{\thepage}
+\fancyfoot[R]{\includegraphics[height=0.42cm]{figuras/logo_urosario_icono.png}}
+
+% --- Atajos de redacción ----------------------------------------------------
+\newcommand{\codigo}[1]{\texttt{#1}}
+% Tabla generada: \tablagen{nombre}{ancho relativo (o vacío)}
+\newcommand{\tablagen}[1]{\input{generado/tabla_#1}}
+\newcommand{\tablaancha}[1]{\resizebox{\textwidth}{!}{\input{generado/tabla_#1}}}
+
+% --- Cifras generadas por los notebooks -------------------------------------
+% generado/resultados.tex define una macro \NombreDeCifra por cada número
+% citado (punto decimal, sin separador de miles). Si aún no existe (notebooks
+% sin ejecutar), el documento compila igual con las macros indefinidas.
+\IfFileExists{generado/resultados.tex}{\input{generado/resultados.tex}}{%
+  \typeout{AVISO: falta generado/resultados.tex; ejecute make notebooks.}}

@@ -1,0 +1,605 @@
+% Generado por la construcción de los notebooks (no editar a mano).
+% Índice de macros y tablas por etapa. \input{generado/resultados} define las macros;
+% cada tabla se incluye con \input{generado/tabla_<nombre>}.
+%
+% ===== 01_datos: 28 macros =====
+% \DatBloquesCV                = 4            bloques temporales de la validación cruzada
+% \DatClientes                 = 220          clientes en la tabla de clientes
+% \DatClientesConMuestras      = 219          clientes con al menos una muestra
+% \DatColumnasContrato         = 65           columnas declaradas en el contrato de datos
+% \DatColumnasObligatorias     = 15           columnas obligatorias del contrato
+% \DatColumnasOpcionales       = 50           columnas opcionales del contrato
+% \DatControles                = 26236        controles de calidad (positivos y negativos)
+% \DatCortePrueba              = 2026-01-01   fecha de corte entre validación y prueba
+% \DatCorteValidacion          = 2025-07-01   fecha de corte entre entrenamiento y validación
+% \DatCostoFN                  = 5            costo de un falso negativo (no conforme sin alerta)
+% \DatCostoFP                  = 1            costo de un falso positivo (alerta innecesaria)
+% \DatDesde                    = 2023-01-02   primera fecha de recepción
+% \DatDiasCalendario           = 1398         días de la tabla de calendario
+% \DatDuplicadas               = 148          filas crudas de muestras duplicadas exactas
+% \DatFaltanOpcionales         = 0            columnas opcionales que no trae el origen
+% \DatFechaFin                 = 2026-10-30   fin del periodo de datos
+% \DatFechaInicio              = 2023-01-02   inicio del periodo de datos
+% \DatHasta                    = 2026-10-30   última fecha de recepción
+% \DatHuella                   = f82dd7cc9bcb huella SHA-256 abreviada de las tablas crudas
+% \DatMomentos                 = 9            momentos del proceso declarados en el contrato
+% \DatMuestrasCrudas           = 38994        filas crudas de la tabla de muestras
+% \DatOrigen                   = simulacion   origen de los datos (simulacion o real)
+% \DatRecuentosNoNumericos     = 28716        recuentos crudos que no son un número simple
+% \DatRecuentosNoNumericosPct  = 75.9         porcentaje de recuentos no numéricos
+% \DatSemilla                  = 42           semilla del proyecto
+% \DatTablasContrato           = 4            tablas del contrato de datos
+% \DatValoresImposibles        = 366          valores crudos fuera de su rango físico
+% \DatVisitas                  = 1812         visitas de muestreo en planta
+% --- tablas de 01_datos ---
+% tabla_cobertura_opcionales.tex (4 filas): Columnas opcionales que trae el origen, por tabla
+% tabla_columnas_por_momento.tex (9 filas): Columnas del contrato que se conocen en cada momento
+% tabla_diccionario_datos.tex (65 filas): Diccionario de datos completo (contrato)
+% tabla_filas_crudas.tex (5 filas): Filas de cada tabla cruda
+%
+% ===== 02_exploracion: 62 macros =====
+% \ExpCVSemanal                 = 0.30         coeficiente de variación del volumen semanal
+% \ExpCategoriaMasNiveles       = codigo\_producto categórica con más niveles
+% \ExpClientesDesarrollo        = 203          clientes con muestras en el desarrollo
+% \ExpClientesMitad             = 28           clientes más grandes que aportan la mitad del volumen
+% \ExpClientesMitadPct          = 13.8         esos clientes como porcentaje del total
+% \ExpColumnasConFaltantes      = 25           columnas con algún faltante en el desarrollo
+% \ExpColumnasIntegradas        = 69           columnas de la tabla integrada por muestra
+% \ExpColumnasSoloEstructural   = 17           columnas cuyos faltantes son todos estructurales
+% \ExpConformesPorNoConforme    = 11           conformes por cada no conforme (desarrollo)
+% \ExpDecimoClientesPct         = 41.1         volumen (%) del 10 % de clientes más grande
+% \ExpDiferenciaEstandarMax     = 0.34         diferencia de medias en desviaciones estándar
+% \ExpDuplicadosEliminados      = 148          muestras duplicadas eliminadas
+% \ExpEnsayoMasTardio           = mohos y levaduras ensayo con más entregas tardías
+% \ExpEnsayoMasTardioPct        = 16.6         entregas tardías (%) de ese ensayo
+% \ExpEnsayoMenosTardio         = Staphylococcus aureus ensayo con menos entregas tardías
+% \ExpEnsayoMenosTardioPct      = 8.8          entregas tardías (%) de ese ensayo
+% \ExpEntregaMediana            = 6            mediana de días de entrega
+% \ExpEntregaPNoventa           = 12           percentil 90 de días de entrega
+% \ExpEntregaTardiaPct          = 12.6         porcentaje de informes entregados tarde
+% \ExpFilasEntrenamiento        = 23151        muestras del bloque de entrenamiento
+% \ExpFilasPrueba               = 8947         muestras del bloque de prueba (solo se cuentan)
+% \ExpFilasValidacion           = 6748         muestras del bloque de validación
+% \ExpHorasCuartoAltoPct        = 12.6         no conformes (%) en el cuarto con mayor duración del transporte
+% \ExpHorasCuartoBajoPct        = 7.0          no conformes (%) en el cuarto con menor duración del transporte
+% \ExpIndiceMesAlto             = 1.26         índice estacional del mes más cargado
+% \ExpIndiceMesBajo             = 0.83         índice estacional del mes más liviano
+% \ExpMedianaMuestrasCliente    = 73           mediana de muestras por cliente
+% \ExpMesAlto                   = nov          mes más cargado
+% \ExpMesBajo                   = ene          mes más liviano
+% \ExpMuestrasCrudas            = 38994        muestras crudas leídas por la limpieza
+% \ExpMuestrasDesarrollo        = 29899        muestras del periodo de desarrollo
+% \ExpMuestrasLimpias           = 38846        muestras tras la limpieza
+% \ExpMuestrasSemana            = 192          muestras por semana en promedio (semanas completas)
+% \ExpMuestrasSemanaMax         = 366          semana completa con más muestras
+% \ExpMuestrasSemanaMin         = 61           semana completa con menos muestras
+% \ExpNivelesCategoria          = 1169         niveles de esa categórica
+% \ExpParCorrelacionado         = dias\_prometidos y limite\_ufc par de variables de entrada más correlacionado
+% \ExpPeorFaltanteColumna       = actividad\_agua columna con más faltantes no estructurales
+% \ExpPeorFaltantePct           = 9.8          porcentaje de faltantes no estructurales de esa columna
+% \ExpPrimerAnio                = 2023         primer año del desarrollo
+% \ExpProblemaMayor             = recuento censurado («<N» o «>N») tipo de problema de limpieza que más filas toca
+% \ExpProblemaMayorFilas        = 18816        filas que toca el problema de limpieza mayor
+% \ExpReglasConHallazgos        = 18           reglas de limpieza con hallazgos (sin faltantes)
+% \ExpRhoObjetivo               = 0.07         su correlación de Spearman con no conforme
+% \ExpRhoPar                    = $-$0.28      correlación de Spearman de ese par
+% \ExpSectorMayor               = cosmético    línea de negocio con más volumen
+% \ExpSectorMayorPct            = 36.3         porcentaje de muestras de esa línea
+% \ExpSectorMenor               = central de mezclas línea de negocio con menos volumen
+% \ExpSectorMenorPct            = 8.6          porcentaje de muestras de esa línea
+% \ExpSemanas                   = 157          semanas del periodo de desarrollo
+% \ExpTablasLimpias             = 5            tablas limpias guardadas
+% \ExpTasaMensualMaxPct         = 12.7         tasa mensual máxima de no conformes (%)
+% \ExpTasaMensualMinPct         = 5.5          tasa mensual mínima de no conformes (%)
+% \ExpTasaNoConformePct         = 8.6          porcentaje de no conformes entre aceptadas (desarrollo)
+% \ExpTasaPrimerAnioPct         = 7.9          no conformes (%) en el primer año
+% \ExpTasaRechazoPct            = 3.0          porcentaje de muestras rechazadas en recepción (desarrollo)
+% \ExpTasaUltimoAnioPct         = 8.7          no conformes (%) en el último año
+% \ExpTemperaturaCuartoAltoPct  = 12.8         no conformes (%) en el cuarto con mayor temperatura de transporte
+% \ExpTemperaturaCuartoBajoPct  = 6.9          no conformes (%) en el cuarto con menor temperatura de transporte
+% \ExpUltimoAnio                = 2025         último año del desarrollo
+% \ExpVariableCorrObjetivo      = actividad\_agua variable más correlacionada con no conforme
+% \ExpVariableMasSepara         = horas\_transporte variable de llegada que más separa no conformes de conformes
+% --- tablas de 02_exploracion ---
+% tabla_auditoria_limpieza.tex (7 filas): Correcciones de la limpieza por tipo de problema
+% tabla_particion.tex (3 filas): Muestras por bloque temporal
+%
+% ===== 03_cribado_analisis: 49 macros =====
+% \CriAgrCandidatos            = 3            candidatos de agrupamiento cribados
+% \CriAgrComplementario        = segmentos\_clientes análisis de agrupamiento complementario (fuera de la regla)
+% \CriAnalisisConTabla         = 13           análisis del catálogo que llevan tabla de modelado
+% \CriAuditoriasSuperadas      = 13           tablas que superan la auditoría de fugas
+% \CriBayes                    = 3            análisis bayesianos (no se criban)
+% \CriCandidatos               = 16           análisis candidatos del catálogo
+% \CriCandidatosAgr            = 3            candidatos de tipo agrupamiento
+% \CriCandidatosBayes          = 3            candidatos de tipo bayes
+% \CriCandidatosClf            = 5            candidatos de tipo clasificacion
+% \CriCandidatosReg            = 5            candidatos de tipo regresion
+% \CriClfMasHabil              = falso\_positivo\_lectura clasificador con la mayor habilidad bruta en el cribado
+% \CriClfMasHabilHabilidad     = 0.689        su habilidad media (2 AUC - 1)
+% \CriClfMasHabilProporcion    = 95           porcentaje de su habilidad que logra la mejor variable sola
+% \CriCribados                 = 13           candidatos que pasan por la prueba rápida
+% \CriDescartadosReglaSimple   = 3            candidatos descartados por la regla simple
+% \CriElegibles                = 10           candidatos elegibles según la regla
+% \CriElegidos                 = 3            análisis elegidos para el modelado a fondo
+% \CriHopkinsMax               = 0.86         Hopkins máximo entre candidatos de agrupamiento
+% \CriHopkinsMin               = 0.72         Hopkins mínimo entre candidatos de agrupamiento
+% \CriMasInestable             = cliente\_inactivo\_trimestre candidato con la habilidad más inestable entre bloques
+% \CriMasInestableMax          = 0.708        su habilidad máxima por bloque
+% \CriMasInestableMin          = 0.442        su habilidad mínima por bloque
+% \CriMejorSilueta             = 0.433        mejor silueta del cribado
+% \CriMejorSiluetaAnalisis     = perfiles\_muestra candidato de agrupamiento con la mejor silueta
+% \CriMejorSiluetaK            = 2            k de la mejor silueta del cribado
+% \CriMinimoFilas              = 300          filas mínimas de entrenamiento de un supervisado
+% \CriMinimoFilasAgrupamiento  = 50           filas mínimas de un agrupamiento
+% \CriMinimoPositivos          = 100          positivos mínimos de un clasificador
+% \CriNoDisponibles            = 0            análisis no disponibles por columnas faltantes
+% \CriProfundidadArbol         = 4            profundidad del árbol rápido del cribado
+% \CriSegundosPrueba           = 15.1         segundos de la prueba rápida completa
+% \CriSeleccionAgr             = perfiles\_muestra análisis de agrupamiento elegido por la regla
+% \CriSeleccionAgrPuntaje      = 0.144        puntaje del agrupamiento elegido
+% \CriSeleccionAgrSilueta      = 0.433        silueta del agrupamiento elegido
+% \CriSeleccionAgrValor        = 1            valor de negocio del agrupamiento elegido
+% \CriSeleccionClf             = no\_conforme\_recepcion análisis de clasificacion elegido por la regla
+% \CriSeleccionClfAUC          = 0.702        AUC del clasificador elegido
+% \CriSeleccionClfHabilidad    = 0.405        habilidad media del clasificacion elegido
+% \CriSeleccionClfPuntaje      = 0.405        puntaje del clasificacion elegido
+% \CriSeleccionClfValor        = 3            valor de negocio del clasificacion elegido
+% \CriSeleccionReg             = carga\_diaria análisis de regresion elegido por la regla
+% \CriSeleccionRegHabilidad    = 0.290        habilidad media del regresion elegido
+% \CriSeleccionRegPuntaje      = 0.193        puntaje del regresion elegido
+% \CriSeleccionRegValor        = 2            valor de negocio del regresion elegido
+% \CriSupervisados             = 10           candidatos supervisados cribados
+% \CriSupervisadosEstables     = 10           supervisados que superan a su base en todos los bloques
+% \CriTablasConstruidas        = 13           tablas de modelado construidas
+% \CriUmbralHopkins            = 0.50         umbral del estadístico de Hopkins
+% \CriUmbralReglaSimplePct     = 90           umbral (%) de la regla simple
+% --- tablas de 03_cribado_analisis ---
+% tabla_catalogo.tex (16 filas): Catálogo de análisis candidatos
+% tabla_cribado_agrupamiento.tex (3 filas): Cribado de agrupamiento (entrenamiento)
+% tabla_cribado_clasificacion.tex (5 filas): Cribado de clasificación (entrenamiento)
+% tabla_cribado_regresion.tex (5 filas): Cribado de regresión (entrenamiento)
+% tabla_tablas_modelado.tex (13 filas): Tablas de modelado construidas y auditadas
+%
+% ===== 04_regresion: 90 macros =====
+% \RegAlfaPoda                    = 3.798        ccp_alpha elegido para el árbol didáctico
+% \RegAnalisis                    = carga\_diaria análisis de regresión modelado a fondo
+% \RegBloques                     = 4            bloques temporales de la validación cruzada
+% \RegCoefPrincipal               = puntos\_programados\_dia variable con el mayor coeficiente estandarizado
+% \RegCoefPrincipalValor          = 8.85         valor de ese coeficiente
+% \RegCompletoEjecutado           = sí           se ejecutó el factorial completo
+% \RegConfiguracionFinal          = modelo = lineal, escalado = minmax, grupo = ampliado, objetivo\_log = no, seleccion = ninguna, codificacion = one\_hot configuración congelada
+% \RegConfirmaAditivo             = sí           la confirmación cae dentro de la tolerancia
+% \RegCorrParRedundante           = 0.78         su correlación absoluta
+% \RegCorrResiduo                 = 0.10         correlación entre la predicción y el error absoluto en validación
+% \RegCorrSimple                  = 0.596        correlación de Pearson de esa variable con el objetivo
+% \RegCorridasCompleto            = 128          corridas del factorial completo
+% \RegDeltaPrincipal              = 1.17         delta (dB) del factor más influyente
+% \RegDeltaSegundo                = 0.74         delta (dB) del segundo factor
+% \RegDiasEntrenamiento           = 589          días de entrenamiento
+% \RegDiasFueraPct                = 42.4         días de validación fuera de tolerancia (%), modelo
+% \RegDiasFueraReferenciaPct      = 56.0         días de validación fuera de tolerancia (%), referencia
+% \RegDiasValidacion              = 125          días de validación
+% \RegDidacticos                  = 5            modelos de la pasada didáctica
+% \RegDidacticosEstables          = 5            modelos didácticos que superan a la referencia en todos los bloques
+% \RegFactorPrincipal             = modelo       factor más influyente (mayor delta)
+% \RegFactorSegundo               = grupo        segundo factor más influyente
+% \RegFactores                    = 6            factores del L16 de regresión
+% \RegFactoresMismoOptimo         = 5            factores con el mismo mejor nivel en ambos diseños
+% \RegFilasReajuste               = 714          filas del reajuste final (entrenamiento + validación)
+% \RegHabilidadMejorDidactico     = 0.290        su habilidad media frente a la referencia
+% \RegHabilidadMinMejorDidactico  = 0.283        su habilidad mínima por bloque
+% \RegHabilidadValidacion         = 0.249        habilidad del modelo final en validación
+% \RegHabilidadValidacionInf      = 0.154        límite inferior del IC 95 % de la habilidad en validación
+% \RegHabilidadValidacionSup      = 0.343        límite superior del IC 95 % de la habilidad en validación
+% \RegHiperparametros             = ninguno      hiperparámetros congelados
+% \RegHojasPodado                 = 12           hojas del árbol podado
+% \RegHojasSinPoda                = 95           hojas del árbol de regresión sin poda
+% \RegInteracciones               = 15           interacciones de dos factores
+% \RegInteraccionesLibres         = 9            interacciones que quedan libres en el L16
+% \RegInterceptoSimple            = 27.92        intercepto de la recta simple
+% \RegKSeleccion                  = 8            variables que conserva la selección por F
+% \RegMAEOperacion                = 11.0         error absoluto medio del modelo en validación (muestras)
+% \RegMAEReferencia               = 15.4         error absoluto medio de la referencia en validación (muestras)
+% \RegMAEValidacion               = 11.03        MAE del modelo final en validación
+% \RegMaximoEntrenamiento         = 135          máximo diario observado (entrenamiento)
+% \RegMediaEntrenamiento          = 38.3         muestras por día en promedio (entrenamiento)
+% \RegMediaValidacion             = 54.0         muestras por día hábil en promedio (validación)
+% \RegMejorCorrida                = 8            número de la mejor corrida observada del L16
+% \RegMejorDidactico              = Lineal múltiple mejor modelo de la pasada didáctica
+% \RegMejorReferencia             = base\_media\_5 mejor referencia ingenua (base de la habilidad)
+% \RegMinimoEntrenamiento         = 3            mínimo diario observado (entrenamiento)
+% \RegModeloFinal                 = Regresión lineal modelo de regresión congelado
+% \RegModeloOtro                  = Perceptrón multicapa otro candidato evaluado en validación
+% \RegMomento                     = programacion momento de la predicción de la regresión
+% \RegObjetivo                    = muestras\_dia columna objetivo de la regresión
+% \RegOptimo                      = modelo = lineal, escalado = minmax, grupo = ampliado, objetivo\_log = no, seleccion = 8, codificacion = one\_hot óptimo aditivo del L16
+% \RegOrigenConfiguracion         = corrida 8 del L16 de dónde sale la configuración que pasa al afinamiento
+% \RegParRedundante               = media\_movil\_5 y media\_movil\_20 par de variables numéricas más correlacionado
+% \RegPendienteSimple             = 1.114        pendiente de la recta simple
+% \RegPorEmpate                   = no           el final se eligió por la regla de empate
+% \RegPuestoConfirmacion          = 12           puesto de la confirmación entre las combinaciones del factorial
+% \RegRDosSimple                  = 0.355        R cuadrado de la recta simple en entrenamiento
+% \RegRDosValidacion              = 0.367        R cuadrado del modelo final en validación
+% \RegRMSEConfirmacion            = 13.61        RMSE medio de la corrida de confirmación
+% \RegRMSEDummy                   = 19.40        RMSE medio por bloque del Dummy (media)
+% \RegRMSELinealDidactico         = 13.31        RMSE medio de la regresión lineal múltiple didáctica
+% \RegRMSEMLPDidactico            = 14.31        RMSE medio del perceptrón didáctico
+% \RegRMSEMejorCorrida            = 13.38        RMSE medio de la mejor corrida
+% \RegRMSEMejorDidactico          = 13.31        su RMSE medio por bloque
+% \RegRMSEPodado                  = 16.20        RMSE medio del árbol podado
+% \RegRMSEReferencia              = 18.76        RMSE medio por bloque de la mejor referencia
+% \RegRMSEReferenciaMax           = 22.51        RMSE máximo por bloque de la mejor referencia
+% \RegRMSEReferenciaMin           = 15.67        RMSE mínimo por bloque de la mejor referencia
+% \RegRMSESinPoda                 = 17.33        RMSE medio del árbol sin poda
+% \RegRMSEValidacion              = 14.59        RMSE del modelo final en validación
+% \RegRMSEValidacionInf           = 12.23        límite inferior del IC 95 % del RMSE en validación
+% \RegRMSEValidacionOtro          = 15.51        RMSE del otro candidato en validación
+% \RegRMSEValidacionSup           = 17.21        límite superior del IC 95 % del RMSE en validación
+% \RegRejillaLinealRMSE           = 13.38        RMSE medio por bloque de la mejor combinación de la rejilla de lineal
+% \RegRejillaMLPRMSE              = 14.51        RMSE medio por bloque de la mejor combinación de la rejilla de mlp
+% \RegResiduoMedioValidacion      = 1.85         residuo medio (observado - predicho) en validación
+% \RegRhoCompleto                 = 0.94         correlación de Spearman entre deltas del L16 y del factorial completo
+% \RegSNMejorCompleto             = $-$22.57     mejor S/N (dB) del factorial completo
+% \RegSNMejorCorrida              = $-$22.63     S/N (dB) de la mejor corrida
+% \RegSNObservada                 = $-$22.78     S/N (dB) observada en la corrida de confirmación
+% \RegSNPredicha                  = $-$22.76     S/N (dB) predicha para el óptimo aditivo
+% \RegSegundosCompleto            = 11.3         segundos del factorial completo
+% \RegSegundosLSixteen            = 1.5          segundos de las 16 corridas del L16
+% \RegToleranciaEmpatePct         = 1            tolerancia de empate (%) de la regla de elección
+% \RegToleranciaOperativa         = 10.8         tolerancia práctica en muestras por día
+% \RegToleranciaOperativaPct      = 20           tolerancia práctica (% de la media diaria)
+% \RegToleranciaSN                = 0.74         tolerancia (dB) de la confirmación
+% \RegVariableSimple              = puntos\_programados\_dia variable de la regresión lineal simple
+% \RegVariablesModelo             = 25           variables que ve el modelo congelado (tras codificar)
+% --- tablas de 04_regresion ---
+% tabla_reg_coeficientes.tex (3 filas): Tres coeficientes estandarizados de mayor tamaño (regresión múltiple)
+% tabla_reg_didactica.tex (8 filas): Pasada didáctica de regresión (media y desviación entre bloques)
+% tabla_reg_l16_diseno.tex (16 filas): Diseño L16 de regresión con los niveles reales
+% tabla_reg_l16_resultados.tex (16 filas): Resultados del L16 de regresión
+% tabla_reg_poda.tex (6 filas): Ruta de poda del árbol de regresión
+% tabla_reg_referencias.tex (3 filas): RMSE de las referencias por bloque
+% tabla_reg_respuesta.tex (6 filas): Tabla de respuesta de Taguchi (regresión, S/N en dB)
+% tabla_reg_validacion.tex (5 filas): Bloque de validación de la regresión con intervalos bootstrap
+%
+% ===== 05_clasificacion_bayes: 149 macros =====
+% \ClfAUCCalibrado                  = 0.721        ROC-AUC de validación calibrado
+% \ClfAUCConfirmacion               = 0.699        ROC-AUC medio de la corrida de confirmación
+% \ClfAUCDesvMejorDidactico         = 0.021        desviación de su ROC-AUC entre bloques
+% \ClfAUCEquivalentePredicha        = 0.725        ROC-AUC equivalente a la S/N predicha
+% \ClfAUCLogisticaDidactico         = 0.702        ROC-AUC medio de la regresión logística didáctica
+% \ClfAUCMLPDidactico               = 0.692        ROC-AUC medio del perceptrón didáctico
+% \ClfAUCMejorCorrida               = 0.695        ROC-AUC medio de la mejor corrida
+% \ClfAUCMejorDidactico             = 0.702        su ROC-AUC medio por bloque
+% \ClfAUCPeorDidactico              = 0.634        ROC-AUC medio del más débil
+% \ClfAUCPodado                     = 0.639        ROC-AUC medio del árbol podado
+% \ClfAUCRejillaFinal               = 0.699        ROC-AUC medio por bloque del final en la rejilla
+% \ClfAUCSinPoda                    = 0.610        ROC-AUC medio del árbol sin poda
+% \ClfAUCValidacion                 = 0.721        ROC-AUC de validación del modelo que se congela
+% \ClfAUCValidacionInf              = 0.697        límite inferior del IC 95 % del ROC-AUC en validación
+% \ClfAUCValidacionOtro             = 0.697        ROC-AUC de validación del otro candidato
+% \ClfAUCValidacionSinCalibrar      = 0.724        ROC-AUC de validación del final (antes de calibrar)
+% \ClfAUCValidacionSup              = 0.745        límite superior del IC 95 % del ROC-AUC en validación
+% \ClfAhorroPct                     = 19           ahorro (%) frente a la mejor política sin modelo
+% \ClfAlertasSemana                 = 31.2         alertas por semana con el umbral elegido
+% \ClfAlertasValidacion             = 843          alertas totales en validación
+% \ClfAlfaPoda                      = 0.000122     ccp_alpha elegido para el árbol didáctico
+% \ClfAnalisis                      = no\_conforme\_recepcion análisis de clasificación modelado a fondo
+% \ClfAudAUCVPPEnsayo               = 0.559        ROC-AUC del VPP por ensayo frente a la contaminación real
+% \ClfAudAUCVPPx                    = 0.779        ROC-AUC del VPP(x) frente a la contaminación real (validación)
+% \ClfAudBrierVPPEnsayo             = 0.1742       Brier del VPP por ensayo frente a la contaminación real
+% \ClfAudBrierVPPx                  = 0.1449       Brier del VPP(x) frente a la contaminación real
+% \ClfAudEnsayosDentroIC            = 5            ensayos cuyo VPP real cae en el intervalo estimado
+% \ClfAudFalsoRealReensayados       = 0.241        fracción realmente no contaminada entre los reensayados
+% \ClfAudSesgoEspec                 = 0.0033       exceso medio de la especificidad de controles sobre la efectiva
+% \ClfAudVPPReal                    = 0.756        VPP real del desarrollo (verdad de la simulación)
+% \ClfBrierCalibrado                = 0.0752       Brier de validación calibrado
+% \ClfBrierMejorDidactico           = 0.0754       su Brier medio
+% \ClfBrierSinCalibrar              = 0.2269       Brier de validación sin calibrar
+% \ClfCompletoEjecutado             = no           se ejecutó el factorial completo
+% \ClfConfiguracionFinal            = modelo = logistica, escalado = estandar, grupo = ampliado, desbalance = sobremuestreo, seleccion = 26, codificacion = ordinal configuración congelada
+% \ClfConfirmaAditivo               = sí           la confirmación cae dentro de la tolerancia
+% \ClfControlesDesarrollo           = 20552        controles de calidad del desarrollo
+% \ClfCostoAlertarTodo              = 5964         costo en validación de alertar todas
+% \ClfCostoNoAlertar                = 2925         costo en validación de no alertar nunca
+% \ClfDeltaPrincipal                = 1.030        delta (dB) del factor más influyente
+% \ClfDeltaSegundo                  = 0.292        delta (dB) del segundo factor
+% \ClfDummyAUC                      = 0.500        ROC-AUC medio del Dummy por bloque
+% \ClfDummyBrier                    = 0.0813       Brier medio del Dummy por bloque
+% \ClfDummyPrecisionMedia           = 0.089        precisión media del Dummy por bloque
+% \ClfEnsayoEjemplo                 = mesófilos aerobios ensayo de los dos ejemplos de VPP(x)
+% \ClfEnsayos                       = 7            ensayos con sensibilidad y especificidad estimadas
+% \ClfEspecMax                      = 0.995        especificidad máxima entre ensayos
+% \ClfEspecMin                      = 0.976        especificidad mínima entre ensayos
+% \ClfEspecMinEnsayo                = mohos y levaduras ensayo con la menor especificidad
+% \ClfFN                            = 353          falsos negativos en validación
+% \ClfFP                            = 611          falsos positivos en validación
+% \ClfFUnoUmbral                    = 0.325        F1 con el umbral elegido
+% \ClfFactorPrincipal               = modelo       factor más influyente (mayor delta)
+% \ClfFactorSegundo                 = grupo        segundo factor más influyente
+% \ClfFalsoRiesgoAlto               = 0.026        P(falso positivo) en la muestra de riesgo alto
+% \ClfFalsoRiesgoBajo               = 0.378        P(falso positivo) en la muestra de riesgo bajo
+% \ClfFalsosPorCien                 = 22           falsos positivos por cada cien no conformes (controles)
+% \ClfFilasReajuste                 = 29012        filas del reajuste final (entrenamiento + validación)
+% \ClfHiperparametros               = C = 10       hiperparámetros congelados
+% \ClfHojaRiesgoFilas               = 22           muestras en la hoja de mayor riesgo del árbol
+% \ClfHojaRiesgoFraccion            = 0.773        fracción de no conformes en esa hoja
+% \ClfHojaRiesgoVeces               = 9.0          veces la tasa general
+% \ClfHojasPodado                   = 52           hojas del árbol podado
+% \ClfHojasSinPoda                  = 546          hojas del árbol de clasificación sin poda
+% \ClfInteraccionesLibres           = 9            interacciones que quedan libres en el L16
+% \ClfKSeleccion                    = 26           variables que conserva la selección por F
+% \ClfMejorCorrida                  = 8            número de la mejor corrida observada del L16
+% \ClfMejorDidactico                = Regresión logística mejor modelo de la pasada didáctica
+% \ClfModeloFinal                   = Regresión logística modelo de clasificación congelado
+% \ClfModeloOtro                    = Árbol de decisión otro candidato evaluado en validación
+% \ClfMomento                       = recepcion    momento de la predicción de la clasificación
+% \ClfMuestrasEntrenamiento         = 22463        muestras de entrenamiento
+% \ClfMuestrasValidacion            = 6549         muestras de validación
+% \ClfObjetivo                      = no\_conforme columna objetivo de la clasificación
+% \ClfOddsBaja                      = 0.36         su razón de odds
+% \ClfOddsSube                      = 3.65         su razón de odds
+% \ClfOptimo                        = modelo = logistica, escalado = estandar, grupo = ampliado, desbalance = sobremuestreo, seleccion = 26, codificacion = ordinal óptimo aditivo del L16
+% \ClfOrigenConfiguracion           = corrida de confirmación de dónde sale la configuración que pasa al afinamiento
+% \ClfPeorDidactico                 = KNN          modelo más débil de la pasada didáctica
+% \ClfPorEmpate                     = no           el final se eligió por la regla de empate
+% \ClfPositivosEntrenamiento        = 1920         no conformes en entrenamiento
+% \ClfPositivosValidacion           = 585          no conformes en validación
+% \ClfPositivosValidacionBayes      = 585          positivos de validación con VPP(x)
+% \ClfPosteriorMasMasMax            = 0.999        posterior máxima tras dos positivos
+% \ClfPosteriorMasMasMin            = 0.988        posterior mínima tras dos positivos
+% \ClfPosteriorMasMenosMax          = 0.474        posterior máxima tras positivo y negativo
+% \ClfPosteriorMasMenosMin          = 0.059        posterior mínima tras positivo y negativo
+% \ClfPrecisionMediaMejorDidactico  = 0.254        su precisión media
+% \ClfPrecisionMediaValidacion      = 0.245        precisión media en validación
+% \ClfPrecisionUmbral               = 0.275        precisión con el umbral elegido
+% \ClfPrevalenciaEntrenamientoPct   = 8.5          no conformes (%) en entrenamiento
+% \ClfPrevalenciaValidacionPct      = 8.9          no conformes (%) en validación
+% \ClfProbMediaCalibrado            = 0.099        probabilidad media en validación calibrada
+% \ClfProbMediaSinCalibrar          = 0.464        probabilidad media en validación sin calibrar
+% \ClfRecallUmbral                  = 0.397        recall con el umbral elegido
+% \ClfRecorteCeroPct                = 0.0          positivos con previa recortada a cero (%)
+% \ClfReensayados                   = 2186         positivos reensayados en el desarrollo
+% \ClfReensayoConformeEsperadoPct   = 25.0         reensayos conformes esperados (%) según los controles
+% \ClfReensayoConformeObservadoPct  = 27.2         reensayos conformes observados (%) en el desarrollo
+% \ClfReglaBorde                    = 0.22         borde de log10(recuento / límite) de la regla de reensayo
+% \ClfReglaCapturaPct               = 51           reensayos conformes que concentra el grupo (%)
+% \ClfReglaGrupoPct                 = 17           reensayados con recuento que caen bajo el borde (%)
+% \ClfReglaTasaAltoPct              = 15           reensayos conformes (%) sobre el borde (desarrollo)
+% \ClfReglaTasaBajoPct              = 78           reensayos conformes (%) bajo el borde (desarrollo)
+% \ClfReglaVecesLimite              = 1.66         veces el límite bajo las que se reensaya
+% \ClfRejillaArbolAUC               = 0.654        ROC-AUC medio por bloque de la mejor combinación de la rejilla de arbol
+% \ClfRejillaLogisticaAUC           = 0.699        ROC-AUC medio por bloque de la mejor combinación de la rejilla de logistica
+% \ClfRevisadasPorDetectado         = 2.6          conformes revisadas por no conforme detectado
+% \ClfSNMejorCorrida                = $-$3.17      S/N (dB) de la mejor corrida
+% \ClfSNObservada                   = $-$3.117     S/N (dB) observada en la corrida de confirmación
+% \ClfSNPredicha                    = $-$2.798     S/N (dB) predicha para el óptimo aditivo
+% \ClfSegundosCompletoEstimados     = 303          segundos estimados del factorial completo
+% \ClfSegundosLSixteen              = 37.8         segundos de las 16 corridas del L16
+% \ClfSemanasValidacion             = 27           semanas del periodo de validación
+% \ClfSensMax                       = 0.966        sensibilidad máxima entre ensayos
+% \ClfSensMin                       = 0.897        sensibilidad mínima entre ensayos
+% \ClfSensMinEnsayo                 = Salmonella spp. ensayo con la menor sensibilidad
+% \ClfSinRazonConformes             = 0.338        fracción conforme en ensayos sin recuento
+% \ClfSinRazonReensayados           = 346          reensayados de ensayos sin recuento
+% \ClfSobreDeltaAUC                 = $-$0.080     cambio de su ROC-AUC con sobremuestreo
+% \ClfSobreDeltaAUCMenor            = $-$0.003     cambio de su ROC-AUC con sobremuestreo
+% \ClfSobreMasPierde                = Perceptrón multicapa modelo al que el sobremuestreo le quita más ROC-AUC
+% \ClfSobreMenosPierde              = Regresión logística modelo que casi no cambia con sobremuestreo
+% \ClfSobremuestrea                 = sí           la tubería elegida sobremuestrea
+% \ClfSorteos                       = 4000         sorteos de las posteriores Beta para el VPP
+% \ClfTN                            = 5353         verdaderos negativos en validación
+% \ClfTP                            = 232          verdaderos positivos en validación
+% \ClfTasaTramos                    = 0.089        tasa real de no conformes en los tramos de validación de los bloques
+% \ClfToleranciaSN                  = 0.683        tolerancia (dB) de la confirmación
+% \ClfUmbral                        = 0.167        umbral de alerta elegido por costo en validación
+% \ClfUmbralCosto                   = 2376         costo en validación con el umbral elegido
+% \ClfUmbralCostoInf                = 2196         límite inferior del IC 95 % del costo
+% \ClfUmbralCostoSup                = 2542         límite superior del IC 95 % del costo
+% \ClfUmbralTeorico                 = 0.167        umbral teórico por costo, CFP / (CFP + CFN)
+% \ClfUmbralTeoricoCosto            = 2376         costo en validación con el umbral teórico
+% \ClfUsaCalibrado                  = sí           se usa la versión calibrada
+% \ClfVPPGlobal                     = 0.784        VPP del laboratorio ponderado por positivos (desarrollo)
+% \ClfVPPMejor                      = 0.897        VPP del ensayo más fiable
+% \ClfVPPMejorEnsayo                = Salmonella spp. ensayo con el mayor VPP
+% \ClfVPPPeor                       = 0.627        VPP del ensayo menos fiable
+% \ClfVPPPeorEnsayo                 = esterilidad  ensayo con el menor VPP
+% \ClfVPPPeorInf                    = 0.428        límite inferior del intervalo del VPP menos fiable
+% \ClfVPPPeorSup                    = 0.759        límite superior del intervalo del VPP menos fiable
+% \ClfVPPxMax                       = 0.995        VPP(x) máximo entre los positivos de validación
+% \ClfVPPxMin                       = 0.040        VPP(x) mínimo entre los positivos de validación
+% \ClfVPPxPDiez                     = 0.597        percentil 10 del VPP(x)
+% \ClfVPPxPNoventa                  = 0.968        percentil 90 del VPP(x)
+% \ClfVariableBaja                  = ensayo\_Salmonella spp. variable de mayor peso que reduce el riesgo
+% \ClfVariableSube                  = tipo\_producto\_lácteo variable de mayor peso que aumenta el riesgo
+% --- tablas de 05_clasificacion_bayes ---
+% tabla_bayes_auditoria.tex (7 filas): Auditoría del VPP frente a la verdad de la simulación
+% tabla_bayes_reensayo.tex (7 filas): Posterior tras el reensayo y reensayos conformes (desarrollo)
+% tabla_bayes_sens_espec.tex (7 filas): Sensibilidad y especificidad por ensayo (intervalos de Wilson)
+% tabla_bayes_tramos_reensayo.tex (6 filas): Reensayos conformes por sextil de log10(recuento / límite)
+% tabla_bayes_vpp_ensayo.tex (7 filas): VPP por ensayo en el desarrollo
+% tabla_bayes_vpp_muestra.tex (7 filas): VPP(x) entre los positivos de validación, por ensayo
+% tabla_clf_didactica.tex (5 filas): Pasada didáctica de clasificación (media y desviación entre bloques)
+% tabla_clf_l16_diseno.tex (16 filas): Diseño L16 de clasificación con los niveles reales
+% tabla_clf_l16_resultados.tex (16 filas): Resultados del L16 de clasificación
+% tabla_clf_odds.tex (8 filas): Ocho variables con mayor peso en la regresión logística
+% tabla_clf_poda.tex (6 filas): Ruta de poda del árbol de clasificación
+% tabla_clf_reglas_arbol.tex (6 filas): Hojas de mayor riesgo del árbol podado
+% tabla_clf_respuesta.tex (6 filas): Tabla de respuesta de Taguchi (clasificación, S/N en dB)
+% tabla_clf_sobremuestreo.tex (4 filas): Modelos didácticos sin y con sobremuestreo
+% tabla_clf_umbrales.tex (26 filas): Recorrido de umbrales en validación
+% tabla_clf_validacion.tex (3 filas): Candidatos de clasificación en validación (intervalos bootstrap)
+%
+% ===== 06_agrupamiento: 74 macros =====
+% \AgrAudARIDbscan                  = 0.007        ARI entre el segmento latente y DBSCAN
+% \AgrAudARIKmeans                  = 0.190        ARI entre el segmento latente y K-means
+% \AgrAudClientes                   = 186          clientes auditados contra el segmento latente
+% \AgrAudPureza                     = 0.538        pureza de los segmentos de K-means
+% \AgrAudSegmentosLatentes          = 4            segmentos latentes de la simulación
+% \AgrCompARIKmDb                   = 0.051        ARI entre K-means y DBSCAN con ruido (complementario)
+% \AgrCompARIKmDbSinRuido           = 0.000        ARI entre K-means y DBSCAN sin ruido (complementario)
+% \AgrCompARISinEscalar             = 0.000        ARI entre K-means sin escalar y escalado (complementario)
+% \AgrCompConLog                    = 1            variables con log1p en el análisis complementario
+% \AgrCompDBCombinaciones           = 16           combinaciones de la rejilla de DBSCAN (complementario)
+% \AgrCompDBConGrupos               = 0            combinaciones de DBSCAN con dos o más grupos (complementario)
+% \AgrCompDBCriterio                = respaldo     criterio con que se eligió DBSCAN (complementario)
+% \AgrCompDBEps                     = 3.42         eps elegido de DBSCAN (complementario)
+% \AgrCompDBGrupos                  = 1            grupos de DBSCAN (complementario)
+% \AgrCompDBMinMuestras             = 12           min_samples elegido de DBSCAN (complementario)
+% \AgrCompDBRuidoPct                = 7.5          casos de ruido (%) de DBSCAN (complementario)
+% \AgrCompDBSilueta                 = ---          silueta sin ruido de DBSCAN (complementario)
+% \AgrCompDominante                 = antigüedad   variable que domina la varianza sin escalar (complementario)
+% \AgrCompDominantePct              = 100.0        varianza (%) que aporta sin escalar (complementario)
+% \AgrCompEstabilidadMax            = 0.948        ARI máximo entre semillas (complementario)
+% \AgrCompEstabilidadMin            = 0.934        ARI mínimo entre semillas (complementario)
+% \AgrCompFilas                     = 186          filas del análisis complementario
+% \AgrCompGrupos                    = Más no conformidad $\cdot$ más entregas tardías, Más muestreo en planta $\cdot$ más tamaño de lote, Menos volumen mensual $\cdot$ menos muestreo en planta nombres de los segmentos de clientes
+% \AgrCompHopkins                   = 0.710        Hopkins de la matriz escalada (complementario)
+% \AgrCompK                         = 3            k elegido por silueta (complementario)
+% \AgrCompPCAVarianzaPct            = 40.2         varianza (%) que explican las dos componentes (complementario)
+% \AgrCompSegmentoMayor             = Más muestreo en planta $\cdot$ más tamaño de lote segmento de clientes con más muestras
+% \AgrCompSegmentoMayorClientesPct  = 39.2         sus clientes (%)
+% \AgrCompSegmentoMayorMuestrasPct  = 73.6         sus muestras (%)
+% \AgrCompSilueta                   = 0.186        silueta de K-means con el k elegido (complementario)
+% \AgrCompSiluetaMax                = 0.186        silueta máxima de la exploración (complementario)
+% \AgrCompSiluetaMin                = 0.124        silueta mínima de la exploración (complementario)
+% \AgrCompVariables                 = 12           variables de la matriz del análisis complementario
+% \AgrComplementario                = segmentos\_clientes análisis de agrupamiento complementario
+% \AgrComplementarioSupera          = sí           el complementario habría superado al seleccionado
+% \AgrEfectoFilas                   = 0.001        cambio de silueta por las filas
+% \AgrEfectoLog                     = $-$0.286     cambio de silueta por log1p
+% \AgrKMax                          = 10           mayor k explorado en K-means
+% \AgrKMin                          = 2            menor k explorado en K-means
+% \AgrPuntajeCompEtapa              = 0.124        puntaje de la regla del complementario con la silueta de la etapa 06
+% \AgrPuntajeSelEtapa               = 0.049        puntaje de la regla del seleccionado con la silueta de la etapa 06
+% \AgrRuidoMaximoPct                = 15           ruido máximo (%) de una solución DBSCAN con grupos
+% \AgrRuidoRespaldoPct              = 10           ruido máximo (%) de DBSCAN como detector de atípicos
+% \AgrSelARIKmDb                    = 0.135        ARI entre K-means y DBSCAN con ruido (seleccionado)
+% \AgrSelARIKmDbSinRuido            = 0.064        ARI entre K-means y DBSCAN sin ruido (seleccionado)
+% \AgrSelARISinEscalar              = 0.000        ARI entre K-means sin escalar y escalado (seleccionado)
+% \AgrSelConLog                     = 5            variables con log1p en el análisis seleccionado
+% \AgrSelDBCombinaciones            = 16           combinaciones de la rejilla de DBSCAN (seleccionado)
+% \AgrSelDBConGrupos                = 10           combinaciones de DBSCAN con dos o más grupos (seleccionado)
+% \AgrSelDBCriterio                 = regla        criterio con que se eligió DBSCAN (seleccionado)
+% \AgrSelDBEps                      = 1.59         eps elegido de DBSCAN (seleccionado)
+% \AgrSelDBGrupos                   = 2            grupos de DBSCAN (seleccionado)
+% \AgrSelDBMinMuestras              = 16           min_samples elegido de DBSCAN (seleccionado)
+% \AgrSelDBRuidoPct                 = 12.7         casos de ruido (%) de DBSCAN (seleccionado)
+% \AgrSelDBSilueta                  = 0.314        silueta sin ruido de DBSCAN (seleccionado)
+% \AgrSelDominante                  = volumen de muestra variable que domina la varianza sin escalar (seleccionado)
+% \AgrSelDominantePct               = 95.0         varianza (%) que aporta sin escalar (seleccionado)
+% \AgrSelEstabilidadMax             = 0.996        ARI máximo entre semillas (seleccionado)
+% \AgrSelEstabilidadMin             = 0.981        ARI mínimo entre semillas (seleccionado)
+% \AgrSelFilas                      = 5000         filas del análisis seleccionado
+% \AgrSelGrupos                     = Recepción tardía $\cdot$ transporte más frío, Transporte largo, Recepción temprana, Plazo prometido largo $\cdot$ entrega lenta nombres de los perfiles de muestra
+% \AgrSelHopkins                    = 0.714        Hopkins de la matriz escalada (seleccionado)
+% \AgrSelK                          = 4            k elegido por silueta (seleccionado)
+% \AgrSelPCAVarianzaPct             = 38.1         varianza (%) que explican las dos componentes (seleccionado)
+% \AgrSelSilueta                    = 0.148        silueta de K-means con el k elegido (seleccionado)
+% \AgrSelSiluetaMax                 = 0.148        silueta máxima de la exploración (seleccionado)
+% \AgrSelSiluetaMin                 = 0.120        silueta mínima de la exploración (seleccionado)
+% \AgrSelVariables                  = 8            variables de la matriz del análisis seleccionado
+% \AgrSeleccionado                  = perfiles\_muestra análisis de agrupamiento seleccionado por la regla
+% \AgrSemillasEstabilidad           = 5            semillas adicionales para la estabilidad
+% \AgrSiluetaCribado                = 0.433        silueta del seleccionado en el cribado
+% \AgrSiluetaSinLog                 = 0.434        silueta con filas de la etapa 06 sin log1p
+% \AgrToleranciaSilueta             = 0.02         diferencia de silueta que se discute
+% \AgrUmbralNombre                  = 0.5          desviaciones estándar para nombrar un grupo
+% --- tablas de 06_agrupamiento ---
+% tabla_agr_comp_grupos.tex (3 filas): Grupos de K-means en segmentos_clientes con su nombre
+% tabla_agr_comp_kmeans.tex (9 filas): Inercia y silueta por k (segmentos_clientes)
+% tabla_agr_comp_medias.tex (12 filas): Medias por grupo en segmentos_clientes (variables originales)
+% tabla_agr_comp_segmentos.tex (3 filas): Tamaño y desempeño de cada segmento de clientes
+% tabla_agr_sel_grupos.tex (4 filas): Grupos de K-means en perfiles_muestra con su nombre
+% tabla_agr_sel_kmeans.tex (9 filas): Inercia y silueta por k (perfiles_muestra)
+% tabla_agr_sel_medias.tex (8 filas): Medias por grupo en perfiles_muestra (variables originales)
+% tabla_agr_silueta_cribado.tex (2 filas): Silueta y puntaje del cribado con el preprocesamiento de cada etapa
+%
+% ===== 07_evaluacion_final: 76 macros =====
+% \FinAUCPrueba                        = 0.724        ROC-AUC en la prueba
+% \FinAUCPruebaInf                     = 0.705        límite inferior del IC 95 % del ROC-AUC en la prueba
+% \FinAUCPruebaSup                     = 0.743        límite superior del IC 95 % del ROC-AUC en la prueba
+% \FinAgrHopkins                       = 0.714        Hopkins de los perfiles de muestra
+% \FinAgrK                             = 4            perfiles de muestra de K-means
+% \FinAgrSegmentos                     = 3            segmentos de clientes de K-means
+% \FinAgrSilueta                       = 0.148        silueta de los perfiles de muestra (etapa 06)
+% \FinAgrSiluetaCribado                = 0.433        silueta del mismo análisis en el cribado
+% \FinAhorroPct                        = 15           ahorro (%) frente a la mejor política sin modelo en la prueba
+% \FinAlertasSemana                    = 21.2         alertas por semana en la prueba
+% \FinAudBrierVPPEnsayo                = 0.1586       Brier del VPP por ensayo en la prueba
+% \FinAudBrierVPPx                     = 0.1381       Brier del VPP(x) en la prueba
+% \FinAudVPPReal                       = 0.800        fracción de positivos de prueba realmente contaminados
+% \FinBrierPrueba                      = 0.0753       Brier en la prueba
+% \FinCambioRMSEPct                    = $-$15        cambio (%) del RMSE de validación a prueba
+% \FinClfModelo                        = Regresión logística modelo de clasificación evaluado en la prueba
+% \FinCostoAlertarTodo                 = 7882         costo en la prueba de alertar todo
+% \FinCostoNoAlertar                   = 3875         costo en la prueba de no alertar
+% \FinCostoPorMuestraPrueba            = 0.381        costo por muestra en la prueba
+% \FinCostoPrueba                      = 3295         costo con el umbral en la prueba
+% \FinCostoRetro                       = 3231         costo con el umbral retrospectivo (no se usa)
+% \FinDiasFinDeAnio                    = 5            días hábiles de prueba en la ventana de fin de año
+% \FinDiasFueraPct                     = 37.9         días de prueba fuera de tolerancia (%), modelo
+% \FinDiasFueraReferenciaPct           = 57.1         días de prueba fuera de tolerancia (%), referencia
+% \FinDiasPrueba                       = 203          días hábiles de prueba
+% \FinEnsayosPocosPositivos            = 2            ensayos con menos de 30 positivos de prueba
+% \FinFN                               = 523          falsos negativos en la prueba
+% \FinFP                               = 680          falsos positivos en la prueba
+% \FinFUnoPrueba                       = 0.295        F1 con el umbral en la prueba
+% \FinHabilidadPrueba                  = 0.334        habilidad del modelo en la prueba
+% \FinHabilidadPruebaInf               = 0.247        límite inferior del IC 95 % de la habilidad en la prueba
+% \FinHabilidadPruebaSup               = 0.408        límite superior del IC 95 % de la habilidad en la prueba
+% \FinMAEPrueba                        = 9.80         MAE del modelo de regresión en la prueba
+% \FinMediaPrueba                      = 44.1         muestras por día hábil en promedio (prueba)
+% \FinMinimoPositivos                  = 30           mínimo de positivos de prueba por ensayo para una cifra precisa
+% \FinMuestrasPrueba                   = 8657         muestras de prueba con resultado
+% \FinPositivosPrueba                  = 775          positivos (no conformes) en la prueba
+% \FinPrecisionMediaPrueba             = 0.243        precisión media en la prueba
+% \FinPrecisionPrueba                  = 0.270        precisión con el umbral en la prueba
+% \FinPrecisionPruebaInf               = 0.242        límite inferior del IC 95 % de la precisión
+% \FinPrecisionPruebaSup               = 0.299        límite superior del IC 95 % de la precisión
+% \FinPrevalenciaPrueba                = 0.090        tasa real de no conformes en la prueba
+% \FinProbMediaPrueba                  = 0.090        probabilidad media predicha en la prueba
+% \FinPruebaDesde                      = 2026-01-02   primer día de prueba
+% \FinPruebaHasta                      = 2026-10-30   último día de prueba
+% \FinRDosPrueba                       = 0.529        R cuadrado del modelo de regresión en la prueba
+% \FinRMSEPrueba                       = 12.47        RMSE del modelo de regresión en la prueba
+% \FinRMSEPruebaInf                    = 11.20        límite inferior del IC 95 % del RMSE en la prueba
+% \FinRMSEPruebaSup                    = 13.66        límite superior del IC 95 % del RMSE en la prueba
+% \FinRecallPrueba                     = 0.325        recall con el umbral en la prueba
+% \FinRecallPruebaInf                  = 0.293        límite inferior del IC 95 % del recall
+% \FinRecallPruebaSup                  = 0.357        límite superior del IC 95 % del recall
+% \FinReensayados                      = 691          positivos de prueba reensayados
+% \FinReensayoConformeEsperadoPct      = 24.1         reensayos conformes esperados (%) en la prueba
+% \FinReensayoConformeObservadoInfPct  = 20.3         límite inferior de Wilson (%)
+% \FinReensayoConformeObservadoPct     = 23.3         reensayos conformes observados (%) en la prueba
+% \FinReensayoConformeObservadoSupPct  = 26.6         límite superior de Wilson (%)
+% \FinReensayosPrueba                  = 698          no conformes reensayados en la prueba
+% \FinRegModelo                        = Regresión lineal modelo de regresión evaluado en la prueba
+% \FinRegReferencia                    = base\_media\_5 referencia de la habilidad en la prueba
+% \FinReglaBajoBorde                   = 93           reensayos de prueba bajo el borde
+% \FinReglaCapturaPct                  = 55           reensayos conformes que concentra el grupo en la prueba (%)
+% \FinReglaReensayosConRecuento        = 593          reensayos de prueba con recuento
+% \FinReglaTasaAltoPct                 = 12           reensayos conformes (%) sobre el borde en la prueba
+% \FinReglaTasaBajoInfPct              = 68           límite inferior de Wilson (%)
+% \FinReglaTasaBajoPct                 = 77           reensayos conformes (%) bajo el borde en la prueba
+% \FinReglaTasaBajoSupPct              = 85           límite superior de Wilson (%)
+% \FinResiduoFinDeAnio                 = $-$12.5      residuo medio en la ventana de fin de año
+% \FinResiduoResto                     = 0.6          residuo medio fuera de la ventana de fin de año
+% \FinSemanasPrueba                    = 44           semanas del periodo de prueba
+% \FinTN                               = 7202         verdaderos negativos en la prueba
+% \FinTP                               = 252          verdaderos positivos en la prueba
+% \FinUmbral                           = 0.167        umbral congelado de la clasificación
+% \FinUmbralRetro                      = 0.140        umbral retrospectivo de menor costo en la prueba (no se usa)
+% \FinUnoDeCadaFalso                   = 5            uno de cada cuántos positivos sería falso (prueba)
+% \FinVPPxMedio                        = 0.794        VPP(x) medio de los positivos de prueba
+% --- tablas de 07_evaluacion_final ---
+% tabla_final_auditoria.tex (7 filas): Auditoría en prueba del VPP frente a la verdad
+% tabla_final_bayes.tex (7 filas): VPP y reensayos conformes en la prueba, por ensayo
+% tabla_final_clasificacion_validacion.tex (7 filas): Validación frente a prueba, clasificación
+% tabla_final_congelado.tex (2 filas): Modelos congelados antes de abrir la prueba
+% tabla_final_preguntas.tex (4 filas): Pregunta del laboratorio, respuesta, evidencia y limitación
+% tabla_final_regla_reensayo.tex (2 filas): Regla de reensayo en desarrollo y prueba
+% tabla_final_regresion.tex (3 filas): Regresión en la prueba (modelo y referencias)
+% tabla_final_regresion_validacion.tex (4 filas): Validación frente a prueba, regresión
+% tabla_final_resumen.tex (8 filas): Resumen final: validación (o desarrollo) frente a prueba
+%

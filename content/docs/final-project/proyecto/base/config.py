@@ -10,7 +10,7 @@ SEMILLA = 42
 
 TITULO_PROYECTO = "Analítica predictiva sobre la base de muestras de un laboratorio de microbiología"
 ROTULO_PROYECTO = "Aprendizaje Automático de Máquina I · Proyecto final"
-AUTORES = "Tania Fernanda Mora Cubillos · Over Haider Castrillón Valencia"
+AUTORES = "Tania Fernanda Mora Cubillos · Daniel Arias Mutis · Over Haider Castrillón Valencia"
 
 # Origen de los datos: "simulacion" genera la base con `datos/simulacion.py`;
 # "real" lee la exportación del laboratorio descrita en

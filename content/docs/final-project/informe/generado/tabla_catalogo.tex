@@ -1,0 +1,23 @@
+% Generado por la etapa 03_cribado_analisis (no editar a mano). Catálogo de análisis candidatos
+\begin{tabular}{lllllllllr}
+\toprule
+Análisis & Título & Tipo & Unidad & Objetivo & Momento & Métrica & Línea base & Decisión que apoya & Valor \\
+\midrule
+volumen\_semanal\_linea & Volumen semanal de muestras por línea & regresion & semana $\times$ línea de negocio & muestras\_semana & programacion & rmse & base\_media\_4 & Programar analistas, medios de cultivo e incubadoras de la semana siguiente. & 3 \\
+carga\_diaria & Carga diaria del laboratorio & regresion & día hábil & muestras\_dia & programacion & rmse & base\_media\_5 & Ajustar los turnos de recepción y siembra del día siguiente. & 2 \\
+dias\_entrega\_recepcion & Días de entrega del informe & regresion & muestra aceptada & dias\_entrega & recepcion & rmse & Dummy & Prometer al cliente una fecha de entrega realista al recibir la muestra. & 2 \\
+recuento\_log\_recepcion & Recuento microbiano (log UFC) & regresion & muestra aceptada con recuento & recuento\_log & recepcion & rmse & Dummy & Anticipar las diluciones necesarias antes de sembrar. & 1 \\
+visitas\_mensuales\_cliente & Visitas de muestreo por cliente y mes & regresion & cliente $\times$ mes & visitas\_mes & maestro & rmse & base\_media\_3 & Reservar técnicos de muestreo en planta para el mes siguiente. & 1 \\
+no\_conforme\_recepcion & Resultado no conforme, visto desde la recepción & clasificacion & muestra aceptada & no\_conforme & recepcion & roc\_auc & Dummy & Priorizar la siembra y avisar pronto al cliente de las muestras de mayor riesgo. & 3 \\
+falso\_positivo\_lectura & Falso positivo entre los no conformes & clasificacion & resultado no conforme reensayado & falso\_positivo & lectura & roc\_auc & Dummy & Decidir qué resultados no conformes conviene reensayar antes de informar. & 3 \\
+entrega\_tardia\_recepcion & Entrega tardía del informe & clasificacion & muestra aceptada & entrega\_tardia & recepcion & roc\_auc & Dummy & Reordenar la cola o avisar al cliente cuando el plazo prometido está en riesgo. & 2 \\
+cliente\_inactivo\_trimestre & Cliente inactivo en el trimestre siguiente & clasificacion & cliente $\times$ trimestre & inactivo & maestro & roc\_auc & Dummy & Indicar al área comercial qué clientes contactar antes de que dejen de enviar. & 2 \\
+rechazo\_llegada & Muestra rechazada en recepción & clasificacion & muestra recibida & rechazada & llegada & roc\_auc & Dummy & Advertir al cliente de los envíos que suelen llegar en condiciones no aceptables. & 1 \\
+segmentos\_clientes & Segmentos de clientes & agrupamiento & cliente & — & reporte & silueta & — & Diferenciar la atención comercial y los acuerdos de servicio por tipo de cliente. & 2 \\
+perfiles\_muestra & Perfiles de muestra & agrupamiento & muestra aceptada & — & reporte & silueta & — & Describir los tipos de muestra que llegan para organizar los flujos de trabajo. & 1 \\
+dias\_atipicos & Días atípicos de operación & agrupamiento & día hábil & — & reporte & silueta & — & Señalar los días fuera de lo común para revisar qué ocurrió en el laboratorio. & 1 \\
+vpp\_por\_ensayo & Valor predictivo positivo por ensayo & bayes & ensayo & — & lectura & — & — & Saber cuánto confiar en un resultado no conforme según el ensayo que lo produjo. & 3 \\
+vpp\_por\_muestra & Valor predictivo positivo con previa por muestra & bayes & muestra aceptada & — & lectura & — & — & Combinar el riesgo previo de la muestra con la fiabilidad del ensayo antes de informar. & 3 \\
+posterior\_reensayo & Probabilidad posterior tras el reensayo & bayes & resultado no conforme & — & reensayo & — & — & Decidir si un reensayo basta para confirmar o descartar un resultado no conforme. & 3 \\
+\bottomrule
+\end{tabular}

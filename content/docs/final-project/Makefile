@@ -2,6 +2,7 @@
 # Uso (desde esta carpeta):
 #   make notebooks     ejecuta todas las etapas y escribe notebooks/*.ipynb
 #   make etapa N=03    vuelve a ejecutar solo la etapa 03 (y rehace el notebook completo)
+#   make presentacion  rehace solo notebooks/Presentacion.ipynb con los artefactos actuales
 #   make colab         prueba que los notebooks construidos funcionan solos en una carpeta vacía
 #   make verificar     ejecuta verificacion/verificar.py (si existe)
 #   make limpiar       borra datos generados, artefactos y cachés
@@ -10,7 +11,7 @@ RAIZ := $(shell git rev-parse --show-toplevel)
 UV   := PYTHONPATH=. uv run --project $(RAIZ)
 N    ?=
 
-.PHONY: notebooks etapa colab verificar limpiar
+.PHONY: notebooks etapa presentacion colab verificar limpiar
 
 notebooks:
 	$(UV) python notebooks/src/build.py
@@ -18,6 +19,9 @@ notebooks:
 etapa:
 	@test -n "$(N)" || { echo "Uso: make etapa N=03"; exit 1; }
 	$(UV) python notebooks/src/build.py --solo $(N)
+
+presentacion:
+	$(UV) python notebooks/src/build.py --presentacion
 
 # La carpeta temporal se conserva si la prueba falla, para poder revisarla.
 colab:

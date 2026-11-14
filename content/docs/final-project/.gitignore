@@ -9,3 +9,15 @@ __pycache__/
 .DS_Store
 
 # Se versionan: figuras/ y los notebooks construidos (notebooks/*.ipynb).
+
+# Auxiliares de LaTeX del informe (main.pdf se conserva)
+informe/*.aux
+informe/*.log
+informe/*.out
+informe/*.toc
+informe/*.fls
+informe/*.fdb_latexmk
+informe/*.bbl
+informe/*.blg
+informe/*.synctex.gz
+informe/secciones/*.aux

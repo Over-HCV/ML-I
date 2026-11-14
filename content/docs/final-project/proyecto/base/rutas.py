@@ -23,6 +23,7 @@ DIR_ETAPAS = DIR_ARTEFACTOS / "_etapas"    # marcas de etapa terminada
 DIR_FIGURAS = RAIZ / "figuras"
 DIR_FUENTES = RAIZ / "notebooks" / "src"   # guiones de etapa (formato percent)
 ARCHIVO_MAPEO = RAIZ / "configuracion" / "mapeo_columnas.json"
+DIR_INFORME_GENERADO = RAIZ / "informe" / "generado"  # macros y tablas para el informe en LaTeX
 
 DIRECTORIOS = [
     DIR_CRUDOS, DIR_REALES, DIR_EXTERNOS, DIR_AUDITORIA, DIR_LIMPIOS, DIR_MODELADO,

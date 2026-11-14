@@ -1,0 +1,88 @@
+% =====================================================================
+% datos.tex
+% Responsabilidad única: describir el contrato de datos, el momento de cada
+% columna, el tamaño de las tablas y el origen (simulado) de los datos, con
+% la forma de conectar la exportación real. Cifras: macros de 01_datos.
+% =====================================================================
+\section{Datos}
+\label{sec:datos}
+
+\subsection{Contrato de datos y momento de cada columna}
+
+La base del laboratorio se describe con un contrato
+(\codigo{proyecto/datos/esquema.py}) que es la única fuente de verdad sobre
+los nombres de columna, de forma que el resto del código nunca escribe listas
+de nombres a mano, sino que le pregunta al contrato. Este declara
+\DatTablasContrato{} tablas (clientes, muestreos, muestras y controles de
+calidad) con \DatColumnasContrato{} columnas, de las cuales
+\DatColumnasObligatorias{} son obligatorias (sin ellas el proyecto no corre) y
+\DatColumnasOpcionales{} opcionales (si faltan, los análisis que las necesitan
+se omiten solos); a esas tablas se suma un calendario con los festivos de
+Colombia.
+
+Cada columna lleva además un \emph{momento}, que es la etapa del proceso en la
+que ese dato ya se conoce: \codigo{maestro} (atributos del cliente),
+\codigo{programacion}, \codigo{toma}, \codigo{llegada}, \codigo{recepcion},
+\codigo{siembra}, \codigo{lectura}, \codigo{reensayo} y \codigo{reporte}, en
+total \DatMomentos{} momentos ordenados (Tabla~\ref{tab:momentos}). La regla
+que se deriva es sencilla, una variable solo puede entrar a un modelo si su
+momento es anterior o igual al momento de la predicción, de forma que, por
+ejemplo, el clasificador de riesgo, que predice en \codigo{recepcion}, no
+puede ver el recuento de la siembra ni la fecha del informe, aunque ambas
+columnas estén en la misma fila de la tabla. Las columnas que agrega la
+limpieza (como \codigo{dias\_entrega} o \codigo{no\_conforme}) también
+declaran su momento, y cada tabla de modelado pasa por una auditoría
+automática de fugas antes de usarse (Sección~\ref{sec:cribado}).
+
+\begin{table}[!htbp]
+\centering
+\begin{minipage}[t]{0.40\textwidth}\centering\small
+\tablagen{filas_crudas}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\textwidth}\centering\small
+\tablagen{columnas_por_momento}
+\end{minipage}
+\caption{Filas de cada tabla cruda (izquierda) y columnas del contrato que se
+conocen en cada momento del proceso (derecha). Los momentos están en el orden
+en que ocurren; un modelo que predice en un momento solo ve las columnas de
+las filas superiores a él, incluidas.}
+\label{tab:momentos}
+\end{table}
+
+En total se leen \DatMuestrasCrudas{} filas crudas de muestras de
+\DatClientes{} clientes, \DatVisitas{} visitas de muestreo en planta y
+\DatControles{} controles de calidad (positivos y negativos) entre
+\DatDesde{} y \DatHasta{}. El origen trae todas las columnas opcionales
+(faltan \DatFaltanOpcionales{}), lo que es de esperar en una simulación, pero
+la tabla de cobertura que produce la etapa~01 dirá de antemano, con la
+exportación real, qué análisis quedan fuera.
+
+\subsection{Datos simulados y conexión con la exportación real}
+\label{sec:simulacion}
+
+Cabe mencionar de forma explícita que \textbf{los datos de este informe son
+simulados}. La exportación real de la base, que gestiona un integrante del
+equipo dentro del laboratorio, no estaba lista a tiempo, así que se escribió
+un generador (\codigo{proyecto/datos/simulacion.py}, semilla
+\DatSemilla{}) que produce tablas con la misma estructura del contrato y con
+el tipo de suciedad que se espera de una exportación real (faltantes,
+categorías mal escritas, duplicados, valores imposibles y recuentos escritos
+como texto). El conjunto de datos es, por tanto, una premisa del trabajo y no
+su contribución.
+
+El generador se diseñó para no favorecer a ningún modelo por construcción, la
+señal mezcla efectos lineales, umbrales, interacciones y episodios locales en
+el tiempo, hay columnas distractoras y redundantes, y las variables latentes
+(contaminación real, higiene y segmento de cada cliente, error de cada
+analista) no se escriben en las tablas, sino aparte, en una «verdad oculta» que
+solo consultan las celdas de auditoría marcadas como tales. Ningún módulo fuera
+de \codigo{proyecto/datos/} importa el generador, de forma que el resto del
+código no distingue entre datos simulados y reales.
+
+Para conectar la exportación real basta copiar los archivos en
+\codigo{datos/reales/}, completar \codigo{configuracion/mapeo\_columnas.json}
+(nombre real de cada columna canónica y traducción de las etiquetas) y
+reconstruir los notebooks con el origen \codigo{real}; las celdas de auditoría
+de la simulación se saltan solas, y la huella de las tablas crudas
+(\codigo{\DatHuella}) cambia, lo que deja constancia de con qué datos se
+produjo cada cifra.

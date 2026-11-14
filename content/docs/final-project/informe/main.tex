@@ -1,0 +1,41 @@
+% =====================================================================
+% main.tex
+% Responsabilidad única: ensamblar el informe a partir de los módulos
+% (preámbulo, portada, secciones y apéndice). No contiene texto propio.
+%
+% Para compilar:  make pdf   (o latexmk -pdf main.tex)
+% Las cifras y tablas vienen de generado/ (make notebooks en la raíz).
+% =====================================================================
+\documentclass[11pt]{article}
+
+\input{preambulo}
+
+\begin{document}
+
+\input{portada}
+
+\input{secciones/resumen}
+
+\setcounter{tocdepth}{1}
+\tableofcontents
+\newpage
+
+\input{secciones/introduccion}
+\input{secciones/datos}
+\input{secciones/exploracion}
+\input{secciones/metodologia}
+\input{secciones/regresion}
+\input{secciones/clasificacion}
+\input{secciones/bayes}
+\input{secciones/agrupamiento}
+\input{secciones/evaluacion}
+\input{secciones/conclusiones}
+
+\bibliographystyle{plain}
+\bibliography{referencias}
+
+\newpage
+\appendix
+\input{secciones/apendice}
+
+\end{document}

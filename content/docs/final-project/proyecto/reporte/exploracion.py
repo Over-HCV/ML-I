@@ -10,6 +10,7 @@ que la exploración siga funcionando con una exportación real incompleta.
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib import transforms
 from matplotlib.colors import LinearSegmentedColormap
 
 from proyecto.base.config import COLORES, PALETA
@@ -176,8 +177,8 @@ def figura_estacionalidad(muestras, columna_grupo="sector"):
 def figura_tasa_por_categoria(muestras, columnas=("sector", "matriz", "ensayo"), objetivo="no_conforme",
                               etiqueta="Muestras no conformes (%)"):
     """Tasa del objetivo (0/1) por nivel de cada columna categórica, con su
-    intervalo de Wilson al 95 % y el número de muestras de cada nivel. La
-    línea punteada es la tasa global."""
+    intervalo de Wilson al 95 % y el número de muestras de cada nivel (en una
+    columna a la derecha de cada panel). La línea punteada es la tasa global."""
     columnas = [c for c in columnas if c in muestras.columns]
     if objetivo not in muestras.columns or not columnas:
         return _aviso(f"No se puede dibujar la tasa por categoría: falta «{objetivo}» o las columnas de agrupación.")
@@ -197,9 +198,13 @@ def figura_tasa_por_categoria(muestras, columnas=("sector", "matriz", "ensayo"),
                 xerr=errores, error_kw={"ecolor": COLORES["tinta"], "elinewidth": 0.9, "capsize": 2})
         ax.axvline(tasa_global, color=COLORES["rojo"], linestyle="--", linewidth=1)
         tope = max(float((100 * superior).max()), tasa_global)
-        for y, (sup, n) in enumerate(zip(100 * superior, grupo["count"])):
-            ax.text(sup + 0.015 * tope, y, f"n = {int(n)}", va="center", fontsize=8, color=COLORES["gris"])
-        ax.set_xlim(0, tope * 1.18)
+        # Los tamaños van en una columna fija a la derecha del panel, fuera del
+        # área de datos, para que nunca se crucen con la línea de la tasa global.
+        columna_n = transforms.blended_transform_factory(ax.transAxes, ax.transData)
+        for y, n in enumerate(grupo["count"]):
+            ax.text(1.02, y, f"n = {int(n)}", transform=columna_n, ha="left", va="center", fontsize=8,
+                    color=COLORES["gris"])
+        ax.set_xlim(0, tope * 1.05)
         ax.set_title(f"Por {columna}", loc="left", fontsize=9.5)
         _ejes(ax, "x")
     ejes[-1, 0].set_xlabel(f"{etiqueta} · línea punteada: tasa global ({tasa_global:.1f} %)")

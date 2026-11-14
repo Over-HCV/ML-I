@@ -3,7 +3,7 @@
 Responsabilidad única: convertir los guiones de etapa (`notebooks/src/NN_*.py`,
 formato percent de jupytext) en notebooks ejecutados y autocontenidos.
 
-    python notebooks/src/build.py [--no-execute] [--solo NN]
+    python notebooks/src/build.py [--no-execute] [--solo NN] [--presentacion]
                                   [--prueba-colab DIR] [--sin-construir]
 
 Qué hace, en orden:
@@ -11,13 +11,15 @@ Qué hace, en orden:
 1. Sin `--solo`, borra las marcas de etapa (`artefactos.reiniciar_etapas`).
 2. Ejecuta cada guion con nbclient (núcleo `python3`, directorio de trabajo
    = raíz del proyecto, paquete `proyecto/` real del repositorio).
-3. Después de ejecutar, inserta tras la primera celda de texto las celdas de
-   arranque, **sin ejecutar**: una celda que crea las carpetas del paquete y
-   una celda `%%writefile` por módulo. En los notebooks encadenados se
-   añaden además los guiones de las etapas previas, para que
+3. Después de ejecutar, inserta tras la primera celda de texto el arranque,
+   **sin ejecutar**: un título plegable y una sola celda que lleva, en
+   base64, un .tar.xz determinista (entradas ordenadas, fecha fija) con el
+   paquete, `configuracion/mapeo_columnas.json` y, en los notebooks
+   encadenados, los guiones de las etapas previas (para que
    `iniciar_etapa` pueda reconstruir lo que falte en una sesión nueva de
-   Colab. Como estas celdas no se ejecutan aquí, construir nunca reescribe
-   los fuentes del repositorio.
+   Colab). La celda comprueba el SHA-256 y no reemplaza archivos que ya
+   existan, de forma que ejecutarla en el repositorio nunca reescribe los
+   fuentes.
 4. Escribe `notebooks/<etapa>.ipynb` y el notebook único
    `notebooks/Proyecto_Final.ipynb` (arranque una sola vez y todas las
    etapas en orden).
@@ -26,15 +28,30 @@ Qué hace, en orden:
    del repositorio no es importable. Con `--sin-construir` hace solo esta
    prueba sobre los notebooks ya construidos.
 
+6. Al final (o sola, con `--presentacion`) arma `notebooks/Presentacion.ipynb`
+   desde `notebooks/src/presentacion.py`: once diapositivas que leen los
+   artefactos ya calculados, con fragmentos de código y animaciones entre
+   ellas. Antes de ejecutarla, `presentacion.preparar_datos()` escribe
+   `artefactos/presentacion_datos.npz` (arreglos pequeños sacados de las
+   tablas de desarrollo, nunca de la prueba) y comprueba que reproduce el
+   ROC-AUC y el costo de validación de la etapa 05. Su arranque recrea el
+   paquete y esos artefactos (unos cientos de kB), de forma que en Colab se
+   ejecuta en segundos sin repetir las etapas. Antes de escribirla se comprueba que las siete
+   etapas estén terminadas y que los artefactos no cambien durante la
+   ejecución (misma huella SHA-256 antes y después).
+
 Un guion de etapa que todavía no existe se omite con un aviso.
 """
 import argparse
+import base64
 import copy
 import hashlib
+import io
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import time
 from pathlib import Path
 
@@ -48,6 +65,9 @@ DIR_FUENTES = RAIZ / "notebooks" / "src"
 DIR_NOTEBOOKS = RAIZ / "notebooks"
 DIR_PAQUETE = RAIZ / "proyecto"
 NOMBRE_FUSIONADO = "Proyecto_Final"
+NOMBRE_PRESENTACION = "Presentacion"
+GUION_PRESENTACION = DIR_FUENTES / "presentacion.py"
+DIR_ARTEFACTOS = RAIZ / "artefactos"
 TIEMPO_MAXIMO = 1200
 
 # Las rutas del proyecto son relativas al directorio de trabajo.
@@ -57,7 +77,7 @@ from proyecto.base import artefactos  # noqa: E402
 from proyecto.base.config import ETAPAS, TITULOS_ETAPAS  # noqa: E402
 
 ORDEN_CAPAS = ["base", "datos", "preparacion", "variables", "modelos",
-               "evaluacion", "cribado", "reporte"]
+               "evaluacion", "cribado", "reporte", "etapas"]
 NUCLEO = {"name": "python3", "display_name": "Python 3", "language": "python"}
 TITULO_PROYECTO = "Proyecto final · Aprendizaje Automático de Máquina I"
 
@@ -96,68 +116,126 @@ def modulos_del_paquete():
     return sorted(rutas, key=clave)
 
 
-def _celda_escribir(ruta, numero):
-    """Celda `%%writefile` que reproduce un archivo de texto.
+ARCHIVO_MAPEO = RAIZ / "configuracion" / "mapeo_columnas.json"
+# Mismos archivos → mismos bytes: entradas ordenadas, fecha 0, dueño y permisos fijos.
 
-    IPython garantiza un salto de línea al final de la celda, así que se
-    quita uno del contenido: la copia queda idéntica byte a byte siempre que
-    el archivo termine en salto de línea."""
-    relativa = ruta.relative_to(RAIZ).as_posix()
-    contenido = ruta.read_text(encoding="utf-8")
-    if not contenido.endswith("\n"):
-        print(f"  aviso: {relativa} no termina en salto de línea; "
-              "la copia de Colab tendrá uno de más.")
-    else:
-        contenido = contenido[:-1]
-    return _codigo(f"%%writefile {relativa}\n{contenido}", "arranque",
-                   f"arranque-{numero:03d}", oculta=True)
+CODIGO_ARRANQUE = """\
+# Código del proyecto. Esta celda recrea en el directorio de trabajo:
+#   - el paquete `proyecto/` ({modulos} módulos) y `configuracion/mapeo_columnas.json`;{guiones}
+# para que el notebook funcione en Google Colab sin clonar el repositorio. Todo viaja
+# al final de la celda como un .tar.xz en base64 ({archivos} archivos, {tamano} kB).
+# Antes de extraer se comprueba su huella SHA-256. Un archivo que ya existe con el
+# mismo contenido no se toca, y uno que existe con otro contenido (una copia local
+# del repositorio con cambios, por ejemplo) se conserva y se avisa; para
+# reemplazarlo hay que poner SOBRESCRIBIR = True.
+import base64
+import hashlib
+import importlib
+import io
+import os
+import sys
+import tarfile
+from pathlib import Path
+
+SOBRESCRIBIR = False
 
 
-def celdas_de_arranque(etapas_previas=()):
-    """Celdas que recrean el paquete (y los guiones previos) desde cero."""
-    modulos = modulos_del_paquete()
-    carpetas = sorted({m.parent.relative_to(RAIZ).as_posix() for m in modulos}
-                      | {DIR_FUENTES.relative_to(RAIZ).as_posix()})
-    inicios = sorted(m.relative_to(RAIZ).as_posix() for m in modulos
-                     if m.name == "__init__.py")
-    con_contenido = [m for m in modulos if m.stat().st_size > 0]
-    guiones = [DIR_FUENTES / f"{e}.py" for e in etapas_previas
-               if (DIR_FUENTES / f"{e}.py").exists()]
+def recrear_proyecto(huella, codificado):
+    datos = base64.b64decode(codificado)
+    if hashlib.sha256(datos).hexdigest() != huella:
+        raise ValueError("El código embebido está dañado: su SHA-256 no coincide.")
+    escritos, iguales, conservados = 0, 0, []
+    with tarfile.open(fileobj=io.BytesIO(datos), mode="r:xz") as archivo:
+        for miembro in archivo.getmembers():
+            nombre = miembro.name
+            if Path(nombre).is_absolute() or ".." in Path(nombre).parts:
+                raise ValueError(f"Ruta no permitida en el archivo: {{nombre}}")
+            contenido, destino = archivo.extractfile(miembro).read(), Path(nombre)
+            if destino.exists() and destino.read_bytes() == contenido:
+                iguales += 1
+            elif destino.exists() and not SOBRESCRIBIR:
+                conservados.append(nombre)
+            else:
+                destino.parent.mkdir(parents=True, exist_ok=True)
+                destino.write_bytes(contenido)
+                escritos += 1
+    if os.getcwd() not in sys.path:
+        sys.path.insert(0, os.getcwd())
+    importlib.invalidate_caches()
+    print(f"Código del proyecto: {{escritos}} archivos escritos, {{iguales}} ya estaban iguales.")
+    if conservados:
+        print(f"Se conservaron {{len(conservados)}} archivos locales distintos:", ", ".join(conservados))
 
+
+recrear_proyecto(
+    huella="{huella}",
+    codificado="{codificado}",
+)"""
+
+
+def archivos_de_arranque(etapas_previas=()):
+    """Archivos que recrea el arranque: el paquete, el mapeo y los guiones previos."""
+    guiones = [DIR_FUENTES / f"{e}.py" for e in etapas_previas if (DIR_FUENTES / f"{e}.py").exists()]
+    return modulos_del_paquete() + [ARCHIVO_MAPEO] + guiones, guiones
+
+
+def archivo_determinista(rutas_archivos):
+    """.tar.xz con entradas ordenadas, fecha 0, dueño vacío y permisos 644: mismos archivos, mismos bytes
+    (xz comprime el código bastante más que el ZIP, y Colab lo lee con la biblioteca estándar)."""
+    memoria = io.BytesIO()
+    with tarfile.open(fileobj=memoria, mode="w:xz", preset=9, format=tarfile.USTAR_FORMAT) as archivo:
+        for ruta in sorted(rutas_archivos, key=lambda r: r.relative_to(RAIZ).as_posix()):
+            contenido = ruta.read_bytes()
+            info = tarfile.TarInfo(ruta.relative_to(RAIZ).as_posix())
+            info.size, info.mtime, info.mode = len(contenido), 0, 0o644
+            info.uid = info.gid = 0
+            info.uname = info.gname = ""
+            archivo.addfile(info, io.BytesIO(contenido))
+    return memoria.getvalue()
+
+
+ARTEFACTOS_EXTRA = ["presentacion_datos.npz", "modelos/regresion.joblib"]
+
+
+def artefactos_de_presentacion():
+    """Artefactos pequeños que lee la presentación: el JSON de cada etapa, su registro de cifras, los arreglos
+    que preparó `presentacion.preparar_datos` y el modelo de regresión congelado (unos pocos kB)."""
+    extra = [DIR_ARTEFACTOS / n for n in ARTEFACTOS_EXTRA if (DIR_ARTEFACTOS / n).exists()]
+    return sorted(DIR_ARTEFACTOS.glob("0*.json")) + sorted(DIR_ARTEFACTOS.glob("macros_*.json")) + extra
+
+
+def celdas_de_arranque(etapas_previas=(), presentacion=False):
+    """Título plegable y una sola celda que recrea el paquete (y los guiones previos, o los
+    artefactos que lee la presentación)."""
+    rutas_archivos, guiones = archivos_de_arranque(etapas_previas)
+    if presentacion:
+        rutas_archivos = rutas_archivos + artefactos_de_presentacion()
+    datos = archivo_determinista(rutas_archivos)
+    modulos = [m for m in modulos_del_paquete() if m.stat().st_size > 0]
     explicacion = (
         "## Código del proyecto\n\n"
-        "Las celdas de esta sección recrean el paquete `proyecto/` "
-        f"({len(con_contenido)} módulos) dentro de la sesión, de modo que el "
-        "notebook funciona en Google Colab sin clonar ningún repositorio. "
-        "Basta con ejecutarlas una vez (*Entorno de ejecución → Ejecutar "
-        "todas*). El código se muestra completo para que pueda revisarse; "
-        "la sección puede plegarse desde su título."
+        "La celda siguiente recrea el paquete `proyecto/` dentro de la sesión, de forma que el notebook funciona en "
+        "Google Colab sin clonar ningún repositorio: basta con ejecutarla una vez (*Entorno de ejecución → Ejecutar "
+        "todas*). En una copia local del repositorio no reemplaza ningún archivo. La sección puede plegarse desde su "
+        "título."
     )
+    if presentacion:
+        explicacion += (" Trae también los artefactos pequeños que leen las diapositivas (JSON, arreglos y el modelo de regresión), de modo que no hace "
+                        "falta volver a ejecutar las etapas.")
     if guiones:
-        explicacion += (
-            "\n\nTambién se guardan los guiones de las etapas anteriores: si "
-            "sus resultados no están en la sesión, la etapa los vuelve a "
-            "calcular en silencio antes de empezar."
-        )
-    crear = (
-        "# Crea las carpetas del paquete y sus archivos __init__.py\n"
-        "import importlib\n"
-        "import os\n"
-        "import sys\n"
-        "from pathlib import Path\n\n"
-        f"for carpeta in {carpetas!r}:\n"
-        "    Path(carpeta).mkdir(parents=True, exist_ok=True)\n"
-        f"for inicio in {inicios!r}:\n"
-        "    Path(inicio).touch()\n"
-        "if os.getcwd() not in sys.path:\n"
-        "    sys.path.insert(0, os.getcwd())\n"
-        "importlib.invalidate_caches()"
+        explicacion += (" Trae también los guiones de las etapas anteriores: si sus resultados no están en la sesión, "
+                        "la etapa los vuelve a calcular en silencio antes de empezar.")
+    codigo = CODIGO_ARRANQUE.format(
+        modulos=len(modulos),
+        guiones=(f"\n#   - los guiones de las {len(guiones)} etapas previas (se reconstruyen si faltan);"
+                 if guiones else
+                 f"\n#   - los {len(artefactos_de_presentacion())} artefactos pequeños que lee la presentación;"
+                 if presentacion else ""),
+        archivos=len(rutas_archivos), tamano=round(len(datos) / 1024),
+        huella=hashlib.sha256(datos).hexdigest(), codificado=base64.b64encode(datos).decode("ascii"),
     )
-    celdas = [_texto(explicacion, "arranque", "arranque-000"),
-              _codigo(crear, "arranque", "arranque-001")]
-    for numero, ruta in enumerate(con_contenido + guiones, start=2):
-        celdas.append(_celda_escribir(ruta, numero))
-    return celdas
+    return [_texto(explicacion, "arranque", "arranque-000"),
+            _codigo(codigo, "arranque", "arranque-001", oculta=True)]
 
 
 def _rotulo(etapa):
@@ -238,6 +316,14 @@ def armar_fusionado(celdas_por_etapa):
                         salida["execution_count"] = contador
             celdas.append(celda)
     return _nuevo_notebook(celdas)
+
+
+def armar_presentacion(celdas):
+    """Notebook de la presentación: título, arranque (paquete y artefactos) y diapositivas."""
+    corte = _posicion_tras_primer_texto(celdas)
+    nuevas = list(celdas[:corte]) + celdas_de_arranque(presentacion=True)
+    nuevas.append(_texto("## Diapositivas", "navegacion", "pres-diapositivas"))
+    return _nuevo_notebook(nuevas + list(celdas[corte:]))
 
 
 # ----------------------------------------------------------------------
@@ -349,6 +435,77 @@ def construir(ejecutar=True, solo=None):
     return True
 
 
+def _huella_artefactos():
+    return hashlib.sha256(archivo_determinista(artefactos_de_presentacion())).hexdigest()
+
+
+def problemas_de_salida(nb):
+    """Errores, avisos o ecos de texto en las salidas de un notebook ejecutado."""
+    problemas = []
+    for i, celda in enumerate(nb.cells):
+        if celda.metadata.get("proyecto") == "arranque":   # el arranque informa qué archivos escribió
+            continue
+        for salida in celda.get("outputs", []):
+            tipo = salida.get("output_type")
+            if tipo == "error":
+                problemas.append(f"celda {i}: error {salida.get('ename')}")
+            elif tipo == "stream":
+                problemas.append(f"celda {i}: texto en {salida.get('name')}: {salida.get('text', '')[:80]!r}")
+            elif tipo == "execute_result":
+                problemas.append(f"celda {i}: eco de un valor ({list(salida.get('data', {}))})")
+            elif tipo == "display_data" and set(salida.get("data", {})) == {"text/plain"}:
+                problemas.append(f"celda {i}: salida solo de texto")
+    return problemas
+
+
+def construir_presentacion(ejecutar=True):
+    """Ejecuta el guion de la presentación sobre los artefactos actuales y escribe
+    `notebooks/Presentacion.ipynb`. Devuelve False si algo falla."""
+    if not GUION_PRESENTACION.exists():
+        print("Presentación: no existe notebooks/src/presentacion.py; se omite.")
+        return True
+    sin_terminar = [e for e in ETAPAS if not artefactos.etapa_completa(e)]
+    if sin_terminar:
+        print(f"Presentación: faltan etapas terminadas ({', '.join(sin_terminar)}); ejecute antes `make notebooks`.")
+        return False
+    if ejecutar:
+        from proyecto.etapas.presentacion import preparar_datos
+        resumen = preparar_datos()
+        print(f"Presentación: datos pequeños en {resumen['segundos']:.1f} s ({resumen['kB']:.0f} kB); "
+              f"ROC-AUC de validación reproducido {resumen['auc'][0]:.6f} (artefacto {resumen['auc'][1]:.6f}), "
+              f"costo {resumen['costo'][0]} (artefacto {resumen['costo'][1]:.0f})")
+        if abs(resumen["auc"][0] - resumen["auc"][1]) > 1e-6 or resumen["costo"][0] != resumen["costo"][1]:
+            print("Presentación: las probabilidades de validación no reproducen la etapa 05; se detiene.")
+            return False
+    nb = jupytext.read(GUION_PRESENTACION, fmt="py:percent")
+    for i, celda in enumerate(nb.cells):
+        celda["id"] = f"pres-{i:03d}"
+        celda.metadata.pop("lines_to_next_cell", None)
+    huella = _huella_artefactos()
+    if ejecutar:
+        print("Presentación: ejecutando...", flush=True)
+        inicio = time.time()
+        try:
+            _ejecutar(nb, RAIZ, con_paquete=True)
+        except CellExecutionError as error:
+            print(f"\nLa presentación falló:\n{error}")
+            return False
+        problemas = problemas_de_salida(nb)
+        if problemas:
+            print("  FALLO en las salidas:\n  " + "\n  ".join(problemas))
+            return False
+        print(f"  terminada en {time.time() - inicio:.1f} s")
+    if _huella_artefactos() != huella:
+        print("Presentación: los artefactos cambiaron durante la construcción; vuelva a ejecutarla.")
+        return False
+    print(f"  artefactos embebidos: {len(artefactos_de_presentacion())} archivos, huella {huella[:12]}")
+    armado = armar_presentacion(nb.cells)
+    if "widgets" in nb.metadata:   # estado de los paneles: sin núcleo, JupyterLab y VS Code dibujan los controles
+        armado.metadata["widgets"] = nb.metadata["widgets"]
+    _escribir(armado, DIR_NOTEBOOKS / f"{NOMBRE_PRESENTACION}.ipynb")
+    return True
+
+
 # ----------------------------------------------------------------------
 # Prueba de autocontención (simula una sesión nueva de Colab)
 # ----------------------------------------------------------------------
@@ -356,8 +513,10 @@ def _huella(ruta):
     return hashlib.sha256(ruta.read_bytes()).hexdigest()
 
 
-def _probar_notebook(nombre, carpeta, etapas_esperadas, guiones_esperados):
-    """Ejecuta un notebook construido, solo, en una carpeta vacía."""
+def _probar_notebook(nombre, carpeta, etapas_esperadas, guiones_esperados, originales=None,
+                     revisar_salidas=False):
+    """Ejecuta un notebook construido, solo, en una carpeta vacía. `originales` son los
+    archivos que el arranque debe recrear idénticos (por omisión, paquete, mapeo y guiones)."""
     carpeta.mkdir(parents=True)
     shutil.copy(DIR_NOTEBOOKS / f"{nombre}.ipynb", carpeta)
     entorno = _entorno(con_paquete=False)
@@ -381,7 +540,10 @@ def _probar_notebook(nombre, carpeta, etapas_esperadas, guiones_esperados):
           f"({len(nb.cells)} celdas)")
 
     problemas = []
-    originales = modulos_del_paquete() + [DIR_FUENTES / f"{e}.py" for e in guiones_esperados]
+    if originales is None:
+        originales, _ = archivos_de_arranque(guiones_esperados)
+    if revisar_salidas:
+        problemas += problemas_de_salida(nb)
     for original in originales:
         copia = carpeta / original.relative_to(RAIZ)
         if not copia.exists():
@@ -394,8 +556,8 @@ def _probar_notebook(nombre, carpeta, etapas_esperadas, guiones_esperados):
     for problema in problemas:
         print(f"  FALLO: {problema}")
     if not problemas:
-        print(f"  {len(originales)} archivos recreados idénticos byte a byte; "
-              f"marcas de etapa presentes: {', '.join(etapas_esperadas)}")
+        print(f"  {len(originales)} archivos recreados idénticos byte a byte"
+              + (f"; marcas de etapa presentes: {', '.join(etapas_esperadas)}" if etapas_esperadas else ""))
     return not problemas
 
 
@@ -422,8 +584,24 @@ def probar_colab(destino):
     bien_a = _probar_notebook(NOMBRE_FUSIONADO, destino / "fusionado", construidas, [])
     print(f"(b) {ultima}.ipynb solo, en carpeta vacía (reconstruye etapas previas):")
     bien_b = _probar_notebook(ultima, destino / "encadenado", previas + [ultima], previas)
-    print("Prueba de autocontención:", "CORRECTA" if bien_a and bien_b else "CON FALLOS")
-    return bien_a and bien_b
+    bien_c = probar_presentacion(destino / "presentacion", rotulo="(c)")
+    print("Prueba de autocontención:", "CORRECTA" if bien_a and bien_b and bien_c else "CON FALLOS")
+    return bien_a and bien_b and bien_c
+
+
+def probar_presentacion(carpeta, rotulo=""):
+    """La presentación sola, en una carpeta vacía: el arranque debe bastar (sin etapas)."""
+    if not (DIR_NOTEBOOKS / f"{NOMBRE_PRESENTACION}.ipynb").exists():
+        print(f"{rotulo} {NOMBRE_PRESENTACION}.ipynb no está construido; se omite.".strip())
+        return True
+    carpeta = Path(carpeta).resolve()
+    if carpeta.exists() and any(carpeta.iterdir()):
+        print(f"--prueba-colab: {carpeta} no está vacío; indique una carpeta vacía o nueva.")
+        return False
+    print(f"{rotulo} {NOMBRE_PRESENTACION}.ipynb solo, en carpeta vacía (sin ejecutar etapas):".strip())
+    originales, _ = archivos_de_arranque()
+    return _probar_notebook(NOMBRE_PRESENTACION, carpeta, [], [],
+                            originales=originales + artefactos_de_presentacion(), revisar_salidas=True)
 
 
 def principal():
@@ -436,11 +614,21 @@ def principal():
                             help="ejecuta los notebooks construidos en una carpeta vacía")
     analizador.add_argument("--sin-construir", action="store_true",
                             help="con --prueba-colab: prueba los notebooks ya construidos")
+    analizador.add_argument("--presentacion", action="store_true",
+                            help="arma solo la presentación (con --prueba-colab, prueba solo la presentación)")
     opciones = analizador.parse_args()
 
     bien = True
+    if opciones.presentacion:
+        if not (opciones.sin_construir and opciones.prueba_colab):
+            bien = construir_presentacion(ejecutar=not opciones.no_execute)
+        if bien and opciones.prueba_colab:
+            bien = probar_presentacion(opciones.prueba_colab)
+        sys.exit(0 if bien else 1)
     if not (opciones.sin_construir and opciones.prueba_colab):
         bien = construir(ejecutar=not opciones.no_execute, solo=opciones.solo)
+        if bien and not opciones.no_execute:
+            bien = construir_presentacion()
     if bien and opciones.prueba_colab:
         bien = probar_colab(opciones.prueba_colab)
     sys.exit(0 if bien else 1)

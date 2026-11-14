@@ -1,0 +1,140 @@
+% =====================================================================
+% bayes.tex
+% Responsabilidad única: presentar la probabilidad de falso positivo
+% (teoría, sensibilidad y especificidad por controles, VPP por ensayo y por
+% muestra, posterior tras el reensayo, regla de reensayo y auditoría de la
+% simulación). Cifras: macros Clf* de Bayes; tablas tabla_bayes_*.
+% =====================================================================
+\section{Probabilidad de falso positivo}
+\label{sec:bayes}
+
+\subsection{Planteamiento}
+
+Un resultado no conforme puede deberse a que el producto está contaminado o a
+que el ensayo falló (contaminación en el laboratorio, error de lectura), y el
+laboratorio quiere saber qué tan probable es lo segundo. Si un ensayo tiene
+sensibilidad $S$ (probabilidad de dar positivo cuando hay contaminación),
+especificidad $E$ (probabilidad de dar negativo cuando no la hay) y la
+prevalencia real de contaminación es $\pi$, el teorema de Bayes da el valor
+predictivo positivo y la probabilidad de falso positivo:
+\[
+\mathrm{VPP}=\frac{S\,\pi}{S\,\pi+(1-E)(1-\pi)},\qquad
+P(\text{falso positivo}\mid +)=1-\mathrm{VPP}.
+\]
+La prevalencia real no se observa, pero se puede despejar de la proporción
+$p$ de positivos observados con la corrección de Rogan--Gladen
+\cite{rogan1978}, $\pi=\bigl(p-(1-E)\bigr)/(S+E-1)$, recortada a $[0,1]$.
+
+\subsection{Sensibilidad y especificidad desde los controles}
+
+El laboratorio siembra a diario controles positivos (con el microorganismo) y
+negativos (estériles), de forma que la sensibilidad es la fracción de
+controles positivos con crecimiento y la especificidad la fracción de
+negativos sin crecimiento. Con los \ClfControlesDesarrollo{} controles del
+desarrollo se estimaron para los \ClfEnsayos{} ensayos
+(columnas Sens.\ y Espec.\ de la Tabla~\ref{tab:vpp-ensayo}, con
+intervalos de Wilson de 95\,\% en el notebook): la sensibilidad va de \ClfSensMin{}
+(\textit{\ClfSensMinEnsayo}) a \ClfSensMax{}, y la especificidad de
+\ClfEspecMin{} (\ClfEspecMinEnsayo) a \ClfEspecMax{}.
+
+\subsection{VPP por ensayo y por muestra}
+
+Con la proporción de positivos de cada ensayo en el desarrollo y sus $S$ y $E$,
+el VPP por ensayo (Tabla~\ref{tab:vpp-ensayo}) va de \ClfVPPPeor{} en
+\ClfVPPPeorEnsayo{} (intervalo de \ClfVPPPeorInf{} a \ClfVPPPeorSup{}) a
+\ClfVPPMejor{} en \textit{\ClfVPPMejorEnsayo}; los intervalos se obtienen
+con \ClfSorteos{} sorteos de las posteriores Beta de $p$, $S$ y $E$, y la
+fracción de positivos cuya previa tuvo que recortarse a cero fue de
+\ClfRecorteCeroPct{}\,\%.
+Ponderado por positivos, el VPP del laboratorio es de \ClfVPPGlobal{}, es
+decir, unos \ClfFalsosPorCien{} de cada cien resultados no conformes serían
+falsos según los controles.
+
+\begin{table}[!htbp]
+\centering
+\tablaancha{bayes_vpp_ensayo}
+\caption{VPP por ensayo en el desarrollo. La prevalencia corregida es la de
+Rogan--Gladen; los ensayos con pocos positivos (\textit{Salmonella},
+esterilidad) tienen los intervalos más anchos.}
+\label{tab:vpp-ensayo}
+\end{table}
+
+El VPP por ensayo trata igual a todas las muestras de un ensayo, cuando en
+realidad la probabilidad previa de contaminación cambia de una muestra a
+otra. Por eso se combina con el clasificador de la Sección~\ref{sec:clasificacion}:
+su probabilidad calibrada $p(x)$ de resultar no conforme se corrige con
+Rogan--Gladen para obtener una previa por muestra $\pi(x)$, que entra a la
+fórmula del VPP en lugar de $\pi$. Entre los \ClfPositivosValidacionBayes{}
+positivos de validación, el VPP$(x)$ va de \ClfVPPxMin{} a \ClfVPPxMax{}, con
+percentiles 10 y 90 de \ClfVPPxPDiez{} y \ClfVPPxPNoventa{}. Por ejemplo, en
+\ClfEnsayoEjemplo{}, la probabilidad de que el positivo sea falso es de
+\ClfFalsoRiesgoBajo{} en una muestra de riesgo bajo y de \ClfFalsoRiesgoAlto{}
+en una de riesgo alto, de forma que el mismo resultado merece más o menos
+desconfianza según la muestra de la que viene.
+
+\subsection{Reensayo y regla de reensayo}
+
+Si un positivo se reensaya, la posterior se actualiza con el segundo
+resultado. Tras dos positivos queda entre \ClfPosteriorMasMasMin{} y
+\ClfPosteriorMasMasMax{} según el ensayo, mientras que tras un positivo y un
+negativo cae a un rango de \ClfPosteriorMasMenosMin{} a
+\ClfPosteriorMasMenosMax{}, es decir, un reensayo
+conforme vuelve probable el falso positivo pero no lo asegura. Los controles
+anticipan que el \ClfReensayoConformeEsperadoPct{}\,\% de los reensayos sea
+conforme, y en los \ClfReensayados{} positivos reensayados del desarrollo se
+observó el \ClfReensayoConformeObservadoPct{}\,\%.
+
+El cribado había mostrado que el análisis \codigo{falso\_positivo\_lectura}
+no necesita un modelo, porque una sola variable basta
+(Sección~\ref{sec:cribado}), y esa variable es la razón entre el recuento y el
+límite de la norma. La Figura~\ref{fig:regla} lo muestra por sextiles: cuando
+$\log_{10}(\text{recuento}/\text{límite})$ es menor que \ClfReglaBorde{}, es
+decir, cuando el recuento supera el límite en menos de \ClfReglaVecesLimite{}
+veces, el \ClfReglaTasaBajoPct{}\,\% de los reensayos sale conforme, frente al
+\ClfReglaTasaAltoPct{}\,\% por encima del borde. Ese grupo es apenas el
+\ClfReglaGrupoPct{}\,\% de los reensayados con recuento, pero concentra el
+\ClfReglaCapturaPct{}\,\% de los reensayos conformes. La regla que se propone
+es entonces sencilla, reensayar sobre todo los no conformes cuyo recuento
+quede por debajo de \ClfReglaVecesLimite{} veces el límite. En los ensayos sin
+recuento (presencia o ausencia) la regla no aplica, y allí, de
+\ClfSinRazonReensayados{} reensayados, una fracción de \ClfSinRazonConformes{}
+resultó conforme.
+
+\subsection{Auditoría frente a la verdad de la simulación}
+\label{sec:auditoria-bayes}
+
+\textbf{Esta subsección solo es posible con datos simulados}, porque usa la
+«verdad oculta» del generador (qué muestras estaban de verdad contaminadas),
+que con datos reales no existe; sirve para comprobar que el método recupera
+lo que el generador puso, no para describir el laboratorio. El VPP real del
+desarrollo es de \ClfAudVPPReal{}, frente a \ClfVPPGlobal{} estimado, y el
+VPP real de \ClfAudEnsayosDentroIC{} de los \ClfEnsayos{} ensayos cae dentro
+del intervalo estimado (Figura~\ref{fig:auditoria}). La especificidad de los
+controles excede en promedio a la efectiva en \ClfAudSesgoEspec{}, porque en
+las muestras hay fuentes de error que los controles no sufren, lo que en los
+ensayos de menor prevalencia se traduce en un VPP estimado por encima del
+real. Entre los
+reensayados, la fracción realmente no contaminada es de
+\ClfAudFalsoRealReensayados{}. Finalmente, el VPP$(x)$ ordena mejor la
+contaminación real que el VPP por ensayo (ROC-AUC de \ClfAudAUCVPPx{} frente
+a \ClfAudAUCVPPEnsayo{}; Brier de \ClfAudBrierVPPx{} frente a
+\ClfAudBrierVPPEnsayo{}), lo que respalda usar la previa por muestra.
+
+\begin{figure}[!htbp]
+\centering
+\begin{minipage}[t]{0.49\textwidth}\centering
+\includegraphics[width=\textwidth]{05_auditoria_vpp.png}
+\caption{\textbf{Auditoría con la verdad de la simulación.} VPP por ensayo
+estimado con controles (barras, IC 95\,\%) frente al verdadero (rombos). Los
+rombos que caen fuera del intervalo (\textit{Salmonella}, mohos y levaduras)
+son los ensayos donde la estimación es optimista.}
+\label{fig:auditoria}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\textwidth}\centering
+\includegraphics[width=\textwidth]{05_regla_reensayo.png}
+\caption{Fracción de reensayos conformes según cuánto supera el recuento al
+límite, por sextiles (IC de Wilson). La caída es abrupta después del primer
+sextil, que es el que define el borde de la regla de reensayo.}
+\label{fig:regla}
+\end{minipage}
+\end{figure}

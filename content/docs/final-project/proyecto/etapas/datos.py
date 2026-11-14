@@ -1,0 +1,281 @@
+"""Capa 8 · Etapa 01: el conjunto de datos.
+
+Responsabilidad única: armar las piezas de la etapa 01 (contrato de datos,
+tablas crudas validadas, cómo llegan los datos, cómo se conecta la exportación
+real y protocolo temporal) y registrar sus cifras para el informe. Cada
+función pública es una sección del notebook.
+"""
+import html as html_estandar
+import json
+
+import pandas as pd
+
+from proyecto.base import config
+from proyecto.datos import carga, esquema, mapeo
+from proyecto.etapas.comun import Resultado, abrir, cerrar
+from proyecto.preparacion import limpieza
+from proyecto.reporte import latex
+from proyecto.reporte.html import linea_tiempo, nota, pasos, pestanas, tabla_html, tarjetas
+
+ETAPA = "01_datos"
+FASES_MUESTRAS = {
+    "muestras · toma": ["maestro", "programacion", "toma"],
+    "muestras · llegada y recepción": ["llegada", "recepcion"],
+    "muestras · siembra a reporte": ["siembra", "lectura", "reensayo", "reporte"],
+}
+SIGNIFICADO_MOMENTOS = {
+    "maestro": "datos del cliente", "programacion": "visita agendada", "toma": "muestra y producto",
+    "llegada": "transporte", "recepcion": "aceptación", "siembra": "analista y equipos",
+    "lectura": "recuento y resultado", "reensayo": "confirmación", "reporte": "informe",
+}
+PROPOSITO_ETAPAS = {
+    "01_datos": "Contrato de datos y tablas crudas.",
+    "02_exploracion": "Auditoría de calidad, limpieza, integración y exploración del periodo de desarrollo.",
+    "03_cribado_analisis": "Catálogo de análisis candidatos, prueba rápida uniforme y selección con una regla fijada de antemano.",
+    "04_regresion": "Estudio a fondo del análisis de regresión elegido.",
+    "05_clasificacion_bayes": "Estudio a fondo del análisis de clasificación elegido, umbral por costo y capa bayesiana.",
+    "06_agrupamiento": "K-medias y DBSCAN sobre el análisis de agrupamiento elegido.",
+    "07_evaluacion_final": "Modelos congelados evaluados una sola vez sobre el bloque de prueba.",
+}
+
+
+def iniciar():
+    """Contexto de la etapa (tras `iniciar_etapa`)."""
+    c = abrir(ETAPA, "El problema, el contrato de datos y las tablas crudas")
+    c.autores = nota(config.AUTORES, titulo=config.ROTULO_PROYECTO)
+    return c
+
+
+def contrato(c):
+    """Diccionario de datos por tabla, cifras del contrato y línea de tiempo de los momentos."""
+    r = Resultado()
+    diccionario = esquema.diccionario()
+    fichas = {}
+    for nombre_tabla in esquema.TABLAS:
+        parte = diccionario[diccionario["Tabla"] == nombre_tabla].drop(columns="Tabla")
+        if nombre_tabla != "muestras":
+            fichas[nombre_tabla] = tabla_html(parte, f"Diccionario de «{nombre_tabla}»", maximo_filas=None)
+            continue
+        for rotulo, momentos in FASES_MUESTRAS.items():
+            fase = parte[parte["Momento"].isin(momentos)]
+            if len(fase):
+                fichas[rotulo] = tabla_html(fase, f"Diccionario de «{rotulo}»", maximo_filas=None)
+    r.agregar(pestanas(fichas, titulo="Diccionario de datos por tabla"))
+
+    n_columnas = len(diccionario)
+    n_obligatorias = int((diccionario["Obligatoria"] == "sí").sum())
+    n_tablas = int(diccionario["Tabla"].nunique())
+    r.agregar(nota(
+        f"El contrato declara **{n_columnas} columnas** en {n_tablas} tablas, de las cuales **{n_obligatorias}** son "
+        f"obligatorias y las {n_columnas - n_obligatorias} restantes opcionales. A estas tablas se suma el calendario "
+        "laboral colombiano (festivos y días hábiles), que no viene de la base del laboratorio sino que se calcula.",
+    ))
+    columnas_por_momento = diccionario["Momento"].value_counts()
+    r.agregar(linea_tiempo(
+        [(f"{int(columnas_por_momento.get(m, 0))} col.", m, SIGNIFICADO_MOMENTOS.get(m, "")) for m in esquema.MOMENTOS],
+        titulo="Momentos del proceso y columnas que se conocen en cada uno",
+    ))
+    latex.registrar_varias([
+        ("DatColumnasContrato", n_columnas, "columnas declaradas en el contrato de datos"),
+        ("DatColumnasObligatorias", n_obligatorias, "columnas obligatorias del contrato"),
+        ("DatColumnasOpcionales", n_columnas - n_obligatorias, "columnas opcionales del contrato"),
+        ("DatTablasContrato", n_tablas, "tablas del contrato de datos"),
+        ("DatMomentos", len(esquema.MOMENTOS), "momentos del proceso declarados en el contrato"),
+    ])
+    latex.exportar_tabla(diccionario, "diccionario_datos", "Diccionario de datos completo (contrato)")
+    latex.exportar_tabla(columnas_por_momento.reindex(esquema.MOMENTOS).fillna(0).astype(int)
+                         .rename_axis("Momento").reset_index(name="Columnas"),
+                         "columnas_por_momento", "Columnas del contrato que se conocen en cada momento")
+    r.valores.update(columnas=n_columnas, obligatorias=n_obligatorias)
+    return r
+
+
+def tablas_crudas(c):
+    """Obtiene las tablas (simulador o exportación real), las valida, las guarda y las resume."""
+    r = Resultado()
+    tablas, verdad = carga.obtener_tablas_crudas()
+    cobertura = esquema.validar(tablas)
+    carga.guardar_crudas(tablas, verdad)
+    c.tablas, c.verdad, c.huella = tablas, verdad, carga.huella(tablas)
+    fechas = pd.to_datetime(tablas["muestras"]["fecha_recepcion"], errors="coerce")
+    c.desde, c.hasta = f"{fechas.min():%Y-%m-%d}", f"{fechas.max():%Y-%m-%d}"
+    c.clientes_con_muestras = int(tablas["muestras"]["id_cliente"].nunique())
+    r.agregar(tarjetas([
+        {"titulo": "Muestras", "valor": len(tablas["muestras"]), "detalle": "filas crudas, una por ensayo"},
+        {"titulo": "Clientes", "valor": len(tablas["clientes"]),
+         "detalle": f"{c.clientes_con_muestras} con alguna muestra", "color": "verde"},
+        {"titulo": "Visitas de muestreo", "valor": len(tablas["muestreos"]), "detalle": "muestreos en planta",
+         "color": "naranja"},
+        {"titulo": "Controles de calidad", "valor": len(tablas["controles"]),
+         "detalle": "controles positivos y negativos", "color": "morado"},
+        {"titulo": "Días de calendario", "valor": len(tablas["calendario"]), "detalle": f"{c.desde} a {c.hasta}",
+         "color": "gris"},
+    ], titulo="Tablas crudas obtenidas"))
+    r.agregar(nota(
+        f"Origen de los datos: **{config.ORIGEN_DATOS}**. Huella del contenido (SHA-256 abreviado): `{c.huella}`. "
+        "Esta huella queda guardada con los resultados de cada etapa, de forma que se pueda comprobar con qué datos se "
+        "obtuvo cada cifra.",
+    ))
+
+    resumen_obligatorias = (
+        cobertura[cobertura["Obligatoria"]]
+        .groupby("Tabla", sort=False)["Presente"].agg(["size", "sum"])
+        .rename(columns={"size": "Obligatorias del contrato", "sum": "Presentes"})
+        .reset_index()
+    )
+    opcionales = carga.cobertura_opcionales(tablas)
+    r.agregar(pestanas({
+        "Columnas obligatorias": tabla_html(resumen_obligatorias, "Columnas obligatorias por tabla"),
+        "Columnas opcionales": tabla_html(opcionales, "Columnas opcionales que trae el origen"),
+    }, titulo="Validación de las tablas contra el contrato"))
+    faltan = int(opcionales["Faltan"].sum())
+    r.agregar(nota(
+        "El origen trae todas las columnas del contrato, obligatorias y opcionales, por lo que ningún análisis del "
+        "catálogo queda descartado por falta de datos." if faltan == 0 else
+        f"Al origen le faltan **{faltan}** columnas opcionales; los análisis que las necesiten se marcan como no "
+        "disponibles en el cribado (etapa 03) en lugar de fallar.",
+        "hallazgo",
+    ))
+    filas = {nombre: int(len(t)) for nombre, t in tablas.items()}
+    latex.registrar_varias([
+        ("DatOrigen", config.ORIGEN_DATOS, "origen de los datos (simulacion o real)"),
+        ("DatHuella", c.huella, "huella SHA-256 abreviada de las tablas crudas"),
+        ("DatMuestrasCrudas", filas["muestras"], "filas crudas de la tabla de muestras"),
+        ("DatClientes", filas["clientes"], "clientes en la tabla de clientes"),
+        ("DatClientesConMuestras", c.clientes_con_muestras, "clientes con al menos una muestra"),
+        ("DatVisitas", filas["muestreos"], "visitas de muestreo en planta"),
+        ("DatControles", filas["controles"], "controles de calidad (positivos y negativos)"),
+        ("DatDiasCalendario", filas["calendario"], "días de la tabla de calendario"),
+        ("DatDesde", c.desde, "primera fecha de recepción"),
+        ("DatHasta", c.hasta, "última fecha de recepción"),
+        ("DatFaltanOpcionales", faltan, "columnas opcionales que no trae el origen"),
+    ])
+    latex.exportar_tabla(opcionales, "cobertura_opcionales", "Columnas opcionales que trae el origen, por tabla")
+    latex.exportar_tabla(pd.DataFrame([{"Tabla": n, "Filas": f} for n, f in filas.items()]), "filas_crudas",
+                         "Filas de cada tabla cruda")
+    r.valores.update(filas=filas, huella=c.huella, faltan_opcionales=faltan)
+    return r
+
+
+def como_llegan(c):
+    """Ejemplos de la «suciedad» de las tablas crudas (no se corrige aquí)."""
+    r = Resultado()
+    crudas = c.tablas["muestras"]
+    ejemplos = {}
+    vista = [x for x in ["id_muestra", "id_cliente", "fecha_recepcion", "matriz", "ensayo", "recuento_reportado",
+                         "limite_ufc", "resultado"] if x in crudas.columns]
+    ejemplos["Primeras filas"] = tabla_html(crudas[vista].head(6), "Primeras filas de «muestras»")
+
+    columna = next((x for x in ["matriz", "ensayo"] if x in crudas.columns), None)
+    if columna is not None:
+        grafias = crudas[columna].dropna().astype(str).value_counts().rename_axis("Como viene escrita").reset_index(name="Filas")
+        grafias["Categoría"] = grafias["Como viene escrita"].map(mapeo.clave_etiqueta)
+        categoria = grafias.groupby("Categoría")["Filas"].size().idxmax()
+        ejemplo = grafias[grafias["Categoría"] == categoria].drop(columns="Categoría")
+        ejemplo["Como viene escrita"] = "«" + ejemplo["Como viene escrita"] + "»"
+        ejemplos["Etiquetas"] = tabla_html(ejemplo.head(10), f"Grafías de una misma categoría en «{columna}»")
+
+    recuentos = crudas["recuento_reportado"].dropna().astype(str)
+    no_numericos = recuentos[~recuentos.str.fullmatch(r"\d+(\.\d+)?")]
+    ejemplos["Recuentos"] = tabla_html(
+        no_numericos.value_counts().head(10).rename_axis("Recuento reportado").reset_index(name="Filas"),
+        "Recuentos que no son un número simple (los más frecuentes)")
+
+    imposibles = []
+    for col in [x for x in limpieza.RANGOS_VALIDOS["muestras"] if x in crudas.columns]:
+        minimo, maximo = limpieza.RANGOS_VALIDOS["muestras"][col]
+        valores = pd.to_numeric(crudas[col], errors="coerce")
+        fuera = (valores < minimo) if maximo is None else ((valores < minimo) | (valores > maximo))
+        if fuera.any():
+            imposibles.append({"Columna": col, "Rango posible": f"[{minimo}, {'∞' if maximo is None else maximo}]",
+                               "Filas fuera del rango": int(fuera.sum()), "Ejemplo": float(valores[fuera].iloc[0])})
+    if imposibles:
+        ejemplos["Valores imposibles"] = tabla_html(pd.DataFrame(imposibles), "Valores fuera del rango físicamente posible",
+                                                    decimales=2)
+    r.agregar(pestanas(ejemplos, titulo="Las tablas tal como llegan (sin limpiar)"))
+
+    duplicadas = int(crudas.duplicated().sum())
+    n_imposibles = sum(f["Filas fuera del rango"] for f in imposibles)
+    proporcion = len(no_numericos) / max(len(recuentos), 1)
+    r.agregar(nota(
+        f"En «muestras» hay **{len(no_numericos)}** recuentos que no son un número simple "
+        f"({100 * proporcion:.1f} % de los reportados), **{duplicadas}** filas que repiten exactamente a otra y "
+        f"**{n_imposibles}** valores fuera de su rango posible. Ninguno se corrige en esta etapa.",
+        "advertencia",
+    ))
+    latex.registrar_varias([
+        ("DatRecuentosNoNumericos", len(no_numericos), "recuentos crudos que no son un número simple"),
+        ("DatRecuentosNoNumericosPct", 100 * proporcion, "porcentaje de recuentos no numéricos", 1),
+        ("DatDuplicadas", duplicadas, "filas crudas de muestras duplicadas exactas"),
+        ("DatValoresImposibles", n_imposibles, "valores crudos fuera de su rango físico"),
+    ])
+    r.valores.update(no_numericos=len(no_numericos), duplicadas=duplicadas, imposibles=n_imposibles)
+    return r
+
+
+def exportacion_real(c):
+    """Extracto de la plantilla de mapeo y, con datos simulados, las variables latentes que quedan aparte."""
+    r = Resultado()
+    descripcion = mapeo.leer_mapeo()["muestras"]
+    extracto = {"muestras": {
+        "archivo": descripcion["archivo"],
+        "columnas": dict(list(descripcion["columnas"].items())[:5]),
+        "valores": dict(list(descripcion.get("valores", {}).items())[:1]),
+    }}
+    texto = html_estandar.escape(json.dumps(extracto, ensure_ascii=False, indent=2))
+    r.agregar(nota(
+        f'<pre style="margin:0;font-size:12.5px;line-height:1.45;white-space:pre-wrap">{texto}</pre>'
+        "A la izquierda va el nombre del contrato y a la derecha el nombre (o la etiqueta) que usa la exportación real; "
+        "en la plantilla ambos coinciden.",
+        titulo="configuracion/mapeo_columnas.json (extracto)", con_marcado=True,
+    ))
+    if c.verdad is not None:
+        latentes = pd.DataFrame([
+            {"Tabla de auditoría": f"verdad_{nombre}", "Filas": len(t),
+             "Columnas latentes": ", ".join(x for x in t.columns if not x.startswith("id_"))}
+            for nombre, t in c.verdad.items()])
+        r.agregar(tabla_html(latentes, "Variables latentes que el simulador guarda aparte (no entran a ningún modelo)"))
+        r.agregar(nota(
+            "Los datos de este proyecto son **simulados**: las cifras que se reportan describen la base simulada y el "
+            "método, no al laboratorio real. Las conclusiones sobre el negocio quedan pendientes de repetir las etapas "
+            "con la exportación real, lo cual solo requiere completar el mapeo.",
+            "simulacion",
+        ))
+    else:
+        r.agregar(nota("Los datos provienen de la exportación real del laboratorio, leída a través del mapeo de "
+                       "columnas; no existe verdad oculta y las celdas de auditoría de la simulación no aplican."))
+    return r
+
+
+def protocolo(c):
+    """Bloques temporales del protocolo y mapa de las etapas."""
+    r = Resultado()
+    r.agregar(linea_tiempo([
+        {"fecha": config.FECHA_INICIO, "titulo": "Entrenamiento", "detalle": "ajustar y comparar", "color": "azul"},
+        {"fecha": config.CORTE_VALIDACION, "titulo": "Validación", "detalle": "decidir", "color": "naranja"},
+        {"fecha": config.CORTE_PRUEBA, "titulo": "Prueba",
+         "detalle": f"se abre solo en {config.ETAPA_PRUEBA.split('_')[0]} · {config.TITULOS_ETAPAS[config.ETAPA_PRUEBA]}",
+         "color": "rojo"},
+        {"fecha": config.FECHA_FIN, "titulo": "Fin del periodo", "color": "gris"},
+    ], titulo="Bloques temporales del protocolo"))
+    r.agregar(pasos([(config.TITULOS_ETAPAS[e], PROPOSITO_ETAPAS.get(e, "")) for e in config.ETAPAS],
+                    titulo="Etapas del proyecto", actual=config.ETAPAS.index(ETAPA) + 1))
+    latex.registrar_varias([
+        ("DatFechaInicio", config.FECHA_INICIO, "inicio del periodo de datos"),
+        ("DatFechaFin", config.FECHA_FIN, "fin del periodo de datos"),
+        ("DatCorteValidacion", config.CORTE_VALIDACION, "fecha de corte entre entrenamiento y validación"),
+        ("DatCortePrueba", config.CORTE_PRUEBA, "fecha de corte entre validación y prueba"),
+        ("DatBloquesCV", config.BLOQUES_VALIDACION_CRUZADA, "bloques temporales de la validación cruzada"),
+        ("DatCostoFP", config.COSTO_FP, "costo de un falso positivo (alerta innecesaria)"),
+        ("DatCostoFN", config.COSTO_FN, "costo de un falso negativo (no conforme sin alerta)"),
+        ("DatSemilla", config.SEMILLA, "semilla del proyecto"),
+    ])
+    return r
+
+
+def terminar(c):
+    cerrar({
+        "origen": config.ORIGEN_DATOS, "huella": c.huella,
+        "filas": {nombre: int(len(t)) for nombre, t in c.tablas.items()},
+        "clientes_con_muestras": c.clientes_con_muestras, "desde": c.desde, "hasta": c.hasta,
+    })

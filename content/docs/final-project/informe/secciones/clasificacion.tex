@@ -1,0 +1,154 @@
+% =====================================================================
+% clasificacion.tex
+% Responsabilidad única: presentar el análisis de clasificación del riesgo
+% de no conformidad (modelos del curso, Taguchi, sobremuestreo,
+% calibración y umbral por costo con alertas por semana).
+% Cifras: macros Clf*; tablas tabla_clf_*; figuras 05_*.
+% =====================================================================
+\section{Clasificación: riesgo de no conformidad}
+\label{sec:clasificacion}
+
+El análisis \codigo{\ClfAnalisis} estima, en el momento
+\codigo{\ClfMomento}, la probabilidad de que una muestra aceptada resulte
+no conforme (\codigo{\ClfObjetivo}), con lo que se sabe al recibirla: el
+cliente y su historial reciente, el producto y su matriz, el ensayo, las
+condiciones de transporte y el calendario. Entrenamiento tiene
+\ClfMuestrasEntrenamiento{} muestras con \ClfPositivosEntrenamiento{} no
+conformes (\ClfPrevalenciaEntrenamientoPct{}\,\%), y validación
+\ClfMuestrasValidacion{} con \ClfPositivosValidacion{}
+(\ClfPrevalenciaValidacionPct{}\,\%).
+
+\subsection{Pasada didáctica con los modelos del curso}
+
+En la pasada didáctica (Tabla~\ref{tab:clf-didactica}) el mejor modelo fue la
+\ClfMejorDidactico{}, con un ROC-AUC medio de \ClfAUCMejorDidactico{}
+(desviación de \ClfAUCDesvMejorDidactico{} entre bloques) y una precisión
+media de \ClfPrecisionMediaMejorDidactico{}, frente a
+\ClfDummyPrecisionMedia{} del clasificador que predice la proporción. El
+perceptrón multicapa quedó cerca (\ClfAUCMLPDidactico{}), y el más débil fue
+\ClfPeorDidactico{} (\ClfAUCPeorDidactico{}), lo que es de esperar con
+decenas de variables codificadas, donde la distancia euclídea pierde
+contraste.
+
+\begin{table}[!htbp]
+\centering
+\tablaancha{clf_didactica}
+\caption{Pasada didáctica de clasificación: media y desviación entre bloques
+temporales. La habilidad es $2\cdot\mathrm{AUC}-1$.}
+\label{tab:clf-didactica}
+\end{table}
+
+El árbol sin poda crece hasta \ClfHojasSinPoda{} hojas y obtiene un ROC-AUC de
+\ClfAUCSinPoda{}, y la poda con $\alpha=\ClfAlfaPoda$ lo deja en
+\ClfHojasPodado{} hojas con \ClfAUCPodado{}, es decir, más simple y mejor. Su
+hoja de mayor riesgo reúne \ClfHojaRiesgoFilas{} muestras con una fracción de
+no conformes de \ClfHojaRiesgoFraccion{}, unas \ClfHojaRiesgoVeces{} veces la
+tasa general, y las reglas de sus hojas más riesgosas combinan el historial
+de no conformidad del producto con la temperatura por horas de transporte, en
+línea con la interacción que mostró la Figura~\ref{fig:transporte}.
+
+En la regresión logística, la variable que más aumenta el riesgo es
+\codigo{\ClfVariableSube} (razón de odds de \ClfOddsSube{}) y la que más lo
+reduce \codigo{\ClfVariableBaja} (\ClfOddsBaja{}). Estas razones de odds se leen con las demás
+variables fijas y valen solo para los datos simulados, ya que el generador
+fija esas relaciones.
+
+\paragraph{Efecto del sobremuestreo.} El sobremuestreo de la clase
+minoritaria (dentro de la tubería, sin tocar los pliegues de validación) casi
+no cambia el ROC-AUC de la \ClfSobreMenosPierde{}
+(\ClfSobreDeltaAUCMenor{}), pero le quita \ClfSobreDeltaAUC{} al
+\ClfSobreMasPierde{} (Tabla~\ref{tab:clf-sobre}). Lo más importante, sin
+embargo, es que en todos los modelos empeora el puntaje de Brier y dispara
+la probabilidad media predicha, porque el modelo aprende con una prevalencia
+artificial, de forma que sus probabilidades dejan de poder leerse como
+frecuencias y no pueden alimentar la capa bayesiana sin recalibrarse.
+
+\begin{table}[!htbp]
+\centering
+\small
+\tablagen{clf_sobremuestreo}
+\caption{Modelos didácticos sin y con sobremuestreo. El ROC-AUC cambia poco,
+pero el Brier y la probabilidad media muestran que el sobremuestreo
+descalibra las probabilidades.}
+\label{tab:clf-sobre}
+\end{table}
+
+\subsection{Taguchi y búsqueda en rejilla}
+
+En el L16 de clasificación el factor más influyente vuelve a ser el
+\ClfFactorPrincipal{} (delta de \ClfDeltaPrincipal{} dB), seguido del
+\ClfFactorSegundo{} (\ClfDeltaSegundo{} dB), y el escalado vuelve a ser
+indiferente (delta casi nulo). El óptimo aditivo es
+\emph{\ClfOptimo}, con una S/N predicha de \ClfSNPredicha{} dB (un ROC-AUC
+equivalente de \ClfAUCEquivalentePredicha{}) y una observada de
+\ClfSNObservada{} dB (ROC-AUC de \ClfAUCConfirmacion{}), dentro de la
+tolerancia de \ClfToleranciaSN{} dB. Como la confirmación superó a la mejor
+corrida observada (la \ClfMejorCorrida{}, con \ClfSNMejorCorrida{} dB y
+ROC-AUC de \ClfAUCMejorCorrida{}), la configuración que pasa a la rejilla
+sale de la \ClfOrigenConfiguracion{}.
+
+El óptimo incluye el sobremuestreo, que en el promedio del L16 favorece un
+poco la S/N (aunque en la logística didáctica casi no cambia el ROC-AUC) y que
+descalibra, de forma que la decisión se toma sabiendo que después
+habrá que calibrar. En la rejilla, la logística (\ClfRejillaLogisticaAUC{})
+quedó por delante del árbol (\ClfRejillaArbolAUC{}), con
+\ClfHiperparametros{} y un ROC-AUC por bloque de \ClfAUCRejillaFinal{}, sin
+recurrir a la regla de empate (\ClfPorEmpate{}).
+
+\subsection{Validación y calibración}
+
+En validación, la logística ordenó mejor que el árbol, con un ROC-AUC de
+\ClfAUCValidacionSinCalibrar{} antes de calibrar frente a
+\ClfAUCValidacionOtro{} del \ClfModeloOtro{},
+pero su Brier sin calibrar (\ClfBrierSinCalibrar{}) es peor que el
+(\ClfDummyBrier{}) del
+clasificador constante, lo que confirma la descalibración que introduce el
+sobremuestreo. Por eso se ajusta una calibración sigmoide con los bloques
+temporales de entrenamiento, que baja el Brier a \ClfBrierCalibrado{} y la
+probabilidad media de \ClfProbMediaSinCalibrar{} a \ClfProbMediaCalibrado{},
+cerca de la tasa real, con un ROC-AUC calibrado de \ClfAUCCalibrado{} (IC
+95\,\% de \ClfAUCValidacionInf{} a \ClfAUCValidacionSup{}) y una precisión
+media de \ClfPrecisionMediaValidacion{} (Figura~\ref{fig:fiabilidad}).
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.46\textwidth]{05_fiabilidad.png}
+\caption{Fiabilidad en validación (tramos con el mismo número de muestras).
+Sin calibrar (azul), las probabilidades quedan muy por debajo de la diagonal y
+muy por encima de la tasa real (\ClfPrevalenciaValidacionPct{}\,\%); la
+calibración sigmoide (naranja) las devuelve a la diagonal y al rango bajo,
+donde está casi toda la masa (histograma inferior).}
+\label{fig:fiabilidad}
+\end{figure}
+
+\subsection{Umbral por costo y alertas por semana}
+
+Con las probabilidades calibradas, el umbral de menor costo en validación
+coincide con el teórico, $t=\ClfUmbral$ (Figura~\ref{fig:umbrales}). Con él
+se emiten \ClfAlertasValidacion{} alertas en las \ClfSemanasValidacion{}
+semanas de validación, unas \ClfAlertasSemana{} por semana, con
+$\text{TP}=\ClfTP$, $\text{FP}=\ClfFP$, $\text{FN}=\ClfFN$ y
+$\text{TN}=\ClfTN$, es decir, una precisión de \ClfPrecisionUmbral{}, un
+recall de \ClfRecallUmbral{} y un F1 de \ClfFUnoUmbral{}. El costo es de
+\ClfUmbralCosto{} (IC 95\,\% de \ClfUmbralCostoInf{} a
+\ClfUmbralCostoSup{}), frente a \ClfCostoNoAlertar{} de no alertar nunca y
+\ClfCostoAlertarTodo{} de alertar todas, un ahorro del \ClfAhorroPct{}\,\%
+frente a la mejor política sin modelo.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.48\textwidth]{05_umbrales.png}
+\caption{Costo, precisión y recall, y alertas por semana según el umbral, en
+validación. La línea vertical marca el umbral elegido, que coincide con el
+teórico; conviene notar que el costo es casi plano a su alrededor, mientras
+que las alertas por semana cambian mucho a la izquierda.}
+\label{fig:umbrales}
+\end{figure}
+
+Dicho en términos operativos, por cada no conforme que la alerta detecta se
+revisan unas \ClfRevisadasPorDetectado{} muestras que resultan conformes, y
+aun así se escapan más de la mitad de las no conformes (recall de
+\ClfRecallUmbral{}). La alerta sirve para priorizar la revisión, no para
+reemplazar el análisis de todas las muestras. Finalmente, el modelo congelado
+(\ClfModeloFinal{} calibrada, umbral \ClfUmbral{}) se reajusta con
+entrenamiento más validación (\ClfFilasReajuste{} muestras).
