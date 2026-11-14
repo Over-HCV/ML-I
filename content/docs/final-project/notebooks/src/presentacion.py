@@ -147,6 +147,9 @@ p.diapositiva_red().mostrar()
 # \frac{\partial \hat p}{\partial h}\;\frac{\partial h}{\partial W_1} + 2\,{\color{#3B64A8}{\alpha}}\,{\color{#6E5BA8}{W_1}}$$
 
 # %%
+mostrar(g.video("red"))   # Manim: adelante, pérdida, gradientes hacia atrás y actualización (arquitectura real)
+
+# %%
 from proyecto.modelos import registro
 
 red = registro.crear_modelo("clasificacion", "mlp")   # MLPClassifier con parada temprana
@@ -177,6 +180,9 @@ p.diapositiva_bayes().mostrar()
 #
 # $$\mathrm{VPP} = \frac{{\color{#2F8A4E}{S\,{\color{#3B64A8}{p}}}}}{{\color{#2F8A4E}{S\,{\color{#3B64A8}{p}}}}
 # + {\color{#B8423F}{(1-E)(1-{\color{#3B64A8}{p}})}}}$$
+
+# %%
+mostrar(g.video("bayes"))   # Manim: el árbol de 1000 muestras del ensayo de esterilidad se vuelve la fórmula
 
 # %%
 import numpy as np

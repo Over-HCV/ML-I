@@ -201,7 +201,10 @@ def artefactos_de_presentacion():
     """Artefactos pequeños que lee la presentación: el JSON de cada etapa, su registro de cifras, los arreglos
     que preparó `presentacion.preparar_datos` y el modelo de regresión congelado (unos pocos kB)."""
     extra = [DIR_ARTEFACTOS / n for n in ARTEFACTOS_EXTRA if (DIR_ARTEFACTOS / n).exists()]
-    return sorted(DIR_ARTEFACTOS.glob("0*.json")) + sorted(DIR_ARTEFACTOS.glob("macros_*.json")) + extra
+    # Videos de Manim (si existen): sin ellos, al volver a ejecutar en Colab las celdas de video
+    # mostrarían solo el aviso, y la exposición se hace con el núcleo en marcha.
+    videos = sorted((RAIZ / "figuras" / "manim").glob("*.mp4")) + sorted((RAIZ / "figuras" / "manim").glob("*.png"))
+    return sorted(DIR_ARTEFACTOS.glob("0*.json")) + sorted(DIR_ARTEFACTOS.glob("macros_*.json")) + extra + videos
 
 
 def celdas_de_arranque(etapas_previas=(), presentacion=False):

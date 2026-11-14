@@ -325,11 +325,10 @@ def iniciar():
 def diapositiva_portada():
     """1 · Título, curso, autores, fecha y contexto del laboratorio."""
     autores = [a.strip() for a in config.AUTORES.split("·")]
-    contexto = ("Un laboratorio de microbiología de alimentos en Bogotá: cada muestra que llega se programa, se "
-                "recibe, se siembra y se reporta, y todo ese recorrido queda en su base de datos.")
+    contexto = ("Rodam Analisis S.A.S: Laboratorio de microbiología de alimentos en Bogotá.")
     return _diapo(1, config.TITULO_PROYECTO, [fichas(autores), contexto],
                   rotulo=f"{config.ROTULO_PROYECTO} · {INSTITUCION}",
-                  subtitulo="Tres preguntas de la operación, respondidas con los modelos del curso",
+                  subtitulo="Tres preguntas operativas, modelos de clase puestos a prueba",
                   pie=[FECHA_PRESENTACION, INSTITUCION], portada=True, valores={"autores": autores})
 
 

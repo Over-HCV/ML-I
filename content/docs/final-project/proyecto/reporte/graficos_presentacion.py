@@ -7,7 +7,9 @@ según la previa) y tres animaciones de `matplotlib.animation` que se
 incrustan como HTML con `to_jshtml()` (se reproducen sin núcleo): el umbral
 que recorre las probabilidades de validación, la red que aprende época por
 época y K-means que converge. No calcula resultados: recibe arreglos ya
-calculados por las etapas o por `proyecto/etapas/presentacion.py`.
+calculados por las etapas o por `proyecto/etapas/presentacion.py`. También
+incrusta los videos de Manim ya renderizados en `figuras/manim/` (`video`),
+con un aviso en su lugar si no están.
 
 Los colores de los términos de las ecuaciones (`TINTAS`) son los mismos que
 usan las celdas de texto con `\\color{...}` en MathJax, para que una
@@ -25,8 +27,9 @@ from matplotlib import animation
 from matplotlib.offsetbox import AnchoredOffsetbox, HPacker, TextArea
 from PIL import Image
 
+from proyecto.base import rutas
 from proyecto.base.config import COLORES
-from proyecto.reporte.figuras import PAPEL, TENUE, TINTA, configurar_estilo, familia, tipografia
+from proyecto.reporte.figuras import FILETE, PAPEL, TENUE, TINTA, configurar_estilo, familia, tipografia
 
 # Colores de los términos de las ecuaciones (los mismos hexadecimales van en las celdas de MathJax).
 TINTAS = {
@@ -76,6 +79,27 @@ def como_html(anim, fps):
     plt.close(anim._fig)
     html = re.sub(r"data:image/png;base64,([A-Za-z0-9+/=\\\n]+)", _paleta_reducida, html)
     return HTML(f'<div style="background:{PAPEL};padding:8px 0;max-width:980px">{html}</div>')
+
+
+def video(nombre, ancho=860):
+    """MP4 de `figuras/manim/<nombre>.mp4` incrustado en base64 (`<video controls muted playsinline>`), con
+    su último cuadro (`<nombre>.png`) como portada. Si el video no existe (Manim no es dependencia del
+    proyecto: se renderiza aparte con `make manim`), devuelve una línea de aviso y la presentación sigue."""
+    carpeta = rutas.DIR_FIGURAS / "manim"
+    ruta, portada = carpeta / f"{nombre}.mp4", carpeta / f"{nombre}.png"
+    estilo_texto = f"font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:{TENUE}"
+    if not ruta.exists():
+        return HTML(f'<p style="{estilo_texto}">Animación «{nombre}» no disponible en esta copia: se renderiza con '
+                    '<code>make manim</code> (Manim en un entorno aparte).</p>')
+    datos = base64.b64encode(ruta.read_bytes()).decode("ascii")
+    cartel = (f' poster="data:image/png;base64,{base64.b64encode(portada.read_bytes()).decode("ascii")}"'
+              if portada.exists() else "")
+    return HTML(f'<div style="background:{PAPEL};padding:8px 0;max-width:980px">'
+                f'<video controls muted playsinline preload="metadata"{cartel} style="width:100%;max-width:{ancho}px;'
+                f'display:block;background:{PAPEL};border:1px solid {FILETE};border-radius:6px">'
+                f'<source src="data:video/mp4;base64,{datos}" type="video/mp4"></video>'
+                f'<p style="{estilo_texto};margin:6px 0 0">Animación con Manim · '
+                f'<code>notebooks/manim/escenas.py</code></p></div>')
 
 
 # ----------------------------------------------------------------------

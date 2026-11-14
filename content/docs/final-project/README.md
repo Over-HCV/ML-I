@@ -89,11 +89,15 @@ Desde esta carpeta, con [uv](https://docs.astral.sh/uv/) y el entorno del reposi
 | `cd informe && make pdf` | Compila el informe en LaTeX (requiere haber ejecutado los notebooks) |
 | `make colab` | Copia los notebooks a una carpeta vacía y los ejecuta allí, sin el paquete, para probar que son autosuficientes |
 | `make verificar` | Ejecuta `verificacion/verificar.py` (menos de un minuto) |
+| `make manim` | Renderiza los dos videos de Manim de la presentación en `figuras/manim/` (Manim en un entorno aparte, `MANIM_VENV=...`) |
 | `make limpiar` | Borra datos generados, artefactos y cachés (no toca `datos/reales` ni `datos/externos`) |
 
 Si una etapa se abre sola y faltan los artefactos de las anteriores, `iniciar_etapa` las ejecuta primero en silencio.
 
 **Presentación y estilo.** `make presentacion` primero escribe `artefactos/presentacion_datos.npz` (unos 260 kB: probabilidades de validación del clasificador, curvas del perceptrón entrenado época por época, una muestra de los perfiles de agrupamiento, unos días de la carga diaria y una submuestra fija de entrenamiento y otra de validación ya transformadas para los paneles interactivos, todo del desarrollo y nunca de la prueba) y comprueba que reproduce el ROC-AUC y el costo de validación de la etapa 05; luego ejecuta el guion, que intercala las diapositivas con fragmentos de código, ecuaciones en LaTeX con términos coloreados y tres animaciones de `matplotlib.animation`. Seis paneles con controles de `ipywidgets` (`proyecto/reporte/interactivo.py`: umbral de alerta, KNN, poda del árbol, red neuronal, Bayes y K-means) permiten, con el núcleo en marcha, mover un parámetro y ver cómo cambia la métrica optimizada frente al valor que eligió el proyecto; sin núcleo, cada celda conserva la figura de su estado inicial. Diapositivas, componentes HTML y figuras comparten un sistema editorial (Fraunces, IBM Plex Sans y JetBrains Mono): el HTML las toma de Google Fonts y matplotlib las busca en el sistema o las descarga una vez de `google/fonts` a `~/.cache/proyecto_fuentes/`; sin conexión, todo cae en Georgia/DejaVu sin errores.
+
+Dos videos de Manim (`notebooks/manim/escenas.py`: Bayes término a término con el ensayo de esterilidad y la retropropagación en el MLP) leen sus cifras de los artefactos y se versionan ya renderizados en `figuras/manim/`; la presentación los incrusta en su salida y, si faltan, muestra un aviso en su lugar.
+Manim no es dependencia del proyecto: `make manim MANIM_VENV=/ruta/al/entorno` los rehace con un entorno aparte (instrucciones en el encabezado de `escenas.py`), y `make notebooks` no lo necesita.
 
 `make verificar` comprueba, entre otras cosas, la regla de capas (incluida la capa 8), que el generador sea determinista, los festivos de Colombia, la ortogonalidad del L16, las fórmulas de Bayes contra un cálculo a mano, la ausencia de fugas por momento, que solo la etapa 07 haya leído la prueba, que el análisis elegido en el cribado sea el que reportan las etapas siguientes que el texto de las etapas no tenga cifras escritas a mano, que los guiones no definan funciones y que las macros del informe estén completas.
 

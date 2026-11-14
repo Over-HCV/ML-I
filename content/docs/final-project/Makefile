@@ -5,13 +5,17 @@
 #   make presentacion  rehace solo notebooks/Presentacion.ipynb con los artefactos actuales
 #   make colab         prueba que los notebooks construidos funcionan solos en una carpeta vacía
 #   make verificar     ejecuta verificacion/verificar.py (si existe)
+#   make manim         renderiza los videos de Manim de la presentación (entorno aparte, MANIM_VENV=...)
 #   make limpiar       borra datos generados, artefactos y cachés
 
 RAIZ := $(shell git rev-parse --show-toplevel)
 UV   := PYTHONPATH=. uv run --project $(RAIZ)
 N    ?=
+# Manim no es dependencia del proyecto: vive en su propio entorno (ver notebooks/manim/escenas.py).
+MANIM_VENV   ?= $(HOME)/.cache/proyecto_manim_venv
+MEDIOS_MANIM ?= $(or $(TMPDIR),/tmp)/proyecto_manim
 
-.PHONY: notebooks etapa presentacion colab verificar limpiar
+.PHONY: notebooks etapa presentacion colab verificar limpiar manim
 
 notebooks:
 	$(UV) python notebooks/src/build.py
@@ -40,3 +44,10 @@ verificar:
 limpiar:
 	rm -rf artefactos datos/crudos datos/auditoria datos/limpios datos/modelado datos/prueba
 	find . -type d \( -name __pycache__ -o -name .ipynb_checkpoints \) -prune -exec rm -rf {} +
+
+# Videos de la presentación (figuras/manim/*.mp4 y su portada .png). No lo exige ningún otro objetivo.
+manim:
+	@test -x "$(MANIM_VENV)/bin/manim" || { echo "No hay Manim en $(MANIM_VENV): cree el entorno (notebooks/manim/escenas.py) o use make manim MANIM_VENV=/ruta"; exit 1; }
+	"$(MANIM_VENV)/bin/manim" -qm --media_dir "$(MEDIOS_MANIM)" notebooks/manim/escenas.py EscenaBayes -o bayes
+	"$(MANIM_VENV)/bin/manim" -qm --media_dir "$(MEDIOS_MANIM)" notebooks/manim/escenas.py EscenaRetropropagacion -o red
+	"$(MANIM_VENV)/bin/python" notebooks/manim/escenas.py "$(MEDIOS_MANIM)/videos/escenas/720p30" figuras/manim
