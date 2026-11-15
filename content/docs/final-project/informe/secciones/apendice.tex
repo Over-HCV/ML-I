@@ -9,51 +9,30 @@
 
 \subsection{Reproducibilidad}
 
-Todo el proyecto se reconstruye desde la carpeta raíz con \codigo{uv} y el
-entorno del repositorio (Python 3.12), y cada paso aleatorio parte de la
-semilla \DatSemilla{}, de forma que dos ejecuciones dan las mismas cifras; la
-huella SHA-256 abreviada de las tablas crudas usadas en este informe es
-\codigo{\DatHuella}. Los comandos principales son los siguientes:
+Todo el proyecto se reconstruye desde la carpeta raíz con \codigo{uv} y
+Python 3.12. Cada paso aleatorio parte de la semilla \DatSemilla{} así que
+dos ejecuciones dan las mismas cifras. Con \codigo{make notebooks} se ejecutan las siete
+etapas en orden y se regenera \codigo{informe/generado/} (las macros, el
+índice y las tablas), con \codigo{make colab} los notebooks se copian a una
+carpeta vacía y se ejecutan allí sin el paquete para probar que se valen por
+sí solos y con \codigo{make pdf} (en \codigo{informe/}) se compila este
+documento. Por último \codigo{make verificar} corre el guion
+\codigo{verificar.py} de la carpeta \codigo{verificacion/}. Ese guion revisa
+la regla de capas, que el generador sea determinista, la ortogonalidad del
+L16, las fórmulas de Bayes contra un cálculo a mano, que no haya fugas por
+momento, que solo la etapa~07 lea la prueba, que las etapas no tengan cifras
+escritas a mano y que no falten macros en el informe.
 
-\begin{itemize}
-    \item \textbf{\codigo{make notebooks}:} ejecuta las siete etapas en orden,
-          escribe los notebooks y regenera \codigo{informe/generado/} (macros,
-          índice y tablas).
-    \item \textbf{\codigo{make verificar}:} ejecuta las comprobaciones
-          independientes de \codigo{verificacion/verificar.py}.
-    \item \textbf{\codigo{make colab}:} copia los notebooks a una carpeta
-          vacía y los ejecuta allí, sin el paquete, para probar que son
-          autosuficientes.
-    \item \textbf{\codigo{make pdf}} (en \codigo{informe/}): compila este
-          documento con \codigo{latexmk}.
-\end{itemize}
-
-Las comprobaciones de \codigo{make verificar} son: la regla de capas
-(importaciones analizadas por AST); que solo \codigo{proyecto/datos} importe
-la simulación; el encabezado «Capa N» y «Responsabilidad única» en cada
-módulo; el determinismo del generador (dos corridas, misma huella); los
-festivos de Colombia; la ortogonalidad del arreglo L16; las fórmulas de Bayes
-contra un cálculo a mano; la ausencia de fugas por momento en las tablas de
-modelado; la custodia de la partición de prueba (solo la etapa~07 la lee);
-que los análisis elegidos en el cribado sean los que reportan las etapas
-siguientes; que el texto de las etapas no tenga cifras escritas a mano; que
-los guiones de etapa sean delgados (sin funciones y con celdas cortas); que las
-macros y tablas del informe estén completas y sin repetir; y que la
-presentación se arme solo con los artefactos guardados.
-
-En Google Colab basta subir \codigo{notebooks/Proyecto\_Final.ipynb} (o un
-notebook de etapa) y ejecutarlo todo: la primera sección recrea el paquete
-desde un archivo comprimido embebido, comprobando su SHA-256, y un notebook
-de etapa suelto reconstruye en silencio las etapas anteriores. Los notebooks
-se probaron con una pila parecida a la de Colab (pandas 2.2, scikit-learn
-1.6) y con la pila local del repositorio (pandas 3, scikit-learn 1.9).
+En Google Colab basta con subir \codigo{notebooks/Proyecto\_Final.ipynb} y
+ejecutarlo todo porque su primera sección recrea el paquete. Lo probamos con
+una pila parecida a la de Colab (pandas 2.2 y scikit-learn 1.6) y con la local
+(pandas 3 y scikit-learn 1.9).
 
 \subsection{Arquitectura por capas}
 
-Cada subcarpeta del paquete \codigo{proyecto/} es una capa, y un módulo solo
-puede importar de su propia capa o de una de número menor
-(Tabla~\ref{tab:capas}); además, las etapas se comunican solo por archivos,
-nunca por variables en memoria.
+Cada subcarpeta de \codigo{proyecto/} es una capa y un módulo solo importa de
+su capa o de una menor (Tabla~\ref{tab:capas}). Las etapas se comunican solo
+por archivos.
 
 \begin{table}[!htbp]
 \centering
@@ -62,18 +41,18 @@ nunca por variables en memoria.
 \toprule
 Capa & Carpeta & Responsabilidad \\
 \midrule
-0 & \codigo{base} & Configuración, rutas, salida en pantalla, artefactos entre etapas y custodia de la prueba \\
-1 & \codigo{datos} & Contrato de columnas, calendario y festivos, carga, mapeo de la exportación real y simulación \\
+0 & \codigo{base} & Configuración, rutas, artefactos entre etapas y custodia de la prueba \\
+1 & \codigo{datos} & Contrato de columnas, festivos, carga, mapeo de la exportación y simulación \\
 2 & \codigo{preparacion} & Limpieza determinista, integración de tablas y partición temporal \\
 3 & \codigo{variables} & Tablas de modelado con el momento de cada variable (sin fugas) \\
-4 & \codigo{modelos} & Tuberías de scikit-learn, registro de modelos y rejillas, agrupamiento \\
-5 & \codigo{evaluacion} & Validación por bloques temporales, métricas, umbral por costo, bootstrap y Bayes \\
+4 & \codigo{modelos} & Tuberías de scikit-learn, modelos, rejillas y agrupamiento \\
+5 & \codigo{evaluacion} & Validación por bloques, métricas, umbral por costo, bootstrap y Bayes \\
 6 & \codigo{cribado} & Catálogo de análisis, cribado rápido, arreglo L16 y corridas de Taguchi \\
 7 & \codigo{reporte} & Figuras, componentes HTML y exportación de cifras y tablas a \LaTeX{} \\
-8 & \codigo{etapas} & Una función por sección de cada notebook: calcula, guarda artefactos y registra cifras \\
+8 & \codigo{etapas} & Una función por sección de notebook: Calcula, guarda y registra cifras \\
 \bottomrule
 \end{tabular}
-\caption{Capas del paquete \codigo{proyecto/}. Los guiones de los notebooks
+\caption{Capas del paquete \codigo{proyecto/}: Los guiones de los notebooks
 solo narran y llaman funciones de la capa~8.}
 \label{tab:capas}
 \end{table}

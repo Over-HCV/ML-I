@@ -19,9 +19,9 @@ from proyecto.reporte.html import linea_tiempo, nota, pasos, pestanas, tabla_htm
 
 ETAPA = "01_datos"
 FASES_MUESTRAS = {
-    "muestras · toma": ["maestro", "programacion", "toma"],
-    "muestras · llegada y recepción": ["llegada", "recepcion"],
-    "muestras · siembra a reporte": ["siembra", "lectura", "reensayo", "reporte"],
+    "muestras (toma)": ["maestro", "programacion", "toma"],
+    "muestras (llegada y recepción)": ["llegada", "recepcion"],
+    "muestras (siembra a reporte)": ["siembra", "lectura", "reensayo", "reporte"],
 }
 SIGNIFICADO_MOMENTOS = {
     "maestro": "datos del cliente", "programacion": "visita agendada", "toma": "muestra y producto",
@@ -54,21 +54,22 @@ def contrato(c):
     for nombre_tabla in esquema.TABLAS:
         parte = diccionario[diccionario["Tabla"] == nombre_tabla].drop(columns="Tabla")
         if nombre_tabla != "muestras":
-            fichas[nombre_tabla] = tabla_html(parte, f"Diccionario de «{nombre_tabla}»", maximo_filas=None)
+            fichas[nombre_tabla] = tabla_html(parte, f'Diccionario de "{nombre_tabla}"', maximo_filas=None)
             continue
         for rotulo, momentos in FASES_MUESTRAS.items():
             fase = parte[parte["Momento"].isin(momentos)]
             if len(fase):
-                fichas[rotulo] = tabla_html(fase, f"Diccionario de «{rotulo}»", maximo_filas=None)
+                fichas[rotulo] = tabla_html(fase, f"Diccionario de {rotulo}", maximo_filas=None)
     r.agregar(pestanas(fichas, titulo="Diccionario de datos por tabla"))
 
     n_columnas = len(diccionario)
     n_obligatorias = int((diccionario["Obligatoria"] == "sí").sum())
     n_tablas = int(diccionario["Tabla"].nunique())
     r.agregar(nota(
-        f"El contrato declara **{n_columnas} columnas** en {n_tablas} tablas, de las cuales **{n_obligatorias}** son "
-        f"obligatorias y las {n_columnas - n_obligatorias} restantes opcionales. A estas tablas se suma el calendario "
-        "laboral colombiano (festivos y días hábiles), que no viene de la base del laboratorio sino que se calcula.",
+        f"Al final el contrato quedó con **{n_columnas} columnas** en {n_tablas} tablas. Solo **{n_obligatorias}** son "
+        "obligatorias, o sea que el código corre con una exportación que traiga apenas esas, y las otras "
+        f"{n_columnas - n_obligatorias} son opcionales. A esto le sumamos el calendario laboral colombiano (festivos y días "
+        "hábiles), que no viene en la base del laboratorio sino que lo calculamos nosotros.",
     ))
     columnas_por_momento = diccionario["Momento"].value_counts()
     r.agregar(linea_tiempo(
@@ -112,9 +113,10 @@ def tablas_crudas(c):
          "color": "gris"},
     ], titulo="Tablas crudas obtenidas"))
     r.agregar(nota(
-        f"Origen de los datos: **{config.ORIGEN_DATOS}**. Huella del contenido (SHA-256 abreviado): `{c.huella}`. "
-        "Esta huella queda guardada con los resultados de cada etapa, de forma que se pueda comprobar con qué datos se "
-        "obtuvo cada cifra.",
+        f"Los datos salieron de **{'la simulación' if config.ORIGEN_DATOS == 'simulacion' else 'la exportación real'}**. "
+        "Para poder comprobar después con qué datos salió cada cifra guardamos con los resultados de cada etapa una "
+        f"huella del contenido, `{c.huella}`, que son los primeros caracteres de un SHA-256 (un resumen que cambia si "
+        "cambia una sola celda).",
     ))
 
     resumen_obligatorias = (
@@ -130,10 +132,10 @@ def tablas_crudas(c):
     }, titulo="Validación de las tablas contra el contrato"))
     faltan = int(opcionales["Faltan"].sum())
     r.agregar(nota(
-        "El origen trae todas las columnas del contrato, obligatorias y opcionales, por lo que ningún análisis del "
-        "catálogo queda descartado por falta de datos." if faltan == 0 else
-        f"Al origen le faltan **{faltan}** columnas opcionales; los análisis que las necesiten se marcan como no "
-        "disponibles en el cribado (etapa 03) en lugar de fallar.",
+        "El origen trae todas las columnas del contrato (obligatorias y opcionales) así que ningún análisis del "
+        "catálogo se cae por falta de datos." if faltan == 0 else
+        f"Al origen le faltan **{faltan}** columnas opcionales. Los análisis que las necesitan no fallan: En el cribado "
+        "de la etapa 03 quedan marcados como no disponibles.",
         "hallazgo",
     ))
     filas = {nombre: int(len(t)) for nombre, t in tablas.items()}
@@ -158,13 +160,13 @@ def tablas_crudas(c):
 
 
 def como_llegan(c):
-    """Ejemplos de la «suciedad» de las tablas crudas (no se corrige aquí)."""
+    """Ejemplos de la suciedad de las tablas crudas (no se corrige aquí)."""
     r = Resultado()
     crudas = c.tablas["muestras"]
     ejemplos = {}
     vista = [x for x in ["id_muestra", "id_cliente", "fecha_recepcion", "matriz", "ensayo", "recuento_reportado",
                          "limite_ufc", "resultado"] if x in crudas.columns]
-    ejemplos["Primeras filas"] = tabla_html(crudas[vista].head(6), "Primeras filas de «muestras»")
+    ejemplos["Primeras filas"] = tabla_html(crudas[vista].head(6), 'Primeras filas de "muestras"')
 
     columna = next((x for x in ["matriz", "ensayo"] if x in crudas.columns), None)
     if columna is not None:
@@ -172,8 +174,8 @@ def como_llegan(c):
         grafias["Categoría"] = grafias["Como viene escrita"].map(mapeo.clave_etiqueta)
         categoria = grafias.groupby("Categoría")["Filas"].size().idxmax()
         ejemplo = grafias[grafias["Categoría"] == categoria].drop(columns="Categoría")
-        ejemplo["Como viene escrita"] = "«" + ejemplo["Como viene escrita"] + "»"
-        ejemplos["Etiquetas"] = tabla_html(ejemplo.head(10), f"Grafías de una misma categoría en «{columna}»")
+        ejemplo["Como viene escrita"] = '"' + ejemplo["Como viene escrita"] + '"'
+        ejemplos["Etiquetas"] = tabla_html(ejemplo.head(10), f'Grafías de una misma categoría en "{columna}"')
 
     recuentos = crudas["recuento_reportado"].dropna().astype(str)
     no_numericos = recuentos[~recuentos.str.fullmatch(r"\d+(\.\d+)?")]
@@ -182,10 +184,13 @@ def como_llegan(c):
         "Recuentos que no son un número simple (los más frecuentes)")
 
     imposibles = []
+    repetidas = crudas.duplicated(keep="first")
+    en_repetidas = 0   # valores imposibles que caen en filas duplicadas (la limpieza los cuenta tras quitarlas)
     for col in [x for x in limpieza.RANGOS_VALIDOS["muestras"] if x in crudas.columns]:
         minimo, maximo = limpieza.RANGOS_VALIDOS["muestras"][col]
         valores = pd.to_numeric(crudas[col], errors="coerce")
         fuera = (valores < minimo) if maximo is None else ((valores < minimo) | (valores > maximo))
+        en_repetidas += int((fuera & repetidas).sum())
         if fuera.any():
             imposibles.append({"Columna": col, "Rango posible": f"[{minimo}, {'∞' if maximo is None else maximo}]",
                                "Filas fuera del rango": int(fuera.sum()), "Ejemplo": float(valores[fuera].iloc[0])})
@@ -194,20 +199,26 @@ def como_llegan(c):
                                                     decimales=2)
     r.agregar(pestanas(ejemplos, titulo="Las tablas tal como llegan (sin limpiar)"))
 
-    duplicadas = int(crudas.duplicated().sum())
+    duplicadas = int(repetidas.sum())
     n_imposibles = sum(f["Filas fuera del rango"] for f in imposibles)
     proporcion = len(no_numericos) / max(len(recuentos), 1)
     r.agregar(nota(
-        f"En «muestras» hay **{len(no_numericos)}** recuentos que no son un número simple "
+        f"En las muestras crudas encontramos **{len(no_numericos)}** recuentos que no son un número simple "
         f"({100 * proporcion:.1f} % de los reportados), **{duplicadas}** filas que repiten exactamente a otra y "
-        f"**{n_imposibles}** valores fuera de su rango posible. Ninguno se corrige en esta etapa.",
+        f"**{n_imposibles}** valores fuera de su rango posible"
+        + (f". De esos valores {en_repetidas} caen en filas duplicadas, por eso la limpieza (que primero quita las "
+           f"duplicadas) cuenta {n_imposibles - en_repetidas}" if en_repetidas else "")
+        + ". Aquí no corregimos nada: Eso queda para la etapa 02, que deja constancia de cada cambio.",
         "advertencia",
     ))
     latex.registrar_varias([
         ("DatRecuentosNoNumericos", len(no_numericos), "recuentos crudos que no son un número simple"),
         ("DatRecuentosNoNumericosPct", 100 * proporcion, "porcentaje de recuentos no numéricos", 1),
         ("DatDuplicadas", duplicadas, "filas crudas de muestras duplicadas exactas"),
-        ("DatValoresImposibles", n_imposibles, "valores crudos fuera de su rango físico"),
+        ("DatValoresImposiblesCrudos", n_imposibles,
+         "valores fuera de su rango físico en las filas crudas, con las duplicadas incluidas"),
+        ("DatValoresImposiblesEnDuplicadas", en_repetidas,
+         "de ellos, los que caen en filas duplicadas (la auditoría de limpieza cuenta tras quitarlas)"),
     ])
     r.valores.update(no_numericos=len(no_numericos), duplicadas=duplicadas, imposibles=n_imposibles)
     return r
@@ -225,8 +236,8 @@ def exportacion_real(c):
     texto = html_estandar.escape(json.dumps(extracto, ensure_ascii=False, indent=2))
     r.agregar(nota(
         f'<pre style="margin:0;font-size:12.5px;line-height:1.45;white-space:pre-wrap">{texto}</pre>'
-        "A la izquierda va el nombre del contrato y a la derecha el nombre (o la etiqueta) que usa la exportación real; "
-        "en la plantilla ambos coinciden.",
+        "A la izquierda va el nombre del contrato y a la derecha el nombre (o la etiqueta) que usa la exportación real. "
+        "En la plantilla los dos coinciden porque todavía no tenemos la exportación.",
         titulo="configuracion/mapeo_columnas.json (extracto)", con_marcado=True,
     ))
     if c.verdad is not None:
@@ -234,16 +245,14 @@ def exportacion_real(c):
             {"Tabla de auditoría": f"verdad_{nombre}", "Filas": len(t),
              "Columnas latentes": ", ".join(x for x in t.columns if not x.startswith("id_"))}
             for nombre, t in c.verdad.items()])
-        r.agregar(tabla_html(latentes, "Variables latentes que el simulador guarda aparte (no entran a ningún modelo)"))
+        r.agregar(tabla_html(latentes, "Variables ocultas que el simulador guarda aparte (ningún modelo las lee)"))
         r.agregar(nota(
-            "Los datos de este proyecto son **simulados**: las cifras que se reportan describen la base simulada y el "
-            "método, no al laboratorio real. Las conclusiones sobre el negocio quedan pendientes de repetir las etapas "
-            "con la exportación real, lo cual solo requiere completar el mapeo.",
+            "Lo que concluyamos sobre la operación queda pendiente hasta repetir las etapas con la exportación real.",
             "simulacion",
         ))
     else:
-        r.agregar(nota("Los datos provienen de la exportación real del laboratorio, leída a través del mapeo de "
-                       "columnas; no existe verdad oculta y las celdas de auditoría de la simulación no aplican."))
+        r.agregar(nota("Los datos vienen de la exportación real del laboratorio, leída a través del mapeo de columnas. "
+                       "Aquí no hay variables ocultas y lo que decimos del simulador no aplica."))
     return r
 
 
@@ -254,7 +263,7 @@ def protocolo(c):
         {"fecha": config.FECHA_INICIO, "titulo": "Entrenamiento", "detalle": "ajustar y comparar", "color": "azul"},
         {"fecha": config.CORTE_VALIDACION, "titulo": "Validación", "detalle": "decidir", "color": "naranja"},
         {"fecha": config.CORTE_PRUEBA, "titulo": "Prueba",
-         "detalle": f"se abre solo en {config.ETAPA_PRUEBA.split('_')[0]} · {config.TITULOS_ETAPAS[config.ETAPA_PRUEBA]}",
+         "detalle": f"se abre solo en la etapa {config.ETAPA_PRUEBA.split('_')[0]}",
          "color": "rojo"},
         {"fecha": config.FECHA_FIN, "titulo": "Fin del periodo", "color": "gris"},
     ], titulo="Bloques temporales del protocolo"))

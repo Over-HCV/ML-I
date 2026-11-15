@@ -1,8 +1,10 @@
 # Analítica predictiva sobre la base de muestras de un laboratorio de microbiología
 
-**Aprendizaje Automático de Máquina I · Proyecto final** (Universidad del Rosario)
+**Aprendizaje Automático de Máquina I, proyecto final** (Universidad del Rosario)
 
-**Autores:** Tania Fernanda Mora Cubillos · Over Haider Castrillón Valencia · Daniel Arias Mutis
+**Autores:** Tania Fernanda Mora Cubillos, Over Haider Castrillón Valencia y Daniel Arias Mutis
+
+**Exposición.** La charla recorre los notebooks de etapa `01_datos.ipynb` a `07_evaluacion_final.ipynb` en orden. Las etapas 04 a 06 traen paneles interactivos (umbral de alerta, KNN, poda del árbol, red neuronal, Bayes, K-means y Taguchi) que solo se mueven con el núcleo en marcha: Antes de exponer hay que ejecutar el notebook (sin núcleo cada panel muestra la figura de su estado inicial). `Presentacion.ipynb` queda como un resumen corto de once diapositivas.
 
 Se aplica aprendizaje automático a la base de muestras de un laboratorio de microbiología de alimentos con el objetivo de responder cuatro preguntas de la operación: cuántas muestras llegarán (regresión), cuáles están en riesgo de resultar no conformes (clasificación), qué tan probable es que un positivo sea falso (Bayes y regla de reensayo) y qué grupos de muestras y clientes existen (agrupamiento). Como la base real todavía no está disponible, se trabaja con una base **simulada** de la misma estructura, y la exportación real se conecta después a través de un mapeo de columnas, sin cambiar el código.
 
@@ -29,7 +31,7 @@ final-project/
 │   ├── src/                    guiones de etapa (formato percent) y build.py
 │   ├── 01_datos.ipynb … 07_evaluacion_final.ipynb
 │   ├── Proyecto_Final.ipynb    las siete etapas en un solo notebook (entregable funcional)
-│   └── Presentacion.ipynb      once diapositivas, con código, ecuaciones y animaciones, para la exposición de 10 minutos
+│   └── Presentacion.ipynb      resumen corto de once diapositivas (la exposición recorre los notebooks 01 a 07)
 ├── figuras/                    PNG de cada etapa (se versionan; el informe las toma de aquí)
 ├── informe/                    informe final en LaTeX (main.tex, secciones/, make pdf)
 │   └── generado/               macros (resultados.tex), índice comentado y tablas tabla_*.tex
@@ -44,7 +46,7 @@ final-project/
 
 ## Arquitectura por capas
 
-Cada subcarpeta de `proyecto/` es una capa, y **un módulo solo puede importar de su propia capa o de una de número menor**. Además, nada fuera de `proyecto/datos/` importa el generador (`simulacion`), de forma que el resto del código no distingue entre datos simulados y reales. Cada módulo empieza con `Capa N ·` y un párrafo `Responsabilidad única:`.
+Cada subcarpeta de `proyecto/` es una capa, y **un módulo solo puede importar de su propia capa o de una de número menor**. Además, nada fuera de `proyecto/datos/` importa el generador (`simulacion`), de forma que el resto del código no distingue entre datos simulados y reales. Cada módulo empieza con `Capa N ·` (el encabezado que exige la verificación) y un párrafo `Responsabilidad única:`.
 
 | Capa | Carpeta | Responsabilidad |
 |---|---|---|
@@ -137,7 +139,7 @@ Las celdas de auditoría de la simulación (verdad oculta) se saltan solas cuand
 
 ## Abrir en Google Colab
 
-Se sube a Colab `notebooks/Proyecto_Final.ipynb` (las siete etapas) o un notebook de etapa suelto, por ejemplo `notebooks/05_clasificacion_bayes.ipynb`, y se ejecuta todo. La primera sección, «Código del proyecto», es una sola celda que recrea el paquete desde un archivo .tar.xz embebido en base64 (y, en los notebooks de etapa, los guiones de las etapas previas), comprobando su SHA-256 y sin reemplazar archivos que ya existan, de forma que no hace falta clonar el repositorio; un notebook de etapa suelto reconstruye en silencio las etapas anteriores antes de empezar.
+Se sube a Colab `notebooks/Proyecto_Final.ipynb` (las siete etapas) o un notebook de etapa suelto, por ejemplo `notebooks/05_clasificacion_bayes.ipynb`, y se ejecuta todo. La primera sección, "Código del proyecto", es una sola celda que recrea el paquete desde un archivo .tar.xz embebido en base64 (y, en los notebooks de etapa, los guiones de las etapas previas), comprobando su SHA-256 y sin reemplazar archivos que ya existan, de forma que no hace falta clonar el repositorio; un notebook de etapa suelto reconstruye en silencio las etapas anteriores antes de empezar.
 
 El notebook completo se probó de punta a punta, en una carpeta vacía y sin el paquete instalado, con una pila parecida a la de Colab (Python 3.12, pandas 2.2.2, NumPy 2.0.2, scikit-learn 1.6.1, imbalanced-learn 0.13.0, matplotlib 3.10.0, pyarrow 18.1.0, SciPy 1.14.1, statsmodels 0.14.4), así como con la pila local del repositorio (pandas 3, scikit-learn 1.9), y en ambas termina sin errores, con las mismas selecciones y el mismo umbral (las cifras de la etapa 05 difieren solo desde el cuarto o quinto decimal, por diferencias numéricas del optimizador entre versiones de scikit-learn).
 

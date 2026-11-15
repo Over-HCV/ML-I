@@ -8,108 +8,123 @@
 \section{Metodología}
 \label{sec:metodologia}
 
+La exploración nos dejó varias preguntas posibles y una base que cambia con
+el tiempo. Aquí contamos lo que comparten todos los análisis: Cómo elegimos
+qué estudiar, cómo partimos los datos por fechas, cómo exploramos las
+configuraciones y con qué métricas medimos.
+
 \subsection{Cribado de análisis con una regla fijada de antemano}
 \label{sec:cribado}
 
-Con la misma base se pueden plantear muchas preguntas, y estudiar a fondo
-todas habría diluido el trabajo, así que primeramente se armó un catálogo de
+Con la misma base se pueden plantear muchas preguntas y estudiarlas todas a
+fondo habría diluido el trabajo. Por eso primero armamos un catálogo de
 \CriCandidatos{} análisis candidatos (\CriCandidatosReg{} de regresión,
 \CriCandidatosClf{} de clasificación, \CriCandidatosAgr{} de agrupamiento y
-\CriCandidatosBayes{} bayesianos, estos últimos sin cribar porque no
-compiten entre sí), cada uno con su objetivo, su unidad de análisis, su
-momento de predicción y un valor de negocio de 1 a 3 asignado antes de ver
-resultados. Para cada candidato se construyó una tabla de modelado
-(\CriTablasConstruidas{} en total), y las \CriAuditoriasSuperadas{} superaron
-la auditoría automática de fugas, que comprueba que ninguna variable tenga un
+\CriCandidatosBayes{} bayesianos, que no cribamos porque no compiten entre
+sí). Cada uno tiene su objetivo, su unidad de análisis, el momento en que
+predice y un valor de negocio de 1 a 3 que le pusimos antes de ver cualquier
+resultado. Para cada candidato construimos una tabla de modelado
+(\CriTablasConstruidas{} en total) y las \CriAuditoriasSuperadas{} pasaron la
+auditoría automática de fugas, que revisa que ninguna variable tenga un
 momento posterior al de la predicción.
 
-Después, cada candidato pasa por la misma prueba rápida, solo con
-entrenamiento y \DatBloquesCV{} bloques temporales, una línea base, un modelo
-lineal o logístico y un árbol de profundidad \CriProfundidadArbol{}, todo sin
-afinar (la prueba completa tomó \CriSegundosPrueba{} segundos). La regla de
-selección, escrita en el código antes de mirar resultados y sin ajustes
-posteriores, es la siguiente:
+Después a cada candidato le hicimos la misma prueba rápida, solo con
+entrenamiento y con \DatBloquesCV{} bloques temporales: Una línea base, un
+modelo lineal o logístico y un árbol de profundidad \CriProfundidadArbol{},
+todo sin afinar (la prueba completa tardó \CriSegundosPrueba{} segundos). La
+regla para elegir la escribimos en el código antes de mirar los resultados y
+no la tocamos después:
 
-\begin{itemize}
-    \item \textbf{Tamaño mínimo:} un supervisado necesita al menos
-          \CriMinimoFilas{} filas de entrenamiento (y, si es de clasificación,
-          \CriMinimoPositivos{} positivos), y un agrupamiento al menos
+\begin{enumerate}[label=\alph*.]
+    \item \textbf{Tamaño mínimo.} Un supervisado necesita al menos
+          \CriMinimoFilas{} filas de entrenamiento (y \CriMinimoPositivos{}
+          positivos si es de clasificación) y un agrupamiento al menos
           \CriMinimoFilasAgrupamiento{} filas.
-    \item \textbf{Estabilidad:} la habilidad frente a la línea base debe ser
-          positiva en todos los bloques, no solo en promedio.
-    \item \textbf{No basta una regla simple:} si un árbol que solo ve la mejor
-          variable logra el \CriUmbralReglaSimplePct{}\,\% o más de la
-          habilidad, el análisis no necesita un modelo y se descarta del
+    \item \textbf{Estabilidad.} La habilidad frente a la línea base tiene
+          que ser positiva en todos los bloques y no solo en promedio.
+    \item \textbf{Que no baste una regla simple.} Si un árbol que solo ve la
+          mejor variable logra el \CriUmbralReglaSimplePct{}\,\% o más de la
+          habilidad, la pregunta no necesita un modelo y la sacamos del
           estudio a fondo.
-    \item \textbf{Tendencia a agruparse:} un agrupamiento necesita un
-          estadístico de Hopkins mayor que \CriUmbralHopkins{}.
-    \item \textbf{Puntaje:} habilidad media (o silueta) por valor de negocio
-          dividido entre 3; en cada tipo gana el elegible de mayor puntaje.
-\end{itemize}
+    \item \textbf{Tendencia a agruparse.} Un agrupamiento necesita un
+          estadístico de Hopkins mayor que \CriUmbralHopkins{}. Ese
+          estadístico vale cerca de 0.5 cuando los datos están repartidos al
+          azar y se acerca a 1 cuando forman grupos.
+    \item \textbf{Puntaje.} Es la habilidad media (o la silueta) por el
+          valor de negocio dividido entre 3. En cada tipo gana el elegible
+          de mayor puntaje.
+\end{enumerate}
 
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.66\textwidth]{03_habilidad.png}
-\caption{Habilidad de cada supervisado en el cribado (barra: media; puntos:
-cada bloque temporal). Los puntos muestran qué tan estable es la habilidad
-entre bloques, y el color separa los elegibles de los descartados porque una
-sola variable basta.}
+\caption{Habilidad de cada supervisado en el cribado, con la media como barra
+y cada bloque temporal como punto: Los puntos dicen qué tan estable es la
+habilidad de un bloque a otro y el color separa a los elegibles de los que
+descartamos porque una sola variable basta.}
 \label{fig:cribado}
 \end{figure}
 
-De los \CriCribados{} candidatos cribados, \CriElegibles{} resultaron
+De los \CriCribados{} candidatos cribados \CriElegibles{} resultaron
 elegibles, los \CriSupervisadosEstables{} supervisados superaron a su línea
-base en todos los bloques y \CriDescartadosReglaSimple{} se descartaron porque
-basta una regla simple (Figura~\ref{fig:cribado} y
-Tablas~\ref{tab:cribado-reg} y~\ref{tab:cribado-clf}). El caso más ilustrativo
-es \codigo{\CriClfMasHabil}, el clasificador con la mayor habilidad bruta
-(\CriClfMasHabilHabilidad{}), del que la mejor variable sola logra el
-\CriClfMasHabilProporcion{}\,\%, es decir, que en lugar de un modelo basta una
-regla sobre el recuento, y esa regla es justamente la que se desarrolla en la
-Sección~\ref{sec:bayes}. En regresión ocurre algo parecido con
-\codigo{dias\_entrega\_recepcion}, que tiene más habilidad que el elegido pero
-la explica casi entera el plazo prometido. El candidato más inestable,
-\codigo{\CriMasInestable}, pasa de una habilidad de \CriMasInestableMin{} a
-\CriMasInestableMax{} entre bloques.
+base en todos los bloques y \CriDescartadosReglaSimple{} quedaron por fuera
+porque basta una regla simple (Figura~\ref{fig:cribado} y
+Tablas~\ref{tab:cribado-reg} y~\ref{tab:cribado-clf}). El caso que más nos
+llamó la atención fue \codigo{\CriClfMasHabil}, el clasificador con la mayor
+habilidad bruta (\CriClfMasHabilHabilidad{}). Resulta que la mejor variable
+sola ya consigue el \CriClfMasHabilProporcion{}\,\% de esa habilidad, o sea
+que para esa pregunta no hace falta un modelo sino una regla sobre el
+recuento y esa regla es justamente la que desarrollamos en la
+Sección~\ref{sec:bayes}. En regresión pasó algo parecido con
+\codigo{dias\_entrega\_recepcion}, que tiene más habilidad que el elegido
+pero que casi entera la explica el plazo prometido. El candidato más
+inestable fue \codigo{\CriMasInestable}, cuya habilidad va de
+\CriMasInestableMin{} a \CriMasInestableMax{} según el bloque.
 
 \begin{table}[!htbp]
 \centering
-\tablaancha{cribado_regresion}
+\tablacompacta{cribado_regresion}
 \caption{Cribado de los análisis de regresión (solo entrenamiento). La
-habilidad es $1-\mathrm{RMSE}/\mathrm{RMSE}_\text{base}$ y la proporción de la
-regla es la fracción de esa habilidad que logra la mejor variable sola.}
+habilidad es la media entre bloques de $1-\mathrm{RMSE}/\mathrm{RMSE}_\text{base}$,
+la columna ``Regla'' es la fracción de esa habilidad que logra la mejor
+variable sola y la observación dice por qué un candidato no es elegible.}
 \label{tab:cribado-reg}
 \end{table}
 
 \begin{table}[!htbp]
 \centering
-\tablaancha{cribado_clasificacion}
-\caption{Cribado de los análisis de clasificación (solo entrenamiento). La
-habilidad es $2\cdot\mathrm{AUC}-1$; una proporción de la regla mayor que 1
-indica que la variable sola supera al modelo.}
+\tablacompacta{cribado_clasificacion}
+\caption{Cribado de los análisis de clasificación (solo entrenamiento).
+``Positivos'' es la tasa de la clase positiva, la habilidad es la media entre
+bloques de $2\,\mathrm{AUC}-1$ y una ``Regla'' mayor que 1 indica que la
+variable sola supera al modelo.}
 \label{tab:cribado-clf}
 \end{table}
 
-La regla eligió \codigo{\CriSeleccionReg} en regresión (habilidad
+En regresión esperábamos que ganara \codigo{volumen\_semanal\_linea} porque
+es el candidato con el mayor valor de negocio, pero su habilidad queda tan
+por debajo que su puntaje también pierde (Tabla~\ref{tab:cribado-reg}). Al
+final la regla eligió \codigo{\CriSeleccionReg} en regresión (habilidad
 \CriSeleccionRegHabilidad{}, puntaje \CriSeleccionRegPuntaje{}),
-\codigo{\CriSeleccionClf} en clasificación (ROC-AUC
-\CriSeleccionClfAUC{}, puntaje \CriSeleccionClfPuntaje{}) y
-\codigo{\CriSeleccionAgr} en agrupamiento (silueta
-\CriSeleccionAgrSilueta{} con $k=\CriMejorSiluetaK$, Hopkins entre
-\CriHopkinsMin{} y \CriHopkinsMax{} entre los candidatos). El agrupamiento
-\codigo{\CriAgrComplementario} se estudia también, pero como análisis
-complementario, fuera de la regla.
+\codigo{\CriSeleccionClf} en clasificación (ROC-AUC \CriSeleccionClfAUC{},
+puntaje \CriSeleccionClfPuntaje{}) y \codigo{\CriSeleccionAgr} en
+agrupamiento (silueta \CriSeleccionAgrSilueta{} con $k=\CriMejorSiluetaK$).
+Entre los candidatos de agrupamiento el Hopkins fue de \CriHopkinsMin{} a
+\CriHopkinsMax{}. El agrupamiento \codigo{\CriAgrComplementario} lo
+estudiamos también pero como análisis complementario y por fuera de la regla.
 
 \subsection{Protocolo temporal}
 \label{sec:protocolo}
 
-Como los datos son una serie en el tiempo, la partición no es aleatoria sino
-por fecha de recepción (Figura~\ref{fig:protocolo} y
-Tabla~\ref{tab:particion}), de forma que todo modelo se evalúa siempre sobre
-un periodo posterior al que vio. Dentro de entrenamiento, la validación
-cruzada usa bloques de ventana creciente, y la partición de prueba solo puede
-leerse a través de una función que existe en la etapa~07, la cual registra
-cada lectura en un archivo que la verificación automática revisa.
+Como los datos son una serie en el tiempo no los partimos al azar sino por
+fecha de recepción (Figura~\ref{fig:protocolo} y Tabla~\ref{tab:particion}),
+de modo que cada modelo se evalúa siempre sobre un periodo posterior al que
+vio. Si los partiéramos al azar el modelo vería días de después para predecir
+días de antes, que es justo lo que no puede hacer el laboratorio. Dentro de
+entrenamiento la validación cruzada usa bloques de ventana creciente y la
+partición de prueba solo se puede leer con una función que existe en la
+etapa~07, la cual deja cada lectura en un archivo que la verificación
+automática revisa.
 
 \input{secciones/protocolo}
 
@@ -117,113 +132,128 @@ cada lectura en un archivo que la verificación automática revisa.
 \centering
 \small
 \tablagen{particion}
-\caption{Muestras por bloque temporal (todas las muestras limpias, por fecha
-de recepción). Cada análisis tiene su propia unidad, por ejemplo días hábiles
-en la regresión, pero respeta los mismos cortes.}
+\caption{Muestras por bloque temporal, contadas sobre todas las muestras
+limpias por fecha de recepción: Cada análisis tiene su propia unidad (en la
+regresión son días hábiles) pero todos respetan los mismos cortes.}
 \label{tab:particion}
 \end{table}
 
 \subsection{Diseño ortogonal L16 de Taguchi}
 \label{sec:taguchi}
 
-Para cada análisis elegido quedan seis decisiones de diseño, el modelo
-(KNN, lineal o logístico, árbol o perceptrón multicapa, a cuatro niveles), el
-escalado (estándar o min-max), el grupo de variables (base o ampliado), la
-selección de variables por $F$ (ninguna o las $k$ mejores), la codificación
-de categóricas (one-hot u ordinal) y un sexto factor propio de cada tarea
-(objetivo en logaritmo en la regresión, sobremuestreo de la clase minoritaria
-en la clasificación). El factorial completo tiene
-$4\times 2^5=\RegCorridasCompleto$ combinaciones, y en lugar de correrlas
-todas se usa un arreglo ortogonal L16, que con 16 corridas mantiene cada par
-de factores balanceado.
+Una vez elegido un análisis nos quedaban seis decisiones de diseño. La
+primera es el modelo, que tiene cuatro niveles (KNN, lineal o logístico,
+árbol y perceptrón multicapa) y las otras cinco tienen dos: El escalado
+(estándar o min-max), el grupo de variables (base o ampliado), la selección
+de variables por $F$ (ninguna o las $k$ mejores), la codificación de las
+categóricas (one-hot u ordinal) y un sexto factor propio de cada tarea (el
+objetivo en logaritmo en la regresión y el sobremuestreo de la clase
+minoritaria en la clasificación). Probar todas las combinaciones son
+$4\times 2^5=\RegCorridasCompleto$ corridas. En lugar de correrlas todas
+usamos un arreglo ortogonal L16, que con 16 corridas mantiene balanceado cada
+par de factores, es decir que cada nivel de un factor aparece el mismo número
+de veces frente a cada nivel de los demás.
 
-\paragraph{Estructura de alias.} El factor de cuatro niveles ocupa tres
-columnas del arreglo (dos columnas base y su interacción), el escalado otra,
-y los cuatro factores restantes columnas generadas por productos, de forma
-que tres columnas (\codigo{ac}, \codigo{bc} y \codigo{abc}) quedan libres para
-estimar la interacción modelo $\times$ escalado, la que más se esperaba (KNN y
-el perceptrón dependen de la escala, el árbol no). De las
-\RegInteracciones{} interacciones de dos factores, \RegInteraccionesLibres{}
-quedan libres de confusión con un efecto principal; las demás comparten
-columna con otro efecto y por eso el método supone, y luego comprueba con una
-corrida de confirmación, que no son grandes.
+\paragraph{Qué se mezcla con qué.} El precio del atajo es que algunas
+interacciones (cuando el efecto de un factor depende del nivel de otro)
+quedan mezcladas con los efectos principales. El factor de cuatro niveles
+ocupa tres columnas del arreglo (dos columnas base y su producto), el
+escalado otra y los cuatro factores restantes columnas que salen de
+multiplicar otras. Así quedan libres tres columnas (\codigo{ac}, \codigo{bc}
+y \codigo{abc}) para estimar la interacción entre modelo y escalado, la única
+que esperábamos grande de antemano porque el escalado cambia las distancias
+de KNN y el entrenamiento del perceptrón pero no afecta al árbol ni a la
+regresión lineal. De las \RegInteracciones{} interacciones de dos factores
+\RegInteraccionesLibres{} quedan sin mezclarse con un efecto principal. Las
+demás las suponemos pequeñas y ese supuesto lo pone a prueba la corrida de
+confirmación que explicamos más abajo.
 
-\paragraph{Razón señal/ruido.} Cada corrida se evalúa en los
-\DatBloquesCV{} bloques temporales, y sus puntajes $y_1,\dots,y_n$ se
-resumen en una razón señal/ruido (S/N, en dB) que premia a la vez el buen
-promedio y la poca variación entre bloques:
+\paragraph{Razón señal/ruido.} Cada corrida la evaluamos en los
+\DatBloquesCV{} bloques temporales y sus puntajes $y_1,\dots,y_n$ los
+resumimos en una razón señal/ruido (S/N, en dB). Como lleva un menos
+adelante una S/N más alta siempre es mejor. Además castiga a la vez un
+promedio malo y un puntaje que cambia mucho entre bloques:
 \[
 \text{S/N}_\text{menor} = -10\log_{10}\Bigl(\tfrac{1}{n}\textstyle\sum_i y_i^2\Bigr)
 \quad\text{(RMSE)},\qquad
 \text{S/N}_\text{mayor} = -10\log_{10}\Bigl(\tfrac{1}{n}\textstyle\sum_i y_i^{-2}\Bigr)
 \quad\text{(ROC-AUC)}.
 \]
-Con las 16 corridas se construye la tabla de respuesta (S/N medio de cada
-nivel, delta entre el mejor y el peor nivel y rango de cada factor), y el
-modelo aditivo predice la S/N de la combinación de mejores niveles. Esa
-combinación se corre de verdad (corrida de confirmación) y, si la S/N
-observada cae dentro de una tolerancia de la predicha, se acepta que las
-interacciones no rompen el modelo aditivo. Finalmente, la mejor configuración
-(confirmación o mejor corrida observada) pasa a una búsqueda en rejilla de
-sus hiperparámetros con los mismos bloques temporales.
+Con las 16 corridas armamos la tabla de respuesta (la S/N media de cada
+nivel y el delta entre el mejor y el peor nivel de cada factor). Luego el
+modelo aditivo, que supone que
+los factores no interactúan y suma lo que aporta cada nivel, predice la S/N
+de la combinación de mejores niveles. Esa combinación no tiene por qué estar
+entre las 16 así que la corremos de verdad (la corrida de confirmación) y, si la
+S/N observada cae dentro de una tolerancia de la predicha, aceptamos que las
+interacciones que ignoramos no pesaban. Finalmente la mejor configuración
+(la confirmación o la mejor corrida observada) pasa a una búsqueda en rejilla
+de sus hiperparámetros con los mismos bloques temporales.
 
-\paragraph{Contraste con el factorial completo.} En la regresión, donde cada
-corrida es barata, se corrió además el factorial completo
-(\RegCorridasCompleto{} corridas, \RegSegundosCompleto{} segundos frente a
-\RegSegundosLSixteen{} del L16) para comprobar si el atajo cambia las
-conclusiones. La correlación de Spearman entre los deltas de ambos diseños es
-de \RegRhoCompleto{}, \RegFactoresMismoOptimo{} de los \RegFactores{} factores
-tienen el mismo mejor nivel en ambos, y el orden de los dos factores más
-influyentes, modelo y grupo, se conserva (Figura~\ref{fig:l16-completo}). La
+\paragraph{¿El atajo cambia las conclusiones?} Esa era la duda que nos quedaba
+y en la regresión, donde cada corrida es barata, la pudimos revisar corriendo
+también el factorial completo (\RegCorridasCompleto{} corridas en
+\RegSegundosCompleto{} segundos frente a \RegSegundosLSixteen{} del L16). La
+correlación de Spearman entre los deltas de los dos diseños es de
+\RegRhoCompleto{}, \RegFactoresMismoOptimo{} de los \RegFactores{} factores
+tienen el mismo mejor nivel en ambos y los dos factores más influyentes
+(modelo y grupo) quedan en el mismo orden (Figura~\ref{fig:l16-completo}). La
 mejor S/N del factorial completo (\RegSNMejorCompleto{} dB) es apenas mayor
-que la mejor corrida del L16 (\RegSNMejorCorrida{} dB), y la confirmación
+que la mejor corrida del L16 (\RegSNMejorCorrida{} dB) y la confirmación
 quedó en el puesto \RegPuestoConfirmacion{} de las \RegCorridasCompleto{}
-combinaciones. En la clasificación el factorial completo no se corrió (se
-estimaron \ClfSegundosCompletoEstimados{} segundos, frente a
-\ClfSegundosLSixteen{} del L16), y por eso allí la corrida de confirmación es
+combinaciones, o sea que con una octava parte de las corridas llegamos casi
+al mismo sitio. En la clasificación el factorial completo no lo corrimos
+porque estimamos que tardaría \ClfSegundosCompletoEstimados{} segundos frente
+a \ClfSegundosLSixteen{} del L16 así que allí la corrida de confirmación es
 la única comprobación del modelo aditivo.
 
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.5\textwidth]{04_l16_contra_completo.png}
 \caption{Delta de S/N de cada factor de la regresión según el L16 (azul) y
-el factorial completo (naranja). Lo que importa es que el orden de los
-factores y la separación entre los influyentes (modelo, grupo, objetivo en
-logaritmo) y los despreciables (escalado) se mantiene con una octava parte de
-las corridas.}
+el factorial completo (naranja): Con una octava parte de las corridas se
+mantienen el orden de los factores y la distancia entre los influyentes
+(modelo, grupo y objetivo en logaritmo) y el que casi no importa (escalado).}
 \label{fig:l16-completo}
 \end{figure}
 
 \subsection{Métricas, habilidad y costo de los errores}
 \label{sec:metricas}
 
-Las métricas siguen los temas del curso \cite{muller2016,hastie2009}, con dos
-añadidos para que las cifras se puedan comparar entre análisis:
+Las métricas son las del curso \cite{muller2016,hastie2009} con dos añadidos
+para poder comparar las cifras entre análisis:
 
-\begin{itemize}
-    \item \textbf{Regresión:} MAE, RMSE y $R^2$. La \emph{habilidad} es
-          $1-\mathrm{RMSE}/\mathrm{RMSE}_\text{ref}$, donde la referencia es la
-          mejor regla ingenua, por ejemplo la media de los cinco días
-          hábiles anteriores (\codigo{base\_media\_5}); una habilidad de cero
-          significa no mejorar lo que ya se haría sin modelo.
-    \item \textbf{Clasificación:} ROC-AUC, precisión media (área bajo la curva
-          de precisión y recall, más exigente con el desbalance) y puntaje de
-          Brier (error cuadrático de la probabilidad, que mide calibración). La
-          habilidad es $2\cdot\mathrm{AUC}-1$, que vale cero para un
-          clasificador al azar.
-    \item \textbf{Incertidumbre:} las métricas de validación y prueba llevan
-          intervalos bootstrap de 95\,\%, y las proporciones (por ejemplo,
-          reensayos conformes) intervalos de Wilson.
-\end{itemize}
+\begin{enumerate}[label=\alph*.]
+    \item \textbf{Regresión.} Usamos el MAE (el error absoluto medio), el
+          RMSE (la raíz del promedio de los errores al cuadrado, que castiga
+          más los errores grandes) y el $R^2$, los dos primeros en muestras
+          por día. La \emph{habilidad} es
+          $1-\mathrm{RMSE}/\mathrm{RMSE}_\text{ref}$, donde la referencia es
+          la mejor regla ingenua, por ejemplo la media de los cinco días
+          hábiles anteriores (\codigo{base\_media\_5}). Vale cero si el modelo
+          empata con lo que el laboratorio ya haría sin modelo y es negativa
+          si pierde.
+    \item \textbf{Clasificación.} El ROC-AUC es la probabilidad de que, al
+          tomar una no conforme y una conforme al azar, el modelo le dé más
+          riesgo a la no conforme. La precisión media resume la curva de
+          precisión y recall y es más exigente cuando hay pocos positivos,
+          mientras que el puntaje de Brier es el error cuadrático de la
+          probabilidad y mide qué tan bien calibrada está. La habilidad es
+          $2\,\mathrm{AUC}-1$, que vale cero para un clasificador al azar.
+    \item \textbf{Incertidumbre.} Las métricas de validación y prueba llevan
+          intervalos bootstrap de 95\,\%, que repiten el cálculo muchas veces
+          sobre filas sacadas al azar con reemplazo. Las proporciones (como
+          los reensayos conformes) llevan intervalos de Wilson.
+\end{enumerate}
 
-\paragraph{Costo de los errores.} En la clasificación, dejar pasar una muestra
-no conforme sin alerta (falso negativo) cuesta \DatCostoFN{} veces lo que
-revisar una que resulta conforme (falso positivo, costo \DatCostoFP{}), de
-forma que el costo total es
-$L=C_\text{FP}\cdot\text{FP}+C_\text{FN}\cdot\text{FN}$. Si las
-probabilidades están calibradas, el umbral que minimiza el costo esperado es
-$t^\ast=C_\text{FP}/(C_\text{FP}+C_\text{FN})$, que aquí vale
-\ClfUmbralTeorico{}; el umbral se elige en validación y se compara con ese
-valor teórico. Como un costo bajo puede esconder una avalancha de falsas
-alarmas, junto al costo se reportan siempre la precisión y las alertas por
-semana.
+\paragraph{Costo de los errores.} En la clasificación no todos los errores
+pesan lo mismo. Dejar pasar sin alerta una muestra no conforme (un falso
+negativo) le cuesta al laboratorio \DatCostoFN{} veces lo que cuesta revisar
+una que resulta conforme (un falso positivo, de costo \DatCostoFP{}), así que
+el costo total es $L=C_\text{FP}\,\text{FP}+C_\text{FN}\,\text{FN}$. Si las
+probabilidades están bien calibradas el umbral que minimiza el costo esperado
+es $t^\ast=C_\text{FP}/(C_\text{FP}+C_\text{FN})$, que aquí vale
+\ClfUmbralTeorico{}. El umbral lo elegimos en validación y después lo
+comparamos con ese valor teórico. Como un costo bajo puede esconder una
+avalancha de falsas alarmas, al lado del costo reportamos siempre la
+precisión y las alertas por semana.

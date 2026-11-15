@@ -8,60 +8,62 @@
 
 Un laboratorio de microbiología recibe a diario muestras de clientes de
 distintas líneas de negocio (cosmética, farmacéutica, alimentos, veterinaria y
-centrales de mezclas), las siembra según el ensayo solicitado (mesófilos
-aerobios, mohos y levaduras, coliformes, \textit{Salmonella}, esterilidad,
-entre otros) y emite un informe que declara cada muestra conforme o no
-conforme frente al límite de la norma. Cada muestra deja un rastro en la base
-de datos del laboratorio, desde la programación de la visita de muestreo y las
-condiciones de transporte hasta la lectura, el eventual reensayo y la fecha
-del informe, de forma que esa base contiene información suficiente para
-anticipar parte de lo que va a ocurrir en la operación.
+centrales de mezclas). Cada muestra se siembra según el ensayo que pidió el
+cliente (mesófilos aerobios, mohos y levaduras, coliformes,
+\textit{Salmonella} y esterilidad, entre otros) y al final el laboratorio
+emite un informe que la declara conforme o no conforme, según si el recuento
+queda dentro o fuera del límite de la norma. Por el camino la muestra va
+dejando un rastro en la base de datos, desde la programación de la visita de
+muestreo y las condiciones del transporte hasta la lectura, el reensayo si lo
+hubo y la fecha del informe. Como esa base guarda tanto de lo que ya pasó nos
+preguntamos si serviría también para anticipar parte de lo que va a pasar.
 
-\paragraph{Preguntas del laboratorio.} El trabajo se organiza alrededor de tres
-preguntas operativas y una cuarta, descriptiva:
+\paragraph{Preguntas del laboratorio.} Armamos el trabajo alrededor de tres
+preguntas de la operación y una cuarta, descriptiva:
 
-\begin{itemize}
-    \item \textbf{Carga diaria:} ¿cuántas muestras llegarán el próximo día
-          hábil?, de forma que se pueda planear el personal de recepción y
+\begin{enumerate}[label=\alph*.]
+    \item \textbf{Carga diaria.} ¿Cuántas muestras llegarán el próximo día
+          hábil? Con esa cifra se podría planear el personal de recepción y
           siembra con algo mejor que el promedio de la semana anterior.
-    \item \textbf{Riesgo de no conformidad:} ¿qué muestras, al momento de
-          recibirlas, tienen mayor probabilidad de resultar no conformes?, con
-          el objetivo de priorizarlas sin saturar al personal con alertas.
-    \item \textbf{Falso positivo:} ¿qué tan probable es que un resultado no
-          conforme sea falso (contaminación del ensayo y no del producto), y
-          cuándo conviene reensayar?
-    \item \textbf{Grupos:} ¿qué perfiles de muestras y qué segmentos de
-          clientes existen?, como insumo descriptivo para la planeación y la
-          relación con los clientes.
-\end{itemize}
+    \item \textbf{Riesgo de no conformidad.} ¿Qué muestras tienen más
+          probabilidad de resultar no conformes en el momento en que se
+          reciben? La idea es priorizarlas sin llenar al personal de alertas.
+    \item \textbf{Falso positivo.} ¿Qué tan probable es que un resultado no
+          conforme sea falso, es decir, que la contaminación venga del ensayo
+          y no del producto? Y en ese caso, ¿cuándo vale la pena reensayar?
+    \item \textbf{Grupos.} ¿Qué perfiles de muestras y qué segmentos de
+          clientes hay? Esta no busca predecir nada sino describir, como
+          insumo para la planeación y para la relación con los clientes.
+\end{enumerate}
 
 \paragraph{Requisito del curso.} El proyecto final de Aprendizaje Automático
-de Máquina~I pide recorrer, sobre un caso propio, los temas del curso
-\cite{muller2016}: preprocesamiento y análisis exploratorio, $k$ vecinos más
-cercanos, regresión logística con curva ROC y elección de umbral, árboles de
-decisión con poda por complejidad de costo, regresión lineal simple y
-múltiple, regresores KNN y de árbol, validación cruzada con búsqueda en
-rejilla, K-means, DBSCAN y el perceptrón multicapa. Todos los modelos se
-construyen con scikit-learn \cite{pedregosa2011}, el sobremuestreo con
-imbalanced-learn \cite{lemaitre2017} y el manejo de tablas con pandas
-\cite{mckinney2010}.
+de Máquina~I pide recorrer sobre un caso propio los temas del curso
+\cite{muller2016}: El preprocesamiento y el análisis exploratorio, $k$ vecinos
+más cercanos (KNN), la regresión logística con curva ROC y elección de umbral,
+los árboles de decisión con poda por complejidad de costo, la regresión
+lineal simple y múltiple, los regresores KNN y de árbol, la validación cruzada
+con búsqueda en rejilla, K-means, DBSCAN y el perceptrón multicapa. Todos los
+modelos los construimos con scikit-learn \cite{pedregosa2011}, el
+sobremuestreo con imbalanced-learn \cite{lemaitre2017} y el manejo de tablas
+con pandas \cite{mckinney2010}.
 
-\paragraph{Contribución.} Más que un modelo puntual, se entrega un
-procedimiento reproducible y honesto de punta a punta, en el que primeramente
-un contrato de datos declara en qué momento del proceso se conoce cada
-columna (lo que impide fugas de información), progresivamente un cribado con
-una regla escrita antes de ver resultados elige qué análisis merece estudiarse
-a fondo, después un diseño de Taguchi reduce el costo de explorar
-configuraciones sin perder las conclusiones del factorial completo, y
-finalmente un protocolo temporal estricto (ajustar con entrenamiento, decidir
-con validación y abrir la prueba una sola vez) evalúa los modelos congelados.
-Cada cifra del informe sale de una macro que escriben los notebooks al
-ejecutarse, de forma que el texto no puede quedar desactualizado frente a los
-resultados.
+\paragraph{Lo que entregamos.} Más que un modelo puntual, lo que nos importó
+fue armar un procedimiento que cualquiera pudiera repetir y que no se hiciera
+trampa a sí mismo. Para eso nos apoyamos en cuatro piezas que aparecen a lo
+largo del informe. La primera es un contrato de datos que dice en qué momento
+del proceso se conoce cada columna, lo que impide que un modelo use
+información del futuro. La segunda es un cribado con una regla que escribimos
+antes de ver resultados y que decide qué análisis vale la pena estudiar a
+fondo. La tercera es un diseño de Taguchi que reduce cuántas configuraciones
+hay que probar sin cambiar las conclusiones del diseño completo y la cuarta
+es un protocolo temporal estricto: Ajustamos con entrenamiento, decidimos con
+validación y abrimos la prueba una sola vez. Además cada cifra del informe es
+una macro que escriben los notebooks al ejecutarse así que el texto no se
+puede quedar atrás de los resultados.
 
-El resto del documento sigue ese orden: la Sección~\ref{sec:datos} describe
-los datos y su contrato, la Sección~\ref{sec:exploracion} la exploración, la
-Sección~\ref{sec:metodologia} la metodología común, las
-Secciones~\ref{sec:regresion} a~\ref{sec:agrupamiento} cada análisis, la
-Sección~\ref{sec:evaluacion} la evaluación final en prueba y la
-Sección~\ref{sec:conclusiones} las conclusiones y limitaciones.
+El informe sigue ese orden: Los datos y su exploración
+(Secciones~\ref{sec:datos} y~\ref{sec:exploracion}), la metodología común
+(Sección~\ref{sec:metodologia}), cada análisis por separado
+(Secciones~\ref{sec:regresion} a~\ref{sec:agrupamiento}), la prueba
+(Sección~\ref{sec:evaluacion}) y las respuestas al laboratorio con sus
+limitaciones (Sección~\ref{sec:conclusiones}).

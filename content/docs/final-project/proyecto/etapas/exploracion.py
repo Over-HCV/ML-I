@@ -21,7 +21,7 @@ ETAPA = "02_exploracion"
 
 
 def iniciar():
-    return abrir(ETAPA, "Calidad de los datos, limpieza y qué se ve antes de modelar")
+    return abrir(ETAPA, "Calidad de los datos, limpieza y lo que vimos antes de modelar")
 
 
 def limpieza_auditada(c):
@@ -30,7 +30,7 @@ def limpieza_auditada(c):
     c.crudas = carga.leer_crudas()
     c.limpias, auditoria = limpieza.limpiar_tablas(c.crudas)
     c.integradas = integracion.integrar_muestras(c.limpias)
-    c.auditoria = auditoria.assign(tipo_problema=auditoria["problema"].str.split(" en «").str[0])
+    c.auditoria = auditoria.assign(tipo_problema=auditoria["problema"].str.split(' en "').str[0])
     correcciones = c.auditoria[~c.auditoria["tipo_problema"].str.startswith("faltante")]
     c.n_correcciones = int(len(correcciones))
     resumen = (
@@ -66,19 +66,20 @@ def limpieza_auditada(c):
     ]))
     mayor = resumen.loc[resumen["Filas afectadas"].idxmax()]
     r.agregar(nota(
-        f"El problema que más filas toca es «{mayor['Tipo de problema']}» ({int(mayor['Filas afectadas'])} filas), "
-        "que no es un error sino la forma habitual de reportar un recuento por debajo (o por encima) del límite de "
-        "detección: la cota se conserva como valor y la fila se marca como censurada."
+        f"El problema que más filas toca es el {mayor['Tipo de problema']} ({int(mayor['Filas afectadas'])} filas) y no "
+        "es un error: Es la forma normal de reportar un recuento por debajo (o por encima) del límite de detección, que es "
+        "el menor recuento que el método alcanza a medir. Por eso conservamos la cota como valor y marcamos la fila como "
+        "censurada."
         if mayor["Tipo de problema"].startswith("recuento censurado") else
-        f"El problema que más filas toca es «{mayor['Tipo de problema']}» ({int(mayor['Filas afectadas'])} filas).",
+        f"El problema que más filas toca es \"{mayor['Tipo de problema']}\" ({int(mayor['Filas afectadas'])} filas).",
         "hallazgo",
     ))
     rutas_limpias = [guardar_tabla(t, rutas.DIR_LIMPIOS / f"{n}.parquet") for n, t in c.limpias.items()]
     guardar_tabla(c.integradas, rutas.DIR_LIMPIOS / "muestras_integradas.parquet")
     misma = len(c.integradas) == len(c.limpias["muestras"])
     r.agregar(nota(
-        f"Se guardaron **{len(rutas_limpias)}** tablas limpias y la tabla integrada ({len(c.integradas)} muestras × "
-        f"{c.integradas.shape[1]} columnas) en `datos/limpios/`. La integración no elimina ni duplica muestras: la "
+        f"Guardamos **{len(rutas_limpias)}** tablas limpias y la tabla integrada ({len(c.integradas)} muestras y "
+        f"{c.integradas.shape[1]} columnas) en `datos/limpios/`. La integración no elimina ni duplica muestras: La "
         f"tabla integrada tiene {'las mismas filas que' if misma else 'distinto número de filas que'} la tabla limpia "
         "de muestras.",
     ))
@@ -105,7 +106,8 @@ def particion_temporal(c):
         Desde=pd.to_datetime(bloques["Desde"]).dt.strftime("%Y-%m-%d"),
         Hasta=pd.to_datetime(bloques["Hasta"]).dt.strftime("%Y-%m-%d"),
     )
-    r.agregar(tabla_html(c.vista_bloques, "Muestras por bloque temporal", decimales=1, barras="Filas"))
+    rotuladas = c.vista_bloques.assign(Bloque=c.vista_bloques["Bloque"].map(particion.ROTULOS).fillna(c.vista_bloques["Bloque"]))
+    r.agregar(tabla_html(rotuladas, "Muestras por bloque temporal", decimales=1, barras="Filas"))
     c.desarrollo = particion.solo_desarrollo(c.integradas, "fecha_recepcion")
     c.limpias_desarrollo = dict(c.limpias)
     c.limpias_desarrollo["muestras"] = particion.solo_desarrollo(c.limpias["muestras"], "fecha_recepcion")
@@ -122,9 +124,9 @@ def particion_temporal(c):
         {"titulo": "No conformes", "valor": 100 * c.tasa_no_conforme, "sufijo": " %", "decimales": 1,
          "detalle": "de las muestras aceptadas", "color": "rojo"},
         {"titulo": "Clientes con muestras", "valor": clientes, "color": "verde"},
-    ], titulo="Periodo de desarrollo (lo único que se explora)"))
-    r.agregar(aviso_origen("Los datos son **simulados**, por lo que los hallazgos de esta etapa describen la base "
-                              "simulada y sirven para decidir cómo modelar, no para concluir sobre el laboratorio real."))
+    ], titulo="Periodo de desarrollo (lo único que exploramos)"))
+    r.agregar(aviso_origen("Los datos son **simulados** así que lo que encontramos en esta etapa describe la base "
+                              "simulada. Nos sirve para decidir cómo modelar y no para concluir sobre el laboratorio real."))
     filas = bloques.set_index("Bloque")["Filas"]
     latex.registrar_varias([
         ("ExpFilasEntrenamiento", int(filas["entrenamiento"]), "muestras del bloque de entrenamiento"),
@@ -135,7 +137,7 @@ def particion_temporal(c):
         ("ExpTasaNoConformePct", 100 * c.tasa_no_conforme, "porcentaje de no conformes entre aceptadas (desarrollo)", 1),
         ("ExpClientesDesarrollo", clientes, "clientes con muestras en el desarrollo"),
     ])
-    latex.exportar_tabla(c.vista_bloques, "particion", "Muestras por bloque temporal", decimales={"Porcentaje": 1})
+    latex.exportar_tabla(rotuladas, "particion", "Muestras por bloque temporal", decimales={"Porcentaje": 1})
     r.valores.update(desarrollo=int(len(c.desarrollo)), tasa_no_conforme=c.tasa_no_conforme)
     return r
 
@@ -150,9 +152,10 @@ def faltantes(c):
     peor = c.peor_faltante
     r.agregar(nota(
         f"De las {len(tabla)} columnas del contrato, **{len(con_faltantes)}** tienen algún faltante en el periodo de "
-        f"desarrollo y en {solo_estructural} de ellas todos los faltantes son estructurales. El mayor porcentaje de "
-        f"faltantes no estructurales es el de «{peor['columna']}» (**{peor['pct_no_estructural']:.1f} %** de las "
-        f"filas), una columna que se conoce en el momento «{peor['momento']}».",
+        f"desarrollo y en {solo_estructural} de ellas todos los faltantes son estructurales. La que más faltantes no "
+        f"estructurales tiene es \"{peor['columna']}\" (**{peor['pct_no_estructural']:.1f} %** de las filas), una columna "
+        f"que se conoce en el momento \"{peor['momento']}\". Es el hueco más grande que tiene que llenar la imputación "
+        "de las tuberías.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -174,10 +177,12 @@ def volumen(c):
     por_sector = d["sector"].value_counts(normalize=True)
     cv = completas.std() / completas.mean()
     r.agregar(nota(
-        f"En las {len(semanal)} semanas del periodo de desarrollo llegan en promedio **{completas.mean():.0f} muestras "
-        f"por semana**, con una semana mínima de {int(completas.min())} y una máxima de {int(completas.max())} "
-        f"(coeficiente de variación de {cv:.2f}). La línea con más volumen es «{por_sector.index[0]}» "
-        f"({pct(por_sector.iloc[0])} de las muestras) y la de menos es «{por_sector.index[-1]}» ({pct(por_sector.iloc[-1])}).",
+        f"En las {len(semanal)} semanas del periodo de desarrollo llegaron en promedio **{completas.mean():.0f} muestras "
+        f"por semana**, con una semana mínima de {int(completas.min())} y una máxima de {int(completas.max())}. El "
+        f"coeficiente de variación (la desviación estándar dividida por la media) es {cv:.2f}, o sea que una semana "
+        f"cualquiera se aleja de la media en alrededor del {100 * cv:.0f} %. La línea con más volumen es "
+        f"\"{por_sector.index[0]}\" ({pct(por_sector.iloc[0])} de las muestras) y la de menos \"{por_sector.index[-1]}\" "
+        f"({pct(por_sector.iloc[-1])}).",
         "hallazgo",
     ))
     r.figura(graficos.figura_estacionalidad(d), "02_estacionalidad")
@@ -185,10 +190,10 @@ def volumen(c):
     indice = mensual.groupby(level="mes").mean() / mensual.mean()
     alto, bajo = int(indice.idxmax()), int(indice.idxmin())
     r.agregar(nota(
-        f"Sumando todas las líneas, el mes más cargado es **{graficos.MESES[alto - 1]}** (índice estacional "
+        f"Sumando todas las líneas el mes más cargado es **{graficos.MESES[alto - 1]}** (índice estacional "
         f"{indice.max():.2f}, donde 1 es un mes típico) y el más liviano es **{graficos.MESES[bajo - 1]}** "
-        f"({indice.min():.2f}). El índice se calcula con {d['anio'].nunique()} años de datos, de forma que cada mes del "
-        "año se observa pocas veces y el patrón debe leerse como indicio, no como una estacionalidad confirmada.",
+        f"({indice.min():.2f}). Eso sí, el índice sale de {d['anio'].nunique()} años de datos así que cada mes lo vimos "
+        "pocas veces y lo leemos como un indicio y no como una estacionalidad confirmada.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -220,12 +225,16 @@ def tasa_no_conforme(c):
         por_nivel = a.groupby(columna)["no_conforme"].agg(["mean", "count"])
         por_nivel = por_nivel[por_nivel["count"] >= graficos.MINIMO_CELDA]
         if len(por_nivel) > 1:
-            frases.append(f"por «{columna}» la tasa va de {pct(por_nivel['mean'].min())} ({por_nivel['mean'].idxmin()}) a "
+            frases.append(f"según \"{columna}\" va de {pct(por_nivel['mean'].min())} ({por_nivel['mean'].idxmin()}) a "
                           f"{pct(por_nivel['mean'].max())} ({por_nivel['mean'].idxmax()})")
     t = c.tasa_no_conforme
+    detalle = (", ".join(frases[:-1]) + " y " + frases[-1]) if len(frases) > 1 else "".join(frases)
     r.agregar(nota(
-        f"La tasa global de no conformes entre las muestras aceptadas es **{pct(t)}** (una muestra no conforme por cada "
-        f"{(1 - t) / t:.0f} conformes), " + "; ".join(frases) + ".",
+        f"Entre las muestras aceptadas la tasa global de no conformes es **{pct(t)}**, o sea una no conforme por cada "
+        f"{(1 - t) / t:.0f} conformes. "
+        + (f"{detalle[:1].upper()}{detalle[1:]}. " if detalle else "")
+        + "Con tan pocas no conformes la exactitud no sirve para medir un clasificador: Uno que diga siempre "
+          f"\"conforme\" acertaría el {pct(1 - t)} de las veces sin detectar ninguna.",
         "hallazgo",
     ))
     latex.registrar("ExpConformesPorNoConforme", (1 - t) / t, "conformes por cada no conforme (desarrollo)", 0)
@@ -242,14 +251,14 @@ def distribuciones(c):
     medias = a.groupby("no_conforme")[numericas].mean()
     diferencia = ((medias.loc[1] - medias.loc[0]) / a[numericas].std()).sort_values(key=np.abs)
     r.agregar(nota(
-        f"La variable que más separa a las dos clases es «{diferencia.index[-1]}»: su media entre las no conformes queda "
-        f"{abs(diferencia.iloc[-1]):.2f} desviaciones estándar por {'encima' if diferencia.iloc[-1] > 0 else 'debajo'} "
-        f"de la de las conformes. La que menos separa es «{diferencia.index[0]}» ({abs(diferencia.iloc[0]):.2f} "
-        "desviaciones). "
-        + ("Al quedar todas las diferencias por debajo de media desviación estándar, las distribuciones de las dos clases "
-           "se traslapan ampliamente y ninguna variable por sí sola distingue el resultado."
+        f"La variable que más separa a las dos clases es \"{diferencia.index[-1]}\": Su media entre las no conformes "
+        f"queda {abs(diferencia.iloc[-1]):.2f} desviaciones estándar por "
+        f"{'encima' if diferencia.iloc[-1] > 0 else 'debajo'} de la de las conformes. La que menos separa es "
+        f"\"{diferencia.index[0]}\" ({abs(diferencia.iloc[0]):.2f} desviaciones). "
+        + ("Como todas las diferencias quedan por debajo de media desviación estándar, las distribuciones de las dos "
+           "clases se traslapan casi por completo y ninguna variable sola distingue el resultado."
            if diferencia.abs().max() < 0.5 else
-           "Una diferencia de ese tamaño ya es visible en los histogramas, aunque las distribuciones se traslapan."),
+           "Una diferencia de ese tamaño ya se nota en los histogramas, aunque las distribuciones se traslapan."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -258,19 +267,24 @@ def distribuciones(c):
     ])
     if {"temperatura_transporte_c", "horas_transporte"} <= set(a.columns):
         r.figura(graficos.figura_transporte(a), "02_transporte")
-        frases = []
-        for columna, nombre, macro in (("temperatura_transporte_c", "temperatura de transporte", "Temperatura"),
-                                       ("horas_transporte", "duración del transporte", "Horas")):
+        frases, sube = [], []
+        for columna, nombre, macro, unidad in (("temperatura_transporte_c", "temperatura de transporte", "Temperatura", "°C"),
+                                               ("horas_transporte", "duración del transporte", "Horas", "horas")):
             q1, q3 = a[columna].quantile([0.25, 0.75])
             baja = float(a.loc[a[columna] <= q1, "no_conforme"].mean())
             alta = float(a.loc[a[columna] >= q3, "no_conforme"].mean())
-            frases.append(f"en el cuarto de muestras con mayor {nombre} (desde {q3:.1f}) la tasa de no conformes es "
-                          f"{pct(alta)}, frente a {pct(baja)} en el cuarto con menor {nombre} (hasta {q1:.1f})")
+            frases.append(f"En el cuarto de muestras con mayor {nombre} (desde {q3:.1f} {unidad}) la tasa de no conformes "
+                          f"es {pct(alta)}, frente a {pct(baja)} en el cuarto con menor {nombre} (hasta {q1:.1f} {unidad}).")
+            sube.append(alta > baja)
             latex.registrar_varias([
                 (f"Exp{macro}CuartoAltoPct", 100 * alta, f"no conformes (%) en el cuarto con mayor {nombre}", 1),
                 (f"Exp{macro}CuartoBajoPct", 100 * baja, f"no conformes (%) en el cuarto con menor {nombre}", 1),
             ])
-        r.agregar(nota("Comparando los extremos de cada variable: " + "; y ".join(frases) + ".", "hallazgo"))
+        r.agregar(nota(
+            "Para ver si el transporte pesa comparamos los extremos de cada variable. " + " ".join(frases)
+            + (" Las dos se conocen apenas llega la muestra así que le pueden servir al clasificador de la etapa 05."
+               if all(sube) else " No apuntan las dos en el mismo sentido así que no esperamos una lectura simple."),
+            "hallazgo"))
     return r
 
 
@@ -286,8 +300,8 @@ def entrega(c):
     r.agregar(nota(
         f"La mediana de entrega es de **{mediana:.0f} días** calendario (el 90 % de los informes sale en {p90:.0f} días "
         f"o menos) y el **{pct(c.tasa_tardia)}** de los informes sale tarde. El ensayo con más entregas tardías es "
-        f"«{por_ensayo['mean'].idxmax()}» ({pct(por_ensayo['mean'].max())}) y el que menos "
-        f"«{por_ensayo['mean'].idxmin()}» ({pct(por_ensayo['mean'].min())}).",
+        f"\"{por_ensayo['mean'].idxmax()}\" ({pct(por_ensayo['mean'].max())}) y el que menos "
+        f"\"{por_ensayo['mean'].idxmin()}\" ({pct(por_ensayo['mean'].min())}).",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -312,12 +326,12 @@ def estabilidad(c):
     cambio = float(por_anio.loc[ultimo] - por_anio.loc[primero])
     m = c.tasa_mes
     r.agregar(nota(
-        f"La tasa mensual oscila entre {pct(m.min())} ({m.idxmin()}) y {pct(m.max())} ({m.idxmax()}). Por años, pasa de "
+        f"La tasa mensual oscila entre {pct(m.min())} ({m.idxmin()}) y {pct(m.max())} ({m.idxmax()}). Por años pasa de "
         f"{pct(por_anio.loc[primero])} en {primero} a {pct(por_anio.loc[ultimo])} en {ultimo} "
-        f"({'sube' if cambio > 0 else 'baja'} {abs(100 * cambio):.1f} puntos porcentuales). Parte de esa oscilación es azar "
-        "de muestreo (la banda de la figura lo indica) y parte puede ser deriva real, y con esta figura no se pueden "
-        "separar; por precaución, la validación de los modelos respeta el orden temporal, ya que mezclar meses al azar "
-        "podría hacer parecer el problema más fácil de lo que es.",
+        f"({'sube' if cambio > 0 else 'baja'} {abs(100 * cambio):.1f} puntos porcentuales). Parte de esa oscilación es "
+        "azar de muestreo (la banda de la figura muestra cuánto) y parte puede ser deriva real, pero con esta figura no "
+        "alcanzamos a separarlas. Por precaución la validación de los modelos respeta el orden temporal: Mezclar meses "
+        "al azar podría hacer ver el problema más fácil de lo que es.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -349,10 +363,10 @@ def correlaciones(c):
     con_objetivo = corr.loc[entradas, "no_conforme"]
     mayor = con_objetivo.abs().idxmax()
     r.agregar(nota(
-        f"Entre las variables de entrada, el par más correlacionado es «{par[0]}» y «{par[1]}» (ρ = {pares.loc[par]:.2f}). "
-        f"Con el resultado no conforme, la correlación más alta en valor absoluto es la de «{mayor}» "
-        f"(ρ = {con_objetivo.loc[mayor]:.2f}), "
-        + ("una asociación débil: la señal, si la hay, no está en una sola variable numérica tomada por separado."
+        f"Entre las variables de entrada el par más correlacionado es \"{par[0]}\" y \"{par[1]}\" "
+        f"(ρ = {pares.loc[par]:.2f}). Con el resultado no conforme la correlación más alta en valor absoluto es la de "
+        f"\"{mayor}\" (ρ = {con_objetivo.loc[mayor]:.2f}), "
+        + ("una asociación débil: La señal, si la hay, no está en una sola variable numérica tomada por separado."
            if con_objetivo.abs().max() < 0.3 else "una asociación apreciable para una sola variable."),
         "hallazgo",
     ))
@@ -375,8 +389,9 @@ def concentracion(c):
     r.agregar(nota(
         f"De los {len(por_cliente)} clientes con muestras, los **{c.clientes_mitad}** más grandes "
         f"({pct(c.clientes_mitad / len(por_cliente))}) aportan la mitad del volumen y el 10 % más grande aporta el "
-        f"{pct(float(acumulado.iloc[decimo - 1]))}. En el otro extremo, la mitad de los clientes tiene "
-        f"{int(por_cliente.median())} muestras o menos en todo el periodo.",
+        f"{pct(float(acumulado.iloc[decimo - 1]))}. En el otro extremo la mitad de los clientes tiene "
+        f"{int(por_cliente.median())} muestras o menos en todo el periodo, o sea que de muchos clientes casi no hay "
+        "historia con la cual construir variables.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -397,21 +412,22 @@ def implicaciones(c):
     cardinalidad = d[categoricas].nunique().sort_values(ascending=False)
     r.agregar(pasos([
         ("Clases desbalanceadas",
-         f"Solo el {pct(c.tasa_no_conforme)} de las muestras aceptadas es no conforme: la exactitud no sirve como "
-         "métrica, se usan ROC-AUC, precisión, recall y un umbral elegido por costo."),
+         f"Solo el {pct(c.tasa_no_conforme)} de las muestras aceptadas es no conforme así que la exactitud no sirve "
+         "como métrica: Usamos ROC-AUC, precisión, recall y un umbral elegido por costo."),
         ("Categorías con muchos niveles",
-         f"«{cardinalidad.index[0]}» tiene {int(cardinalidad.iloc[0])} niveles y «{cardinalidad.index[1]}» "
-         f"{int(cardinalidad.iloc[1])}: no se codifican tal cual, se resumen con historiales o se agrupan los niveles raros."),
+         f"\"{cardinalidad.index[0]}\" tiene {int(cardinalidad.iloc[0])} niveles y \"{cardinalidad.index[1]}\" "
+         f"{int(cardinalidad.iloc[1])}. No las codificamos tal cual sino que las resumimos con historiales o agrupamos "
+         "los niveles raros."),
         ("Faltantes dentro de la tubería",
-         f"Hay faltantes no estructurales de hasta {peor['pct_no_estructural']:.1f} % («{peor['columna']}»): la "
-         "imputación se ajusta solo con entrenamiento, dentro de la tubería, y se añade un indicador de faltante."),
+         f"Hay faltantes no estructurales de hasta {peor['pct_no_estructural']:.1f} % (\"{peor['columna']}\"). La "
+         "imputación la ajustamos solo con entrenamiento y dentro de la tubería, con un indicador de faltante al lado."),
         ("Orden temporal",
-         f"La tasa mensual de no conformes va de {pct(m.min())} a {pct(m.max())}: la validación cruzada usa bloques de "
-         "ventana creciente, nunca mezcla al azar."),
+         f"La tasa mensual de no conformes va de {pct(m.min())} a {pct(m.max())}, por eso la validación cruzada usa "
+         "bloques de ventana creciente y nunca mezcla al azar."),
         ("Clientes de cola pesada",
-         f"{c.clientes_mitad} clientes aportan la mitad del volumen: las variables de historia por cliente se suavizan "
-         "hacia la tasa global para que los clientes con pocas muestras no produzcan tasas extremas."),
-    ], titulo="Implicaciones para las etapas de modelado"))
+         f"{c.clientes_mitad} clientes aportan la mitad del volumen. Las variables de historia por cliente las suavizamos "
+         "hacia la tasa global para que un cliente con pocas muestras no dé tasas extremas."),
+    ], titulo="Lo que esto implica para el modelado"))
     latex.registrar_varias([
         ("ExpCategoriaMasNiveles", cardinalidad.index[0], "categórica con más niveles"),
         ("ExpNivelesCategoria", int(cardinalidad.iloc[0]), "niveles de esa categórica"),

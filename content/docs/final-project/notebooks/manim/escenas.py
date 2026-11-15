@@ -86,7 +86,7 @@ def _meta_red():
 
 
 # ----------------------------------------------------------------------
-# Escena 1 · Bayes, término a término
+# Escena 1: Bayes, término a término
 # ----------------------------------------------------------------------
 def _nodo(nombre, cantidad, color, ancho=2.5):
     rotulo = VGroup(_texto(nombre, 20), _texto(cantidad, 22, color, CIFRAS)).arrange(RIGHT, buff=0.25)
@@ -119,7 +119,7 @@ class EscenaBayes(Scene):
         verde, rojo, azul, gris = TINTAS["sensibilidad"], TINTAS["falsos"], TINTAS["previa"], TINTAS["conformes"]
 
         encabezado = _encabezado("Bayes, término a término",
-                                 f"ensayo de esterilidad · {total} muestras imaginarias con las cifras de la etapa 05")
+                                 f"Ensayo de esterilidad: {total} muestras imaginarias con las cifras de la etapa 05")
         self.play(FadeIn(encabezado, shift=0.2 * DOWN), run_time=1.2)
 
         # Árbol: previa y luego resultado del ensayo
@@ -175,8 +175,8 @@ class EscenaBayes(Scene):
                           r"(1-", "p", ")", "}", font_size=42, color=TINTA)
         for i, c in ((3, verde), (5, azul), (7, verde), (9, azul), (11, rojo), (12, rojo), (13, azul), (14, rojo)):
             formula[i].set_color(c)
-        numeros = MathTex("=", "{", _cifra(S), r"\cdot", _cifra(p), r"\over", _cifra(S), r"\cdot", _cifra(p), "+",
-                          _cifra(1 - E), r"\cdot", _cifra(1 - p), "}", "=", _cifra(e["vpp"], 3), font_size=40, color=TINTA)
+        numeros = MathTex("=", "{", _cifra(S), r"\times", _cifra(p), r"\over", _cifra(S), r"\times", _cifra(p), "+",
+                          _cifra(1 - E), r"\times", _cifra(1 - p), "}", "=", _cifra(e["vpp"], 3), font_size=40, color=TINTA)
         for i, c in ((2, verde), (4, azul), (6, verde), (8, azul), (10, rojo), (12, rojo), (15, verde)):
             numeros[i].set_color(c)
         fila = VGroup(formula, numeros).arrange(RIGHT, buff=0.25)
@@ -204,9 +204,9 @@ class EscenaBayes(Scene):
         self.play(Write(falso), run_time=1.4)
         por_cada = limpias / contaminadas
         cierre = _texto(
-            f"Con una previa baja, hasta un ensayo muy específico (E = {_cifra(E, 3)}) da muchos falsos positivos:\n"
-            f"hay unas {por_cada:.0f} limpias por cada contaminada, y su {100 * (1 - E):.1f} % de error "
-            f"({fp} de cada {total}) compite\ncon los {vp} verdaderos positivos.", 24, TINTA,
+            f"Con una previa baja hasta un ensayo muy específico (E = {_cifra(E, 3)}) da muchos falsos positivos:\n"
+            f"Hay unas {por_cada:.0f} limpias por cada contaminada y su {100 * (1 - E):.1f} % de error "
+            f"({fp} de cada {total})\nalcanza a competir con los {vp} verdaderos positivos.", 24, TINTA,
             line_spacing=1.0, t2c={"falsos positivos": rojo, "verdaderos positivos": verde, "previa baja": azul})
         cierre.next_to(falso, DOWN, buff=0.6)
         if cierre.width > 13:
@@ -216,7 +216,7 @@ class EscenaBayes(Scene):
 
 
 # ----------------------------------------------------------------------
-# Escena 2 · Retropropagación en el perceptrón multicapa
+# Escena 2: Retropropagación en el perceptrón multicapa
 # ----------------------------------------------------------------------
 def _capa(x, dibujadas, color, radio=0.14, alto=4.2):
     ys = np.linspace(alto / 2, -alto / 2, dibujadas) if dibujadas > 1 else np.zeros(1)
@@ -243,7 +243,7 @@ class EscenaRetropropagacion(Scene):
         n_entradas, ocultas, alfa = red["n_entradas"], red["ocultas"], red["alpha"]
         morado, rojo, azul = TINTAS["pesos"], TINTAS["falsos"], TINTAS["previa"]
         capas = " → ".join([f"{n_entradas} entradas", *(f"{h} ReLU" for h in ocultas), "1 sigmoide"])
-        encabezado = _encabezado("Retropropagación en el perceptrón multicapa", f"{capas} · α = {alfa:g}")
+        encabezado = _encabezado("Retropropagación en el perceptrón multicapa", f"{capas}, α = {alfa:g}")
         self.play(FadeIn(encabezado, shift=0.2 * DOWN), run_time=1.2)
 
         # Red esquemática (capas grandes recortadas, como en la figura de la arquitectura)
@@ -253,8 +253,8 @@ class EscenaRetropropagacion(Scene):
         primera = _conexiones(entrada, oculta, morado)
         segunda = _conexiones(oculta, salida, morado, ancho=1.4, opacidad=0.4)
         rotulos = VGroup(
-            _texto(f"x · {n_entradas}", 20, TENUE).next_to(entrada, DOWN, buff=0.35),
-            _texto(f"h · {ocultas[0]} ReLU", 20, morado).next_to(oculta, DOWN, buff=0.2),
+            _texto(f"x: {n_entradas} entradas", 20, TENUE).next_to(entrada, DOWN, buff=0.35),
+            _texto(f"h: {ocultas[0]} ReLU", 20, morado).next_to(oculta, DOWN, buff=0.2),
             MathTex(r"\hat p", font_size=34, color=rojo).next_to(salida, RIGHT, buff=0.15),
         )
         rotulos[0].set_y(rotulos[1].get_y())
@@ -274,7 +274,7 @@ class EscenaRetropropagacion(Scene):
                 objeto.scale_to_fit_width(6.9 - columna_x).set_x(columna_x + objeto.width / 2)
             return objeto
 
-        t1 = paso("1 · hacia adelante", TINTA).move_to([columna_x, 2.55, 0], aligned_edge=LEFT)
+        t1 = paso("1. Hacia adelante", TINTA).move_to([columna_x, 2.55, 0], aligned_edge=LEFT)
         e_h = ubicar(MathTex("h", "=", r"\mathrm{ReLU}(", "W_1", "x", "+", "b_1", ")", font_size=32, color=TINTA), t1, 0.15)
         e_p = ubicar(MathTex(r"\hat p", "=", r"\sigma(", "w_2", r"^\top h", "+", "b_2", ")", font_size=32, color=TINTA), e_h, 0.12)
         for m in (e_h[3], e_h[6], e_p[3], e_p[6]):
@@ -298,7 +298,7 @@ class EscenaRetropropagacion(Scene):
         self.wait(1.2)
 
         # Hacia atrás
-        t2 = ubicar(paso("2 · hacia atrás: regla de la cadena", rojo), e_l, 0.35)
+        t2 = ubicar(paso("2. Hacia atrás: Regla de la cadena", rojo), e_l, 0.35)
         e_g2 = ubicar(MathTex(r"{\partial L \over \partial w_2}", "=", r"(\hat p - y)\,h", "+", r"2\,\alpha", r"\,w_2",
                               font_size=30, color=TINTA), t2, 0.15)
         e_g1 = ubicar(MathTex(r"{\partial L \over \partial W_1}", "=",
@@ -314,7 +314,7 @@ class EscenaRetropropagacion(Scene):
         self.wait(1.2)
 
         # Actualización
-        t3 = ubicar(paso("3 · actualización de los pesos", morado), e_g1, 0.35)
+        t3 = ubicar(paso("3. Actualización de los pesos", morado), e_g1, 0.35)
         e_a = ubicar(MathTex("W_1", r"\leftarrow", "W_1", "-", r"\eta", r"\,{\partial L \over \partial W_1}",
                              font_size=32, color=TINTA), t3, 0.15)
         e_a[0].set_color(morado)

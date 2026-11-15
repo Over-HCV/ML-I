@@ -30,6 +30,7 @@ PERMITIDOS_TEXTO = {
     "06_agrupamiento.py": {"0.5"},               # Hopkins > 0.5 (definición)
     "05_clasificacion_bayes.py": {
         "1.5",                                    # ejemplo de razón de odds
+        "0.5",                                    # ROC-AUC de un modelo que no ordena (definición)
         "0.005",                                  # tolerancia de empate de la regla de elección
         "0.2",                                    # ejemplo de probabilidad calibrada
         "0.02", "0.50",                           # rejilla de umbrales declarada
@@ -378,7 +379,7 @@ def colores_de_ecuaciones():
     """Los colores de las ecuaciones de la presentación (MathJax) son los mismos de sus figuras."""
     from proyecto.reporte.graficos_presentacion import TINTAS
 
-    guion = (FUENTES / "presentacion.py").read_text(encoding="utf-8")
+    guion = "".join(g.read_text(encoding="utf-8") for g in guiones_narrados())   # presentación y etapas
     usados = set(re.findall(r"\\color\{(#[0-9A-Fa-f]{6})\}", guion))
     ajenos = sorted(usados - set(TINTAS.values()))
     assert usados, "las ecuaciones no usan colores"
@@ -390,7 +391,56 @@ def colores_de_ecuaciones():
     return f"{len(usados)} colores, todos de TINTAS"
 
 
+# Notebooks de etapa cuyo texto ya sigue la guía de redacción (la lista crece a medida que se revisan las demás).
+ETAPAS_ESTILO = ["01_datos", "02_exploracion", "03_cribado_analisis", "04_regresion", "05_clasificacion_bayes",
+                 "06_agrupamiento", "07_evaluacion_final", "Presentacion"]
+PROHIBIDOS_ESTILO = {"·": "punto medio", "«": "comilla angular", "»": "comilla angular", "—": "raya",
+                     "\\cdot": "\\cdot"}
+
+
+def _texto_visible(html):
+    """Lo que lee una persona en una salida HTML: sin hojas de estilo, guiones ni imágenes en base64."""
+    html = re.sub(r"<(style|script)\b.*?</\1>", " ", html, flags=re.S | re.I)
+    html = re.sub(r"data:[\w/+.-]+;base64,[A-Za-z0-9+/=]+", " ", html)
+    return re.sub(r"<[^>]+>", " ", html)
+
+
+def estilo_de_redaccion():
+    """Las celdas de texto y lo que muestran las salidas de los notebooks de `ETAPAS_ESTILO` no usan punto medio,
+    comillas angulares, rayas ni \\cdot (el código de las celdas queda fuera: es código)."""
+    import nbformat
+
+    hallados = []
+    for etapa in ETAPAS_ESTILO:
+        ruta = RAIZ / "notebooks" / f"{etapa}.ipynb"
+        assert ruta.exists(), f"falta {ruta.name}: construya los notebooks"
+        cuaderno = nbformat.read(ruta, as_version=4)
+        for i, celda in enumerate(cuaderno.cells):
+            textos = []
+            if celda.cell_type == "markdown":
+                textos.append(celda.source)
+            for salida in celda.get("outputs", []):
+                datos = salida.get("data", {})
+                if "text/html" in datos:
+                    textos.append(_texto_visible("".join(datos["text/html"])))
+                elif "text/plain" in datos:
+                    textos.append("".join(datos["text/plain"]))
+                if "text" in salida:
+                    textos.append("".join(salida["text"]))
+            for texto in textos:
+                for simbolo, nombre in PROHIBIDOS_ESTILO.items():
+                    for hallazgo in re.finditer(re.escape(simbolo), texto):
+                        contexto = texto[max(0, hallazgo.start() - 30):hallazgo.end() + 20].replace("\n", " ")
+                        hallados.append(f"{etapa} celda {i}: {nombre} en «{contexto.strip()}»")
+    assert not hallados, f"{len(hallados)} hallazgos: " + "; ".join(hallados[:12])
+    return f"{len(ETAPAS_ESTILO)} notebooks sin punto medio, comillas angulares, rayas ni \\cdot"
+
+
 MAXIMO_SEGUNDOS_PANEL = 1.5   # por redibujo (objetivo: menos de 1 s en un portátil)
+
+
+def _artefacto_regresion(nombre="04_regresion"):
+    return json.loads((RAIZ / "artefactos" / f"{nombre}.json").read_text(encoding="utf-8"))
 
 
 def _valores_de_prueba(control):
@@ -425,15 +475,28 @@ def paneles_interactivos():
     from proyecto.etapas import presentacion
     from proyecto.reporte import interactivo
 
+    from proyecto.etapas.comun import legible
+
     d = presentacion.iniciar()
     guion = (FUENTES / "presentacion.py").read_text(encoding="utf-8")
     nombres = sorted(set(re.findall(r"ui\.(panel_\w+)\(d\)", guion)))
-    definidos = sorted(n for n in dir(interactivo) if n.startswith("panel_"))
+    # Paneles que no reciben `d` sino un artefacto de etapa: se arman con los datos de su etapa.
+    de_etapa = {"panel_taguchi": lambda: interactivo.panel_taguchi(
+        _artefacto_regresion()["taguchi"],
+        {f: legible(v) for f, v in _artefacto_regresion()["configuracion"].items()}),
+        "panel_taguchi (etapa 05)": lambda: interactivo.panel_taguchi(
+            _artefacto_regresion("05_clasificacion")["taguchi"],
+            {f: legible(v) for f, v in _artefacto_regresion("05_clasificacion")["configuracion"].items()},
+            rotulo="Clasificación", etapa="05")}
+    definidos = sorted(n for n in dir(interactivo) if n.startswith("panel_") and n not in de_etapa)
     assert nombres == definidos, f"paneles en el guion {nombres} y en el módulo {definidos}"
+    usados = "".join(g.read_text(encoding="utf-8") for g in guiones_narrados())
+    sin_usar = [n for n in de_etapa if f"ui.{n.split()[0]}(" not in usados]
+    assert not sin_usar, f"paneles de etapa que ningún guion usa: {sin_usar}"
     informe = []
-    for nombre in nombres:
+    for nombre in nombres + sorted(de_etapa):
         inicio = time.perf_counter()
-        panel = getattr(interactivo, nombre)(d)
+        panel = de_etapa[nombre]() if nombre in de_etapa else getattr(interactivo, nombre)(d)
         armado = time.perf_counter() - inicio
         with contextlib.redirect_stdout(io.StringIO()):   # fuera de un notebook, display escribe texto
             panel._ipython_display_()
@@ -470,8 +533,9 @@ def main():
     comprobar("Macros y tablas del informe completas y sin repetir", macros_del_informe)
     comprobar("Presentación armada con los artefactos guardados", presentacion_completa)
     comprobar("Datos pequeños de la presentación (desarrollo, reproducibles)", datos_de_presentacion)
-    comprobar("Colores de las ecuaciones iguales a los de las figuras", colores_de_ecuaciones)
-    comprobar("Paneles interactivos de la presentación (controles movidos sin pantalla)", paneles_interactivos)
+    comprobar("Colores de las ecuaciones (presentación y etapas) iguales a los de las figuras", colores_de_ecuaciones)
+    comprobar("Paneles interactivos de la presentación y de las etapas (controles movidos sin pantalla)", paneles_interactivos)
+    comprobar("Estilo de redacción en los notebooks revisados", estilo_de_redaccion)
     fallas = resultados.count(False)
     print(f"\n{len(resultados) - fallas} de {len(resultados)} comprobaciones superadas en "
           f"{time.perf_counter() - inicio:.1f} s.")

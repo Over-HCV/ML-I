@@ -18,6 +18,8 @@ from proyecto.base.config import CORTE_PRUEBA, CORTE_VALIDACION
 
 ENTRENAMIENTO, VALIDACION, PRUEBA = "entrenamiento", "validacion", "prueba"
 PARTICIONES = [ENTRENAMIENTO, VALIDACION, PRUEBA]
+# Rótulos para mostrar (tablas y figuras); las claves internas siguen sin tilde.
+ROTULOS = {ENTRENAMIENTO: "entrenamiento", VALIDACION: "validación", PRUEBA: "prueba"}
 
 
 def etiquetar_particion(fechas):

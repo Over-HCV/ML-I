@@ -40,7 +40,7 @@ from proyecto.base import config
 from proyecto.base.config import COLORES, ETAPAS, TITULOS_ETAPAS
 
 ROTULO_PROYECTO = getattr(config, "ROTULO_PROYECTO",
-                          "Proyecto final · Aprendizaje Automático de Máquina I")
+                          "Aprendizaje Automático de Máquina I, proyecto final")
 TITULO_PROYECTO = getattr(config, "TITULO_PROYECTO",
                           "Aprendizaje automático sobre la base de muestras de un "
                           "laboratorio de microbiología")
@@ -236,7 +236,7 @@ font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.01em}
 .pf-op-etq{font-size:13px;color:var(--pf-tenue)}
 .pf-op-puntos{margin-top:8px;font-size:14px;color:var(--pf-tinta)}
 .pf-op-punto{margin:3px 0}
-.pf-op-punto::before{content:"\\2014\\00a0";color:var(--pf-gris)}
+.pf-op-punto::before{content:"\\203A\\00a0";color:var(--pf-gris)}
 """
 # --- Piezas de la presentación (diapositivas) ---
 _CSS["diapositiva"] = f"""
@@ -325,7 +325,7 @@ _CSS["columnas"] = """
 _CSS["fichas"] = """
 .pf-fichas{display:flex;flex-wrap:wrap;row-gap:4px;font-size:14.5px;color:var(--pf-tinta)}
 .pf-ficha{display:inline-block}
-.pf-ficha+.pf-ficha::before{content:"\\00b7";color:var(--pf-gris);margin:0 10px}
+.pf-ficha:not(:last-child)::after{content:",";color:var(--pf-gris);margin-right:10px}
 """
 _CSS["formula"] = """
 .pf-formula{display:flex;align-items:center;flex-wrap:wrap;gap:12px;font-family:var(--pf-serif);font-size:22px;
@@ -414,10 +414,10 @@ def _falta(valor):
 
 def formato_numero(valor, decimales=4):
     """Formato único del proyecto: punto decimal, sin separador de miles,
-    enteros sin decimales, «—» para los faltantes.
+    enteros sin decimales y celda en blanco para los faltantes.
     Uso: `formato_numero(0.81234, 3)` → `'0.812'`."""
     if _falta(valor):
-        return "—"
+        return ""
     if isinstance(valor, bool) or (hasattr(valor, "dtype") and valor.dtype.kind == "b"):
         return "sí" if valor else "no"
     if _es_numero(valor):
@@ -438,7 +438,7 @@ def _aplicar_formato(valor, formato):
     if callable(formato):
         return str(formato(valor))
     if isinstance(formato, str):
-        return "—" if _falta(valor) else formato.format(valor)
+        return "" if _falta(valor) else formato.format(valor)
     return formato_numero(valor, formato)
 
 
@@ -490,7 +490,7 @@ def _a_html(contenido):
 def _cifra(valor, decimales, prefijo="", sufijo=""):
     """Cifra con su texto final ya escrito; el adorno la cuenta desde cero."""
     if not _es_numero(valor) or _falta(valor) or math.isinf(float(valor)):
-        return f"{escape(prefijo)}{_texto(valor if not _falta(valor) else '—')}{escape(sufijo)}"
+        return f"{escape(prefijo)}{_texto(valor if not _falta(valor) else '')}{escape(sufijo)}"
     es_entero = isinstance(valor, int) or (hasattr(valor, "dtype") and valor.dtype.kind in "iu")
     dec = 0 if es_entero else int(decimales)
     final = f"{prefijo}{formato_numero(valor, dec)}{sufijo}"
@@ -525,7 +525,7 @@ def encabezado_etapa(etapa, subtitulo=None):
         f'<div class="pf-enc-rotulo pf-ap">{escape(ROTULO_PROYECTO)}</div>'
         f'<div class="pf-enc-proyecto pf-ap">{escape(TITULO_PROYECTO)}</div>'
         f'<div class="pf-enc-titulo pf-ap" style="--pf-i:1">'
-        f"Etapa {actual + 1} de {len(ETAPAS)} · {escape(TITULOS_ETAPAS.get(etapa, etapa))}</div>"
+        f"Etapa {actual + 1} de {len(ETAPAS)}: {escape(TITULOS_ETAPAS.get(etapa, etapa))}</div>"
         f'{sub}<div class="pf-progreso">{"".join(pasos_html)}</div>'
     )
     return _envolver(cuerpo, "encabezado", "pf-encabezado")
@@ -570,7 +570,7 @@ def tabla_html(tabla, titulo=None, resaltar=None, decimales=4, columnas_resaltad
     """Tabla de pandas con formato uniforme (punto decimal, decimales fijos,
     enteros sin decimales).
 
-    - `titulo`: leyenda; si no empieza por «Tabla» se le antepone.
+    - `titulo`: leyenda; si no empieza por "Tabla" se le antepone.
     - `resaltar`: etiqueta(s) del índice de las filas a destacar, o una
       máscara booleana de la misma longitud que la tabla.
     - `decimales`: entero, o diccionario `{columna: decimales}`.
@@ -855,7 +855,7 @@ def diapositiva(titulo, cuerpo, numero=None, total=None, pie=None, rotulo=None, 
 
 
 def cifra_grande(lista, titulo=None, decimales=0):
-    """Una o varias cifras protagonistas («héroe»), con conteo al aparecer.
+    """Una o varias cifras protagonistas ("héroe"), con conteo al aparecer.
     Cada elemento es un diccionario con `valor`, `etiqueta` y, opcionalmente,
     `detalle`, `color`, `decimales`, `prefijo`, `sufijo`; o una tupla
     `(valor, etiqueta[, detalle])`.
@@ -922,8 +922,8 @@ def matriz_confusion(vn, fp, fn, vp, titulo=None, clases=("Conforme", "No confor
                 f'<div class="pf-mc-celda" style="--pf-i:{2 * fila + columna};--pf-c:{_oscuro(color)};'
                 f'--pf-f:{_tenue(color)}"><div class="pf-mc-valor">{_cifra(valor, 0)}</div>'
                 f'<div class="pf-mc-etq">{_texto(rotulo)}</div></div>')
-    pie_html = (f'<div class="pf-mc-pie">{_texto(eje_real)} en filas · {_texto(eje_predicho)} en columnas'
-                + (f" · {_texto(pie)}" if pie else "") + "</div>")
+    pie_html = (f'<div class="pf-mc-pie">{_texto(eje_real)} en filas y {_texto(eje_predicho).lower()} en columnas'
+                + (f". {_texto(pie)}" if pie else "") + "</div>")
     return _envolver(f'<div class="pf-mc">{"".join(html)}</div>{pie_html}', "matriz", titulo=titulo)
 
 
@@ -1018,7 +1018,7 @@ def fichas(lista, titulo=None, color="azul"):
 def fraccion(izquierda, numerador, denominador, detalle=None):
     """Fórmula con una fracción, en HTML. En numerador y denominador, `[[a:texto]]`
     se pinta en verde y `[[b:texto]]` en rojo (además de `**negrita**`).
-    Uso: `mostrar(fraccion("VPP", "[[a:S·p]]", "[[a:S·p]] + [[b:(1 − E)(1 − p)]]"))`."""
+    Uso: `mostrar(fraccion("VPP", "[[a:S p]]", "[[a:S p]] + [[b:(1 − E)(1 − p)]]"))`."""
     def pintar(texto):
         return re.sub(r"\[\[([ab]):(.+?)\]\]", r'<span class="pf-f-\1">\2</span>', _texto(texto))
     det = f'<div class="pf-f-det">{_texto(detalle)}</div>' if detalle else ""

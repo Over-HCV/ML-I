@@ -70,7 +70,7 @@ def figura_recta_simple(x, y, pendiente, intercepto, nombre_x, nombre_y):
     ax.scatter(x, y, s=12, alpha=0.35, color=COLORES["azul"], edgecolor="none", label="días de entrenamiento")
     malla = np.linspace(np.nanmin(x), np.nanmax(x), 50)
     ax.plot(malla, intercepto + pendiente * malla, color=COLORES["rojo"], linewidth=2.2,
-            label=f"ŷ = {intercepto:.2f} + {pendiente:.3f} · x")
+            label=f"ŷ = {intercepto:.2f} + {pendiente:.3f} x")
     ax.set_xlabel(nombre_x)
     ax.set_ylabel(nombre_y)
     ax.legend(frameon=False, fontsize=9, loc="upper left")

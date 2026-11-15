@@ -199,16 +199,16 @@ def _limpiar_tabla(nombre, cruda, auditoria):
             original = _texto(cruda_col, recortar=False)
             limpia = normalizar_etiquetas(cruda_col, canonicas.get(columna.nombre))
             cambiadas = limpia.notna() & (original != limpia)
-            _anotar(auditoria, nombre, f"etiquetas con grafía inconsistente en «{columna.nombre}»",
+            _anotar(auditoria, nombre, f"etiquetas con grafía inconsistente en \"{columna.nombre}\"",
                     cambiadas.sum(), "se unifican mayúsculas, tildes y espacios")
             if columna.nombre in canonicas:
                 ajenas = limpia.notna() & ~limpia.isin(canonicas[columna.nombre])
-                _anotar(auditoria, nombre, f"etiqueta no reconocida en «{columna.nombre}»", ajenas.sum(),
-                        "se conserva; tradúzcala en «valores» del mapeo si es un sinónimo")
+                _anotar(auditoria, nombre, f"etiqueta no reconocida en \"{columna.nombre}\"", ajenas.sum(),
+                        "se conserva; Tradúzcala en \"valores\" del mapeo si es un sinónimo")
             tabla[columna.nombre] = limpia
         elif columna.tipo == "numero":
             numeros, ilegibles = _a_numero(cruda_col)
-            _anotar(auditoria, nombre, f"valor no numérico en «{columna.nombre}»", ilegibles,
+            _anotar(auditoria, nombre, f"valor no numérico en \"{columna.nombre}\"", ilegibles,
                     "se convierte en faltante")
             if columna.nombre in rangos:
                 minimo, maximo = rangos[columna.nombre]
@@ -218,13 +218,13 @@ def _limpiar_tabla(nombre, cruda, auditoria):
                 if maximo is not None:
                     fuera = fuera | (numeros > maximo)
                 intervalo = f"[{'' if minimo is None else minimo}, {'∞' if maximo is None else maximo}]"
-                _anotar(auditoria, nombre, f"valor imposible en «{columna.nombre}» (fuera de {intervalo})",
+                _anotar(auditoria, nombre, f"valor imposible en \"{columna.nombre}\" (fuera de {intervalo})",
                         fuera.sum(), "se convierte en faltante")
                 numeros = numeros.mask(fuera)
             tabla[columna.nombre] = numeros
         elif columna.tipo == "fecha":
             fechas, ilegibles = _a_fecha(cruda_col)
-            _anotar(auditoria, nombre, f"fecha ilegible en «{columna.nombre}»", ilegibles,
+            _anotar(auditoria, nombre, f"fecha ilegible en \"{columna.nombre}\"", ilegibles,
                     "se convierte en faltante")
             tabla[columna.nombre] = fechas
         else:  # id y texto
@@ -233,18 +233,18 @@ def _limpiar_tabla(nombre, cruda, auditoria):
     llave = LLAVES.get(nombre)
     if llave in tabla.columns:
         sin_llave = tabla[llave].isna()
-        _anotar(auditoria, nombre, f"filas sin «{llave}»", sin_llave.sum(), "se eliminan")
+        _anotar(auditoria, nombre, f"filas sin \"{llave}\"", sin_llave.sum(), "se eliminan")
         tabla = tabla.loc[~sin_llave]
         repetidas = tabla.duplicated(llave, keep="first")
-        _anotar(auditoria, nombre, f"«{llave}» repetido con contenido distinto", repetidas.sum(),
+        _anotar(auditoria, nombre, f"\"{llave}\" repetido con contenido distinto", repetidas.sum(),
                 "se conserva la primera fila")
         tabla = tabla.loc[~repetidas].reset_index(drop=True)
 
     for antes, despues, anulada in ORDEN_FECHAS:
         if antes in tabla.columns and despues in tabla.columns:
             invertidas = tabla[despues] < tabla[antes]
-            _anotar(auditoria, nombre, f"«{despues}» anterior a «{antes}»", invertidas.sum(),
-                    f"«{anulada}» se convierte en faltante")
+            _anotar(auditoria, nombre, f"\"{despues}\" anterior a \"{antes}\"", invertidas.sum(),
+                    f"\"{anulada}\" se convierte en faltante")
             tabla[anulada] = tabla[anulada].mask(invertidas)
     return tabla
 
@@ -278,12 +278,12 @@ def _derivar_muestras(m, auditoria):
     # Recuento reportado.
     if "recuento_reportado" in m.columns:
         recuento = interpretar_recuento(m["recuento_reportado"])
-        _anotar(auditoria, "muestras", "recuento censurado («<N» o «>N»)", recuento["censurado"].sum(),
-                "la cota queda en «recuento_ufc» y se marca «recuento_censurado» = 1")
+        _anotar(auditoria, "muestras", "recuento censurado (\"<N\" o \">N\")", recuento["censurado"].sum(),
+                "la cota queda en \"recuento_ufc\" y se marca \"recuento_censurado\" = 1")
         _anotar(auditoria, "muestras", "recuento con unidad u otro texto", recuento["con_texto"].sum(),
                 "se extrae el número")
         _anotar(auditoria, "muestras", "recuento ilegible", recuento["ilegible"].sum(),
-                "«recuento_ufc» queda faltante")
+                "\"recuento_ufc\" queda faltante")
     else:
         recuento = pd.DataFrame({"valor": nan, "censurado": 0, "cualitativo": nan, "direccion": ""},
                                 index=m.index)
@@ -318,7 +318,7 @@ def _derivar_muestras(m, auditoria):
     no_conforme = etiqueta.mask(contradice | deducido, esperado).mask(rechazada)
     con_resultado_rechazada = rechazada & etiqueta.notna()
     _anotar(auditoria, "muestras", "muestra rechazada con resultado registrado",
-            con_resultado_rechazada.sum(), "«no_conforme» queda faltante")
+            con_resultado_rechazada.sum(), "\"no_conforme\" queda faltante")
     m["no_conforme"] = no_conforme.astype(float)
     corregir = (contradice | deducido) & ~rechazada
     m["resultado"] = m["resultado"].mask(
@@ -407,9 +407,9 @@ def faltantes_por_columna(limpias):
 def _auditar_faltantes(limpias, auditoria):
     resumen = faltantes_por_columna(limpias)
     for fila in resumen.itertuples(index=False):
-        _anotar(auditoria, fila.tabla, f"faltante estructural en «{fila.columna}»", fila.estructurales,
+        _anotar(auditoria, fila.tabla, f"faltante estructural en \"{fila.columna}\"", fila.estructurales,
                 "se conserva: el dato no puede existir para esa fila")
-        _anotar(auditoria, fila.tabla, f"faltante no estructural en «{fila.columna}»",
+        _anotar(auditoria, fila.tabla, f"faltante no estructural en \"{fila.columna}\"",
                 fila.no_estructurales, "se conserva como faltante (si la columna se usa, se imputa dentro de la tubería del modelo)")
 
 
@@ -421,7 +421,7 @@ def _auditar_integridad(limpias, auditoria):
         if tabla in limpias and destino in limpias and columna in limpias[tabla].columns:
             valores = limpias[tabla][columna]
             huerfanas = valores.notna() & ~valores.isin(limpias[destino][columna])
-            _anotar(auditoria, tabla, f"«{columna}» sin fila correspondiente en «{destino}»", huerfanas.sum(),
+            _anotar(auditoria, tabla, f"\"{columna}\" sin fila correspondiente en \"{destino}\"", huerfanas.sum(),
                     "se conserva; los atributos de la otra tabla quedan faltantes")
 
 

@@ -14,7 +14,7 @@ import pandas as pd
 from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, leer_json, leer_modelo, leer_prueba
 from proyecto.datos import carga
-from proyecto.etapas.comun import Resultado, abrir, cerrar
+from proyecto.etapas.comun import Resultado, abrir, cerrar, lista_nombres
 from proyecto.evaluacion import bayes, metricas, umbral
 from proyecto.evaluacion.remuestreo import intervalo_bootstrap
 from proyecto.modelos import registro
@@ -41,7 +41,7 @@ def _con_intervalo(funcion, *arreglos):
 
 
 def _texto_ic(trio, decimales=3):
-    return f"{trio[0]:.{decimales}f} (IC 95 %: {trio[1]:.{decimales}f} a {trio[2]:.{decimales}f})"
+    return f"{trio[0]:.{decimales}f} (intervalo del 95 % de {trio[1]:.{decimales}f} a {trio[2]:.{decimales}f})"
 
 
 def iniciar():
@@ -66,34 +66,35 @@ def congelado(c):
     c.fila_val_reg = f = next(x for x in reg["validacion"] if x["Predictor"] == c.nombre_modelo_reg)
     c.umbral_val = u = clf["umbral_elegido"]
     tabla = pd.DataFrame([
-        {"Análisis": c.nombre_reg, "Tipo": "regresión", "Modelo": c.nombre_modelo_reg,
+        {"Análisis": c.nombre_reg, "Tipo": "Regresión", "Modelo": c.nombre_modelo_reg,
          "Variables": f"grupo {reg['configuracion']['grupo']} ({len(reg['variables_entrada'])})",
-         "Hiperparámetros": _hiper_legibles(reg["hiperparametros"]), "Calibración y umbral": "no aplica",
+         "Hiperparámetros": _hiper_legibles(reg["hiperparametros"]), "Calibración y umbral": "No aplica",
          "Validación": f"RMSE {f['RMSE']:.2f}, habilidad {f['Habilidad']:.3f}"},
-        {"Análisis": c.nombre_clf, "Tipo": "clasificación", "Modelo": registro.NOMBRES_LEGIBLES[clf["modelo"]],
+        {"Análisis": c.nombre_clf, "Tipo": "Clasificación", "Modelo": registro.NOMBRES_LEGIBLES[clf["modelo"]],
          "Variables": f"grupo {clf['configuracion']['grupo']} ({len(clf['variables_entrada'])})",
          "Hiperparámetros": _hiper_legibles(clf["hiperparametros"]),
-         "Calibración y umbral": f"{'sigmoide' if clf['calibracion']['usada'] else 'sin calibrar'}, umbral {c.umbral:.3f}",
+         "Calibración y umbral": f"{'Sigmoide' if clf['calibracion']['usada'] else 'Sin calibrar'}, umbral {c.umbral:.3f}",
          "Validación": (f"ROC-AUC {clf['auc_validacion']['estimado']:.3f}, costo {u['Costo']:.0f}, "
                         f"precisión {u['Precisión']:.3f}")},
     ])
     r.agregar(tabla_html(tabla, "Modelos congelados antes de abrir la prueba"))
     r.agregar(linea_tiempo([
-        (config.FECHA_INICIO, "Entrenamiento", "ajuste y validación cruzada por bloques temporales"),
-        (config.CORTE_VALIDACION, "Validación", "elección del modelo, la calibración y el umbral"),
-        (config.CORTE_PRUEBA, "Prueba", "se abre una sola vez, en esta etapa"),
-        (config.FECHA_FIN, "Fin de los datos", "último día del periodo de prueba"),
+        (config.FECHA_INICIO, "Entrenamiento", "Ajuste y validación cruzada por bloques temporales"),
+        (config.CORTE_VALIDACION, "Validación", "Elección del modelo, la calibración y el umbral"),
+        (config.CORTE_PRUEBA, "Prueba", "Se abre una sola vez, en esta etapa"),
+        (config.FECHA_FIN, "Fin de los datos", "Último día del periodo de prueba"),
     ], titulo="Protocolo temporal"))
     r.agregar(pasos([
-        ("Ajustar", "solo con el entrenamiento, comparando por bloques temporales"),
-        ("Decidir", "con la validación: modelo, calibración y umbral"),
-        ("Reajustar", "el modelo congelado con entrenamiento + validación, sin tocar sus decisiones"),
-        ("Evaluar", "una vez, con la prueba; nada de lo que sigue cambia una decisión"),
+        ("Ajustar", "Solo con el entrenamiento, comparando por bloques temporales."),
+        ("Decidir", "Con la validación: El modelo, la calibración y el umbral."),
+        ("Reajustar", "El modelo congelado con entrenamiento y validación, sin tocar sus decisiones."),
+        ("Evaluar", "Una vez y con la prueba. Nada de lo que sigue cambia una decisión."),
     ], titulo="Ajustar, decidir, evaluar", actual=4))
     r.agregar(nota(
-        f"La regresión elige con la regla «{reg['regla_eleccion']}» y la clasificación con «{clf['regla_eleccion']}». Las "
-        "dos reglas y sus resultados quedaron escritos en los artefactos de las etapas 04 y 05 antes de esta celda, de "
-        "forma que lo que se mida en la prueba no puede retroalimentar la elección.",
+        "La regresión se eligió por el menor RMSE de validación y la clasificación por el mayor ROC-AUC, en los dos casos "
+        "con una regla de empate que favorece al modelo más sencillo. Las dos reglas y sus resultados quedaron escritos en "
+        "los artefactos de las etapas 04 y 05 antes de esta celda así que lo que midamos en la prueba ya no puede cambiar "
+        "la elección.",
         "info", titulo="Nada se reelige después de este punto",
     ))
     latex.exportar_tabla(tabla, "final_congelado", "Modelos congelados antes de abrir la prueba")
@@ -101,12 +102,18 @@ def congelado(c):
 
 
 def abrir_prueba(c):
-    """Lee los tres bloques de prueba (cada lectura queda registrada)."""
+    """Ordena los tres bloques de prueba que el guion leyó con `leer_prueba` (`c.prueba_reg`, `c.prueba_clf` y
+    `c.prueba_reensayo`, una lectura registrada por bloque) y resume lo que contienen. Si el guion no los leyó,
+    los lee aquí."""
     r = Resultado()
-    c.prueba_reg = leer_prueba(c.nombre_reg).sort_values(c.papeles_reg["fecha"]).reset_index(drop=True)
-    prueba_clf = leer_prueba(c.nombre_clf).reset_index(drop=True)
+    leidos = {n: getattr(c, n, None) for n in ("prueba_reg", "prueba_clf", "prueba_reensayo")}
+    if leidos["prueba_reg"] is None:
+        leidos = {"prueba_reg": leer_prueba(c.nombre_reg), "prueba_clf": leer_prueba(c.nombre_clf),
+                  "prueba_reensayo": leer_prueba(NOMBRE_REENSAYO)}
+    c.prueba_reg = leidos["prueba_reg"].sort_values(c.papeles_reg["fecha"]).reset_index(drop=True)
+    prueba_clf = leidos["prueba_clf"].reset_index(drop=True)
     c.prueba_clf = prueba_clf[prueba_clf[c.papeles_clf["objetivo"]].notna()].reset_index(drop=True)
-    c.prueba_reensayo = leer_prueba(NOMBRE_REENSAYO).reset_index(drop=True)
+    c.prueba_reensayo = leidos["prueba_reensayo"].reset_index(drop=True)
     c.semanas = int(pd.to_datetime(c.prueba_clf[c.papeles_clf["fecha"]]).dt.to_period("W-SUN").nunique())
     fechas = pd.to_datetime(c.prueba_reg[c.papeles_reg["fecha"]])
     r.agregar(tarjetas([
@@ -115,7 +122,7 @@ def abrir_prueba(c):
         {"titulo": "Muestras de prueba", "valor": len(c.prueba_clf), "decimales": 0, "color": "naranja",
          "detalle": f"{c.semanas} semanas"},
         {"titulo": "Reensayos de prueba", "valor": len(c.prueba_reensayo), "decimales": 0, "color": "morado",
-         "detalle": "no conformes con resultado de reensayo"},
+         "detalle": "no conformes con resultado del reensayo"},
     ], titulo="Lo que contiene la prueba"))
     latex.registrar_varias([
         ("FinDiasPrueba", len(c.prueba_reg), "días hábiles de prueba"),
@@ -123,7 +130,8 @@ def abrir_prueba(c):
         ("FinPruebaHasta", f"{fechas.max():%Y-%m-%d}", "último día de prueba"),
         ("FinMuestrasPrueba", len(c.prueba_clf), "muestras de prueba con resultado"),
         ("FinSemanasPrueba", c.semanas, "semanas del periodo de prueba"),
-        ("FinReensayosPrueba", len(c.prueba_reensayo), "no conformes reensayados en la prueba"),
+        ("FinReensayosLecturaPrueba", len(c.prueba_reensayo),
+         "reensayos cuya lectura cae en la prueba (la tabla de reensayo se parte por fecha de lectura)"),
     ])
     return r
 
@@ -154,13 +162,13 @@ def regresion(c):
                                     y[completo], pred[completo], base[completo]),
     }
     decimales = {"MAE": 2, "RMSE": 2, "R2": 3, "Habilidad": 3}
-    r.agregar(tabla_html(c.tabla_reg, f"Regresión en la prueba (muestras por día; habilidad frente a «{c.referencia}»)",
+    r.agregar(tabla_html(c.tabla_reg, f'Regresión en la prueba (muestras por día, habilidad frente a "{c.referencia}")',
                          decimales=decimales, resaltar=[0]))
     metr = ("RMSE", "MAE", "R2", "Habilidad")
     lado = pd.DataFrame({"Métrica": ["RMSE", "MAE", "R²", "Habilidad"], "Validación": [f[m] for m in metr],
                          "Prueba": [ic[m][0] for m in metr], "Prueba inf.": [ic[m][1] for m in metr],
                          "Prueba sup.": [ic[m][2] for m in metr]})
-    r.agregar(tabla_html(lado, "Validación frente a prueba, modelo de regresión congelado (IC 95 % bootstrap)",
+    r.agregar(tabla_html(lado, "Validación frente a prueba del modelo de regresión congelado (intervalos bootstrap al 95 %)",
                          decimales=3, columnas_resaltadas="Prueba"))
     c.rmse_val = rv = f["RMSE"]
     inf, sup = f["RMSE inf."], f["RMSE sup."]
@@ -169,19 +177,19 @@ def regresion(c):
     r.agregar(nota(
         f"En la prueba el RMSE es **{rp:.2f}** muestras por día, frente a {rv:.2f} en validación "
         f"({100 * (rp / rv - 1):+.0f} %). "
-        + (f"Queda por encima del intervalo de validación ({inf:.2f} a {sup:.2f}), de forma que el periodo nuevo resultó "
-           "más difícil de lo que la validación anticipaba." if rp > sup else
-           f"Queda por debajo del intervalo de validación ({inf:.2f} a {sup:.2f}), de forma que el periodo de prueba "
-           "resultó más fácil de predecir que el de validación." if rp < inf else
-           f"Queda dentro del intervalo de validación ({inf:.2f} a {sup:.2f}), de forma que la validación anticipó bien el "
+        + (f"Queda por encima del intervalo de validación ({inf:.2f} a {sup:.2f}) así que el periodo nuevo resultó más "
+           "difícil de lo que la validación anticipaba." if rp > sup else
+           f"Queda por debajo del intervalo de validación ({inf:.2f} a {sup:.2f}) así que el periodo de prueba resultó "
+           "más fácil de predecir que el de validación." if rp < inf else
+           f"Queda dentro del intervalo de validación ({inf:.2f} a {sup:.2f}), o sea que la validación anticipó bien el "
            "error del periodo nuevo.")
-        + f"\n\nLa habilidad frente a «{c.referencia}» es {_texto_ic(ic['Habilidad'])}, contra {f['Habilidad']:.3f} en "
+        + f"\n\nLa habilidad frente a \"{c.referencia}\" es {_texto_ic(ic['Habilidad'])}, contra {f['Habilidad']:.3f} en "
           "validación"
-        + (", así que el modelo sigue mejorando a la referencia ingenua con un margen que el intervalo no alcanza a borrar."
-           if ic["Habilidad"][1] > 0 else
-           ", y el intervalo toca el cero, así que en la prueba no puede afirmarse que el modelo supere a la referencia."
+        + (". O sea que el modelo le sigue ganando a la referencia ingenua con un margen que el intervalo no alcanza a "
+           "borrar." if ic["Habilidad"][1] > 0 else
+           ". El intervalo toca el cero así que en la prueba no podemos decir que el modelo le gane a la referencia."
            if c.habilidad_prueba > 0 else
-           ", es decir, en la prueba el modelo no mejora a la referencia ingenua."),
+           ". Es decir que en la prueba el modelo no mejora a la referencia ingenua."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -218,24 +226,24 @@ def regresion_diagnostico(c):
     c.residuo_resto = rr = float(residuo[~ventana].mean())
     c.mae_prueba = mae = c.ic_reg["MAE"][0]
     if n == 0:
-        texto = ("La prueba no incluye días entre el 20 de diciembre y el 8 de enero, de forma que el efecto de las fiestas "
-                 "de fin de año no puede revisarse en ella.")
+        texto = ("La prueba no incluye días entre el 20 de diciembre y el 8 de enero así que el efecto de las fiestas de fin "
+                 "de año no se puede revisar en ella.")
     else:
         dias = fechas[ventana]
         antes_de_diciembre = fechas.max().month < 12
         texto = (
             "La ventana de fin de año (20 de diciembre a 8 de enero) cae en la prueba "
             f"{'solo ' if antes_de_diciembre else ''}entre {dias.min():%Y-%m-%d} y {dias.max():%Y-%m-%d} ({n} días hábiles)"
-            + (f", porque el periodo empieza el {config.CORTE_PRUEBA} y termina el {fechas.max():%Y-%m-%d}, antes de "
+            + (f" porque el periodo empieza el {config.CORTE_PRUEBA} y termina el {fechas.max():%Y-%m-%d}, antes de "
                "diciembre." if antes_de_diciembre else ".")
             + f" En esos días el residuo medio (observado − predicho) es {rv:+.1f} muestras, frente a {rr:+.1f} en el resto. "
-            + ("El modelo sobrestima la carga de esos días, es decir, tras las fiestas llegan menos muestras de las que "
-               "sugieren sus variables, y ninguna de ellas marca específicamente el periodo de fin de año."
+            + ("O sea que el modelo sobrestima la carga de esos días: Tras las fiestas llegan menos muestras de las que "
+               "sugieren sus variables y ninguna de ellas marca el periodo de fin de año."
                if rv < rr - 0.5 * mae else
-               "El modelo subestima la carga de esos días, es decir, tras las fiestas llegan más muestras de las que "
-               "sugieren sus variables, y ninguna de ellas marca específicamente el periodo de fin de año."
+               "O sea que el modelo subestima la carga de esos días: Tras las fiestas llegan más muestras de las que "
+               "sugieren sus variables y ninguna de ellas marca el periodo de fin de año."
                if rv > rr + 0.5 * mae else
-               "La diferencia es menor que la mitad del error absoluto medio, así que con estos días no se distingue un "
+               "La diferencia es menor que la mitad del error absoluto medio así que con estos días no se distingue un "
                "efecto propio de las fiestas.")
             + (f" Con solo {n} días la cifra es orientativa." if n < 10 else ""))
     r.agregar(nota(texto, "hallazgo", titulo="Fin de año"))
@@ -255,12 +263,12 @@ def regresion_diagnostico(c):
     ], titulo=f"Días de prueba con error mayor que {tol:.1f} muestras ({100 * fraccion:.0f} % de la media diaria de "
               "validación)", elegida=c.nombre_modelo_reg if fm <= fr else c.referencia, sello="Menos días fuera"))
     r.agregar(nota(
-        f"En la prueba llegaron en promedio {media:.1f} muestras por día hábil (en validación {op['media_validacion']:.1f}), "
-        f"y el error en un día típico es de {mae:.1f} muestras, el {100 * mae / media:.0f} % de la media. "
-        + (f"El {100 * fm:.0f} % de los días queda fuera de la tolerancia, contra el {100 * fr:.0f} % de la referencia, de "
-           "forma que el modelo reduce los días mal planificados sin eliminarlos." if fm < fr else
-           f"El {100 * fm:.0f} % de los días queda fuera de la tolerancia, sin mejorar el {100 * fr:.0f} % de la "
-           "referencia, de forma que la ganancia en RMSE no se traduce en menos días mal planificados."),
+        f"En la prueba llegaron en promedio {media:.1f} muestras por día hábil (en validación {op['media_validacion']:.1f}) "
+        f"y el error de un día típico es de {mae:.1f} muestras, el {100 * mae / media:.0f} % de la media. "
+        + (f"El {100 * fm:.0f} % de los días queda fuera de la tolerancia, contra el {100 * fr:.0f} % de la referencia. O "
+           "sea que el modelo reduce los días mal planificados pero no los elimina." if fm < fr else
+           f"El {100 * fm:.0f} % de los días queda fuera de la tolerancia sin mejorar el {100 * fr:.0f} % de la "
+           "referencia así que la ganancia en RMSE no se traduce en menos días mal planificados."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -307,7 +315,7 @@ def clasificacion(c):
     }
     lado = pd.DataFrame({"Métrica": list(ic), "Validación": [vv[m] for m in ic], "Prueba": [ic[m][0] for m in ic],
                          "Prueba inf.": [ic[m][1] for m in ic], "Prueba sup.": [ic[m][2] for m in ic]})
-    r.agregar(tabla_html(lado, f"Validación frente a prueba, clasificador congelado (umbral {um:.3f}; IC 95 % bootstrap)",
+    r.agregar(tabla_html(lado, f"Validación frente a prueba del clasificador congelado (umbral {um:.3f}, intervalos al 95 %)",
                          decimales=3, columnas_resaltadas="Prueba",
                          pie="El costo se expresa por muestra porque los dos periodos tienen tamaños distintos."))
     c.costo_nada = int(config.COSTO_FN * int(y.sum()))
@@ -324,29 +332,30 @@ def clasificacion(c):
         elegida=int(np.argmin([c.costo_nada, res["Costo"], c.costo_todo])), sello="Menor costo"))
     r.figura(graficos_clf.figura_confusion(res["TN"], res["FP"], res["FN"], res["TP"],
                                            f"Matriz de confusión en prueba (umbral {um:.3f})"), "07_confusion")
-    r.figura(graficos_clf.figura_fiabilidad({"Prueba": (y, p)}, n_tramos=10, titulo="Fiabilidad en prueba (10 tramos "
-                                            "iguales)"), "07_fiabilidad")
+    r.figura(graficos_clf.figura_fiabilidad({"Prueba": (y, p)}, n_tramos=10, titulo="Fiabilidad en la prueba (10 tramos "
+                                            "con el mismo número de muestras)"), "07_fiabilidad")
     c.auc_val, c.auc_prueba = av, ap = vv["ROC-AUC"], ic["ROC-AUC"]
     c.ahorro = ahorro = 1 - res["Costo"] / min(c.costo_nada, c.costo_todo)
     prev = float(y.mean())
     r.agregar(nota(
-        f"El ROC-AUC en prueba es {_texto_ic(ap)}, frente a {av:.3f} en validación"
-        + (", dentro del intervalo de prueba, de forma que la capacidad de ordenar se sostiene en el periodo nuevo."
-           if ap[1] <= av <= ap[2] else
-           ", fuera del intervalo de prueba y por encima, de forma que el modelo ordena peor en el periodo nuevo."
-           if av > ap[2] else
-           ", fuera del intervalo de prueba y por debajo, de forma que el modelo ordena algo mejor en el periodo nuevo.")
+        f"El ROC-AUC en la prueba es {_texto_ic(ap)}, frente a {av:.3f} en validación"
+        + (". La cifra de validación cae dentro del intervalo de la prueba así que la capacidad de ordenar se sostiene en "
+           "el periodo nuevo." if ap[1] <= av <= ap[2] else
+           ". La cifra de validación queda por encima del intervalo de la prueba así que el modelo ordena peor en el "
+           "periodo nuevo." if av > ap[2] else
+           ". La cifra de validación queda por debajo del intervalo de la prueba así que el modelo ordena algo mejor en el "
+           "periodo nuevo.")
         + f"\n\nCon el umbral congelado se levantan {asem:.1f} alertas por semana (en validación "
-          f"{u['Alertas por semana']:.1f}); acierta el {100 * res['Precisión']:.0f} % de ellas y se captura el "
+          f"{u['Alertas por semana']:.1f}). Acierta el {100 * res['Precisión']:.0f} % de ellas y alcanza el "
           f"{100 * res['Recall']:.0f} % de los no conformes. "
-        + (f"El costo, {res['Costo']:.0f}, es un {100 * ahorro:.0f} % menor que el de la mejor política sin modelo, así que "
-           "la alerta paga sus falsas alarmas." if ahorro > 0 else
-           f"El costo, {res['Costo']:.0f}, no mejora a la mejor política sin modelo, así que en la prueba la alerta no paga "
+        + (f"El costo ({res['Costo']:.0f}) es un {100 * ahorro:.0f} % menor que el de la mejor política sin modelo, o sea "
+           "que la alerta paga sus falsas alarmas." if ahorro > 0 else
+           f"El costo ({res['Costo']:.0f}) no mejora a la mejor política sin modelo así que en la prueba la alerta no paga "
            "sus falsas alarmas.")
         + f"\n\nLa probabilidad media predicha es {p.mean():.3f} y la tasa real de no conformes {prev:.3f}"
-        + (": la calibración se sostiene." if abs(p.mean() - prev) <= 0.1 * prev else
-           ", de forma que el modelo sobrestima el riesgo medio del periodo nuevo." if p.mean() > prev else
-           ", de forma que el modelo subestima el riesgo medio del periodo nuevo."),
+        + (", o sea que la calibración se sostiene." if abs(p.mean() - prev) <= 0.1 * prev else
+           " así que el modelo sobrestima el riesgo medio del periodo nuevo." if p.mean() > prev else
+           " así que el modelo subestima el riesgo medio del periodo nuevo."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -393,7 +402,7 @@ def retrospectiva(c):
          f"congelado ({c.umbral:.3f}), una diferencia del {100 * (costo - cr) / costo:.1f} %. "
          if not np.isclose(ur, c.umbral) else
          f"En la prueba el umbral de menor costo coincide con el congelado ({c.umbral:.3f}). ")
-        + "Esta cifra es retrospectiva y no se usa para ninguna decisión.",
+        + "La cifra es retrospectiva y no la usamos para ninguna decisión.",
         "advertencia", titulo="Retrospectiva, no se usa",
     ))
     latex.registrar_varias([("FinUmbralRetro", ur, "umbral retrospectivo de menor costo en la prueba (no se usa)", 3),
@@ -436,22 +445,25 @@ def bayes_prueba(c):
     ic = bayes.intervalo_wilson(int(re["falso_positivo"].sum()), len(re)) if len(re) else (np.nan, np.nan)
     c.ic_observado = ic = (float(np.asarray(ic[0])), float(np.asarray(ic[1])))
     r.agregar(nota(
-        f"Entre los {len(pos)} positivos de prueba el VPP(x) medio es **{g:.3f}**, es decir, según los controles y el "
+        f"Entre los {len(pos)} positivos de prueba el VPP(x) medio es **{g:.3f}**. Es decir que según los controles y el "
         f"clasificador uno de cada {1 / max(1 - g, 1e-9):.0f} positivos sería falso. Se reensayaron {len(re)} y salió "
-        f"conforme el {100 * obs:.1f} % (IC 95 % de Wilson: {100 * ic[0]:.1f} a {100 * ic[1]:.1f} %), frente al "
+        f"conforme el {100 * obs:.1f} % (intervalo de Wilson del {100 * ic[0]:.1f} al {100 * ic[1]:.1f} %), frente al "
         f"{100 * esp:.1f} % que predicen el VPP(x) y la sensibilidad del ensayo"
-        + (", de forma que la predicción cae dentro del intervalo observado y los controles describen bien la prueba."
+        + (". La predicción cae dentro del intervalo observado así que los controles describen bien la prueba."
            if ic[0] <= esp <= ic[1] else
-           ", de forma que el laboratorio observa más reensayos conformes de los que los controles explican, lo que apunta "
-           "a una especificidad efectiva menor que la de los controles." if obs > esp else
-           ", de forma que se observan menos reensayos conformes de los que los controles predicen."),
+           ". O sea que el laboratorio ve más reensayos conformes de los que explican los controles, lo que apunta a una "
+           "especificidad efectiva menor que la de los controles." if obs > esp else
+           ". O sea que se ven menos reensayos conformes de los que predicen los controles."),
         "hallazgo",
     ))
     latex.registrar_varias([
         ("FinPositivosPrueba", len(pos), "positivos (no conformes) en la prueba"),
         ("FinVPPxMedio", g, "VPP(x) medio de los positivos de prueba", 3),
         ("FinUnoDeCadaFalso", 1 / max(1 - g, 1e-9), "uno de cada cuántos positivos sería falso (prueba)", 0),
-        ("FinReensayados", len(re), "positivos de prueba reensayados"),
+        ("FinPositivosReensayados", len(re),
+         "positivos de la prueba de clasificación (recibidos en la prueba) que tienen reensayo"),
+        ("FinReensayosRecibidosAntes", len(c.prueba_reensayo) - len(re),
+         "reensayos leídos en la prueba de muestras recibidas antes del corte (fuera de la prueba de clasificación)"),
         ("FinReensayoConformeObservadoPct", 100 * obs, "reensayos conformes observados (%) en la prueba", 1),
         ("FinReensayoConformeObservadoInfPct", 100 * ic[0], "límite inferior de Wilson (%)", 1),
         ("FinReensayoConformeObservadoSupPct", 100 * ic[1], "límite superior de Wilson (%)", 1),
@@ -466,7 +478,7 @@ def auditoria(c):
     verdad = carga.leer_verdad()
     c.auditoria_prueba = None
     if verdad is None:
-        return r.agregar(nota("No hay verdad oculta: la auditoría no aplica y la única referencia es el reensayo.",
+        return r.agregar(nota("No hay verdad oculta: La auditoría no aplica y la única referencia es el reensayo.",
                               "simulacion"))
     auditadas = c.positivas.merge(verdad["muestras"][["id_muestra", "contaminada_real"]], on="id_muestra", how="inner")
     real = auditadas.groupby("ensayo", observed=True)["contaminada_real"].mean()
@@ -477,17 +489,19 @@ def auditoria(c):
     brier_e = metricas.brier(auditadas["contaminada_real"], auditadas["ensayo"].map(c.vpp_desarrollo).to_numpy(dtype=float))
     vista = t.rename(columns={"ensayo": "Ensayo", "positivos": "Positivos", "vpp_desarrollo": "VPP del ensayo (desarrollo)",
                               "vpp_x_medio": "VPP(x) medio", "vpp_real": "Fracción realmente contaminada"})
-    r.agregar(tabla_html(vista, "Auditoría en prueba: VPP estimado frente a la verdad de la simulación", decimales=3))
+    r.agregar(tabla_html(vista, "Auditoría en la prueba: VPP estimado frente a la verdad de la simulación", decimales=3))
     g = c.vpp_x_global
     r.agregar(nota(
-        f"En la prueba la fracción de positivos realmente contaminados es {vpp_real:.3f}, frente a un VPP(x) medio de {g:.3f}"
-        + (", de forma que la estimación con controles es optimista: la especificidad de un control estéril supera a la de "
-           "una muestra que se manipula." if g > vpp_real + 0.02 else
-           ", de forma que la estimación con controles es conservadora." if g < vpp_real - 0.02 else
+        f"En la prueba la fracción de positivos que de verdad estaban contaminados es {vpp_real:.3f}, frente a un VPP(x) "
+        f"medio de {g:.3f}"
+        + (". O sea que la estimación con controles es optimista: La especificidad de un control estéril es mayor que la "
+           "de una muestra que se manipula." if g > vpp_real + 0.02 else
+           ". O sea que la estimación con controles es conservadora." if g < vpp_real - 0.02 else
            ", prácticamente la misma cifra.")
-        + f" Como probabilidad individual, el Brier del VPP(x) es {brier_x:.4f} frente a {brier_e:.4f} del VPP por ensayo"
-        + (", así que la previa por muestra aporta." if brier_x < brier_e else
-           ", así que la previa por muestra no mejora al VPP por ensayo en la prueba."),
+        + f" Como probabilidad de cada muestra el Brier del VPP(x) es {brier_x:.4f} frente a {brier_e:.4f} del VPP por "
+          "ensayo"
+        + (" así que la previa por muestra sí aporta." if brier_x < brier_e else
+           " así que en la prueba la previa por muestra no mejora al VPP por ensayo."),
         "simulacion", titulo="Lo que dice la verdad oculta",
     ))
     c.auditoria_prueba = {"vpp_real": vpp_real, "vpp_x_medio": g, "brier_vpp_x": brier_x, "brier_vpp_ensayo": brier_e,
@@ -508,8 +522,8 @@ def regla_reensayo(c):
     c.borde, c.regla_prueba = borde, None
     pr = c.prueba_reensayo
     if borde is None or variable not in pr.columns:
-        return r.agregar(nota("La etapa 05 no fijó un borde para la regla de reensayo, de forma que no hay nada que "
-                              "comprobar.", "info"))
+        return r.agregar(nota("La etapa 05 no fijó un borde para la regla de reensayo así que no hay nada que comprobar.",
+                              "info"))
     con_razon = pr[pr[variable].notna()]
     bajo = con_razon[variable] <= borde
     tb = float(con_razon.loc[bajo, "falso_positivo"].mean()) if bajo.any() else np.nan
@@ -528,15 +542,15 @@ def regla_reensayo(c):
     r.agregar(tabla_html(tabla, f"Regla de reensayo (recuento por debajo de {10 ** borde:.2f} veces el límite)",
                          decimales=3))
     r.agregar(nota(
-        f"En la prueba hay {len(con_razon)} reensayos con recuento, {int(bajo.sum())} de ellos por debajo del borde. Ahí "
-        f"sale conforme el {100 * tb:.0f} % (IC 95 %: {100 * rp['tasa_bajo_inf']:.0f} a {100 * rp['tasa_bajo_sup']:.0f} %), "
-        f"frente al {100 * ta:.0f} % por encima"
-        + (", de forma que la regla se sostiene: un recuento apenas por encima del límite sigue siendo el caso donde el "
-           "falso positivo es lo más probable." if tb >= 0.5 and tb > ta else
-           ", de forma que la regla ordena el riesgo pero en la prueba el grupo bajo el borde ya no es mayoritariamente "
+        f"En la prueba hay {len(con_razon)} reensayos con recuento y {int(bajo.sum())} de ellos quedan por debajo del "
+        f"borde. Ahí sale conforme el {100 * tb:.0f} % (intervalo del {100 * rp['tasa_bajo_inf']:.0f} al "
+        f"{100 * rp['tasa_bajo_sup']:.0f} %), frente al {100 * ta:.0f} % por encima"
+        + (". O sea que la regla se sostiene: Un recuento apenas por encima del límite sigue siendo el caso donde el falso "
+           "positivo es lo más probable." if tb >= 0.5 and tb > ta else
+           ". O sea que la regla ordena el riesgo pero en la prueba el grupo bajo el borde ya no es en su mayoría "
            "conforme." if tb > ta else
-           ", de forma que la regla no se sostiene en la prueba.")
-        + f" El grupo concentra el {100 * cap:.0f} % de los reensayos conformes (en el desarrollo "
+           ". O sea que la regla no se sostiene en la prueba.")
+        + f" El grupo concentra el {100 * cap:.0f} % de los reensayos conformes (en el desarrollo era el "
           f"{100 * regla['captura']:.0f} %).",
         "hallazgo", titulo="Regla para el reensayo",
     ))
@@ -561,19 +575,19 @@ def agrupamiento(c):
     c.grp_sel, c.grp_comp = grp, comp
     nombres = [s["nombre"] for s in grp["segmentos"]]
     r.agregar(nota(
-        f"En «{grp['analisis']}» la etapa 06 encontró {grp['kmeans']['k']} grupos con K-means "
-        f"({', '.join(f'«{n}»' for n in nombres)}), con una silueta de {se:.3f} y un estadístico de Hopkins de "
-        f"{grp['hopkins']:.3f}; DBSCAN, con otra lógica, dejó {grp['dbscan']['grupos']} grupos y un "
-        f"{100 * grp['dbscan']['proporcion_ruido']:.0f} % de ruido, y los dos acuerdan poco (ARI "
+        f"En \"{grp['analisis']}\" la etapa 06 encontró {grp['kmeans']['k']} grupos con K-means "
+        f"({lista_nombres(nombres)}), con una silueta de {se:.3f} y un estadístico de Hopkins de "
+        f"{grp['hopkins']:.3f}. DBSCAN, que sigue otra lógica, dejó {grp['dbscan']['grupos']} grupos y un "
+        f"{100 * grp['dbscan']['proporcion_ruido']:.0f} % de ruido. Los dos coinciden poco (ARI de "
         f"{grp['ari_kmeans_dbscan']:.2f}). "
-        + (f"En «{comp['analisis']}» quedaron {comp['kmeans']['k']} segmentos de clientes con silueta "
+        + (f"En \"{comp['analisis']}\" quedaron {comp['kmeans']['k']} segmentos de clientes con silueta "
            f"{comp['kmeans']['silueta']:.3f}. " if comp else "")
-        + "Las siluetas bajas dicen que hay tendencia a agrupar pero sin fronteras nítidas, así que los grupos sirven para "
-          "describir y conversar con el laboratorio, no para decidir muestra a muestra."
-        + f"\n\nEn el cribado (etapa 03) «{grp['analisis']}» tuvo una silueta de {sc:.3f}, frente a {se:.3f} con el "
+        + "Las siluetas bajas dicen que hay tendencia a formar grupos pero sin fronteras nítidas así que los grupos sirven "
+          "para describir y conversar con el laboratorio y no para decidir muestra a muestra."
+        + f"\n\nEn el cribado (etapa 03) \"{grp['analisis']}\" tuvo una silueta de {sc:.3f}, frente a {se:.3f} con el "
           f"preprocesamiento de la etapa 06 (variables elegidas, logaritmo en {len(grp['con_log1p'])} variables asimétricas "
-          f"y escalado), una diferencia de {sc - se:+.3f}. Las dos cifras no son comparables, y la que describe los grupos "
-          "presentados es la de la etapa 06.",
+          f"y escalado), una diferencia de {sc - se:+.3f}. Las dos cifras no se pueden comparar y la que describe los "
+          "grupos que mostramos es la de la etapa 06.",
         "hallazgo",
     ))
     return r
@@ -585,89 +599,89 @@ def resumen(c):
     res, rp, grp, comp = c.res_clf, c.regla_prueba, c.grp_sel, c.grp_comp
     r.agregar(tarjetas([
         {"titulo": "Carga diaria", "valor": c.rmse_prueba, "decimales": 1, "prefijo": "RMSE ",
-         "detalle": f"habilidad {c.habilidad_prueba:.3f} frente a «{c.referencia}»"},
+         "detalle": f'habilidad {c.habilidad_prueba:.3f} frente a "{c.referencia}"'},
         {"titulo": "Riesgo en recepción", "valor": c.auc_prueba[0], "decimales": 3, "prefijo": "AUC ", "color": "naranja",
          "detalle": f"{c.alertas_semana:.1f} alertas por semana, precisión {res['Precisión']:.3f}"},
         {"titulo": "Positivos reales", "valor": 100 * c.vpp_x_global, "decimales": 0, "sufijo": " %", "color": "verde",
-         "detalle": f"VPP(x) medio; reensayo conforme {100 * c.observado_global:.0f} %"},
+         "detalle": f"VPP(x) medio, reensayo conforme {100 * c.observado_global:.0f} %"},
         {"titulo": "Regla de reensayo", "valor": 100 * rp["tasa_bajo"] if rp else np.nan, "decimales": 0, "sufijo": " %",
          "color": "morado", "detalle": "reensayos conformes bajo el borde" if rp else "sin regla"},
     ], titulo="Cifras de la prueba"))
     pocos = c.por_ensayo[c.por_ensayo["positivos"] < MINIMO_POSITIVOS].index.tolist()
-    texto_pocos = " y ".join(f"«{e}» ({int(c.por_ensayo.loc[e, 'positivos'])})" for e in pocos)
+    texto_pocos = " y ".join(f'"{e}" ({int(c.por_ensayo.loc[e, "positivos"])})' for e in pocos)
     g = c.vpp_x_global
     preguntas = pd.DataFrame([
         {"Pregunta del laboratorio": "¿Cuántas muestras llegarán mañana?",
          "Respuesta": f"{c.nombre_modelo_reg} con un error típico de {c.mae_prueba:.1f} muestras sobre una media de "
                       f"{c.media_prueba:.1f}",
-         "Evidencia": f"RMSE {c.rmse_prueba:.2f} en prueba ({c.rmse_val:.2f} en validación); habilidad "
+         "Evidencia": f"RMSE {c.rmse_prueba:.2f} en prueba ({c.rmse_val:.2f} en validación), habilidad "
                       f"{c.habilidad_prueba:.3f}",
-         "Limitación": f"el {100 * c.fuera_modelo:.0f} % de los días queda fuera de la tolerancia"},
+         "Limitación": f"El {100 * c.fuera_modelo:.0f} % de los días queda fuera de la tolerancia"},
         {"Pregunta del laboratorio": "¿Qué muestras están en riesgo?",
-         "Respuesta": f"alerta en recepción con umbral {c.umbral:.3f}, unas {c.alertas_semana:.0f} por semana",
-         "Evidencia": f"AUC {c.auc_prueba[0]:.3f}; costo {res['Costo']:.0f} frente a "
+         "Respuesta": f"Alerta en recepción con umbral {c.umbral:.3f}, unas {c.alertas_semana:.0f} por semana",
+         "Evidencia": f"AUC {c.auc_prueba[0]:.3f}, costo {res['Costo']:.0f} frente a "
                       f"{min(c.costo_nada, c.costo_todo):.0f} sin modelo",
-         "Limitación": f"solo el {100 * res['Precisión']:.0f} % de las alertas acierta"},
+         "Limitación": f"Solo acierta el {100 * res['Precisión']:.0f} % de las alertas"},
         {"Pregunta del laboratorio": "¿Qué tan probable es un falso positivo?",
-         "Respuesta": f"uno de cada {1 / max(1 - g, 1e-9):.0f} positivos, según controles y clasificador"
-                      + (f"; reensayar si el recuento es menor que {10 ** c.borde:.2f} veces el límite" if rp else ""),
+         "Respuesta": f"Uno de cada {1 / max(1 - g, 1e-9):.0f} positivos según controles y clasificador"
+                      + (f". Reensayar si el recuento es menor que {10 ** c.borde:.2f} veces el límite" if rp else ""),
          "Evidencia": f"reensayo conforme {100 * c.observado_global:.1f} % observado frente a "
                       f"{100 * c.esperado_global:.1f} % esperado",
-         "Limitación": "el reensayo no es una verdad: también falla"},
+         "Limitación": "El reensayo no es la verdad: También falla"},
         {"Pregunta del laboratorio": "¿Qué grupos existen?",
          "Respuesta": f"{grp['kmeans']['k']} perfiles de muestra" + (f" y {comp['kmeans']['k']} segmentos de clientes"
                                                                       if comp else ""),
          "Evidencia": f"silueta {c.silueta_etapa:.3f}, Hopkins {grp['hopkins']:.3f}",
-         "Limitación": "fronteras difusas; uso descriptivo"},
+         "Limitación": "Fronteras difusas, uso descriptivo"},
     ])
     r.agregar(tabla_html(preguntas, "Pregunta del laboratorio, respuesta, evidencia y limitación"))
     recomendaciones = [
         ("Planear la dotación del día siguiente con la predicción",
-         f"sumando un margen de unas {c.mae_prueba:.0f} muestras, el error típico medido en la prueba"
+         f"Sumando un margen de unas {c.mae_prueba:.0f} muestras, que es el error típico que medimos en la prueba."
          if c.ic_reg["Habilidad"][1] > 0 else
-         f"solo como apoyo, porque en la prueba no supera con claridad a «{c.referencia}»"),
+         f'Solo como apoyo porque en la prueba no le gana con claridad a "{c.referencia}".'),
         ("Marcar en recepción las muestras sobre el umbral",
-         f"para leerlas antes o asignarles segundo analista; son unas {c.alertas_semana:.0f} por semana y acierta el "
-         f"{100 * res['Precisión']:.0f} %" if c.ahorro > 0 else
-         "no se recomienda todavía: en la prueba la alerta no supera a la mejor política sin modelo"),
-        ("Ordenar los positivos por su VPP(x)", "para decidir cuáles revisar primero, nunca para descartar un positivo sin "
-                                                "reensayo"),
+         f"Para leerlas antes o asignarles un segundo analista. Son unas {c.alertas_semana:.0f} por semana y acierta el "
+         f"{100 * res['Precisión']:.0f} %." if c.ahorro > 0 else
+         "Todavía no lo recomendaríamos: En la prueba la alerta no le gana a la mejor política sin modelo."),
+        ("Ordenar los positivos por su VPP(x)", "Para decidir cuáles revisar primero, nunca para descartar un positivo sin "
+                                                "reensayo."),
     ]
     if rp and rp["tasa_bajo"] > rp["tasa_alto"]:
         recomendaciones.append(("Reensayar antes de informar los recuentos apenas sobre el límite",
-                                f"por debajo de {10 ** c.borde:.2f} veces el límite, donde en la prueba salió conforme el "
-                                f"{100 * rp['tasa_bajo']:.0f} % de los reensayos"))
+                                f"Por debajo de {10 ** c.borde:.2f} veces el límite, donde en la prueba salió conforme el "
+                                f"{100 * rp['tasa_bajo']:.0f} % de los reensayos."))
     recomendaciones.append(("Usar los perfiles y segmentos para conversar con el laboratorio",
-                            "como descripción de la operación, no como regla de decisión"))
+                            "Como descripción de la operación y no como regla de decisión."))
     r.agregar(pasos(recomendaciones, titulo="Recomendaciones"))
     limitaciones = [
-        "Los datos son simulados: el procedimiento funciona de punta a punta, pero las cifras del laboratorio dependerán "
-        "de su exportación, que se procesará con el mismo código.",
-        f"Brechas medidas entre validación y prueba: RMSE {c.rmse_val:.2f} → {c.rmse_prueba:.2f} y ROC-AUC "
-        f"{c.auc_val:.3f} → {c.auc_prueba[0]:.3f}.",
-        (f"Pocos positivos de prueba en {texto_pocos}, de forma que su VPP y su tasa de reensayos conformes son poco "
+        "Los datos son simulados: El procedimiento funciona de punta a punta pero las cifras del laboratorio van a "
+        "depender de su exportación, que se procesaría con el mismo código.",
+        f"Entre validación y prueba el RMSE pasó de {c.rmse_val:.2f} a {c.rmse_prueba:.2f} y el ROC-AUC de "
+        f"{c.auc_val:.3f} a {c.auc_prueba[0]:.3f}.",
+        (f"Hay pocos positivos de prueba en {texto_pocos} así que su VPP y su tasa de reensayos conformes son poco "
          "precisos." if pocos else f"Todos los ensayos tienen al menos {MINIMO_POSITIVOS} positivos de prueba."),
-        f"Siluetas bajas en el agrupamiento ({c.silueta_etapa:.3f} en perfiles de muestra), y la del cribado "
-        f"({c.silueta_cribado:.3f}) no es comparable con la de la etapa 06.",
-        "Los intervalos bootstrap remuestrean filas como si fueran independientes; en la serie diaria hay autocorrelación, "
-        "de forma que los intervalos de la regresión probablemente son más estrechos de lo que deberían.",
+        f"Las siluetas del agrupamiento son bajas ({c.silueta_etapa:.3f} en los perfiles de muestra) y la del cribado "
+        f"({c.silueta_cribado:.3f}) no se puede comparar con la de la etapa 06.",
+        "Los intervalos bootstrap remuestrean filas como si fueran independientes. En la serie diaria los días seguidos se "
+        "parecen así que los intervalos de la regresión probablemente son más estrechos de lo que deberían.",
     ]
     r.agregar(nota("\n\n".join(f"**{i}.** {t}" for i, t in enumerate(limitaciones, start=1)), "limite",
                    titulo="Limitaciones"))
     r.agregar(pasos([
-        ("Copiar la exportación real", "en `datos/reales/` y completar `configuracion/mapeo_columnas.json` con los nombres "
-                                       "de columnas y valores del laboratorio"),
-        ("Reconstruir", "con `PROYECTO_ORIGEN=real make notebooks`, que vuelve a ejecutar las siete etapas"),
-        ("Revisar primero la etapa 01", "la tabla de cobertura dice qué columnas opcionales faltan y qué análisis quedan "
-                                        "fuera"),
-        ("Revisar las fechas de corte", "`CORTE_VALIDACION` y `CORTE_PRUEBA` en `proyecto/base/config.py` deben caer "
-                                        "dentro del periodo exportado"),
-        ("Revisar los controles", "sin controles de calidad no hay sensibilidad ni especificidad y la parte de Bayes no "
-                                  "aplica"),
+        ("Copiar la exportación real", "En `datos/reales/` y completar `configuracion/mapeo_columnas.json` con los "
+                                       "nombres de columnas y los valores del laboratorio."),
+        ("Reconstruir", "Con `PROYECTO_ORIGEN=real make notebooks`, que vuelve a ejecutar las siete etapas."),
+        ("Revisar primero la etapa 01", "La tabla de cobertura dice qué columnas opcionales faltan y qué análisis quedan "
+                                        "por fuera."),
+        ("Revisar las fechas de corte", "`CORTE_VALIDACION` y `CORTE_PRUEBA` en `proyecto/base/config.py` tienen que caer "
+                                        "dentro del periodo exportado."),
+        ("Revisar los controles", "Sin controles de calidad no hay sensibilidad ni especificidad y la parte de Bayes no "
+                                  "aplica."),
     ], titulo="Siguientes pasos con la exportación real"))
     if config.ORIGEN_DATOS == "simulacion":
-        r.agregar(nota("Todas las cifras de este proyecto provienen de una base **simulada** con la estructura de la del "
-                       "laboratorio; ninguna describe todavía su operación real.", "simulacion"))
+        r.agregar(nota("Todas las cifras de este proyecto salen de una base **simulada** con la estructura de la del "
+                       "laboratorio. Ninguna describe todavía su operación real.", "simulacion"))
     latex.registrar_varias([
         ("FinAgrK", int(grp["kmeans"]["k"]), "perfiles de muestra de K-means"),
         ("FinAgrSilueta", c.silueta_etapa, "silueta de los perfiles de muestra (etapa 06)", 3),
@@ -678,7 +692,9 @@ def resumen(c):
     ])
     if comp:
         latex.registrar("FinAgrSegmentos", int(comp["kmeans"]["k"]), "segmentos de clientes de K-means")
-    latex.exportar_tabla(preguntas, "final_preguntas", "Pregunta del laboratorio, respuesta, evidencia y limitación")
+    parrafo = r">{\raggedright\arraybackslash}p{%s}"
+    latex.exportar_tabla(preguntas, "final_preguntas", "Pregunta del laboratorio, respuesta, evidencia y limitación",
+                         alineacion=dict(zip(preguntas.columns, [parrafo % a for a in ("2.8cm", "4.5cm", "3.8cm", "3.2cm")])))
     resumen_final = pd.DataFrame([
         {"Análisis": "Regresión (carga diaria)", "Métrica": "RMSE", "Validación": c.rmse_val, "Prueba": c.rmse_prueba},
         {"Análisis": "Regresión (carga diaria)", "Métrica": "Habilidad", "Validación": c.fila_val_reg["Habilidad"],

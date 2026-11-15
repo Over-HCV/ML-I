@@ -9,91 +9,84 @@
 
 \subsection{Respuestas a las preguntas del laboratorio}
 
-\begin{itemize}
-    \item \textbf{Carga diaria:} una regresión lineal con calendario, puntos de
-          muestreo programados y medias móviles predice la carga del día con
-          un error absoluto medio de \FinMAEPrueba{} muestras sobre una media
-          de \FinMediaPrueba{}, y una habilidad de \FinHabilidadPrueba{} frente
-          a la media de los cinco días anteriores; aun así, el
-          \FinDiasFueraPct{}\,\% de los días queda fuera de la tolerancia
-          práctica.
-    \item \textbf{Riesgo de no conformidad:} una regresión logística calibrada,
-          con el umbral \FinUmbral{} que dicta la razón de costos, ordena las
-          muestras con un ROC-AUC de \FinAUCPrueba{} y emite unas
-          \FinAlertasSemana{} alertas por semana, de las cuales acierta una
-          fracción de \FinPrecisionPrueba{} y que detectan una fracción de
-          \FinRecallPrueba{} de las no conformes, con un ahorro del
-          \FinAhorroPct{}\,\% frente a no alertar.
-    \item \textbf{Falso positivo:} según los controles y el clasificador, uno de
-          cada \FinUnoDeCadaFalso{} positivos sería falso, cifra que la
-          fracción de reensayos conformes de prueba confirma
-          (\FinReensayoConformeObservadoPct{}\,\% observada frente a
-          \FinReensayoConformeEsperadoPct{}\,\% esperada), y los reensayos
-          conformes se concentran en los recuentos que superan el límite en
-          menos de \ClfReglaVecesLimite{} veces.
-    \item \textbf{Grupos:} existen \FinAgrK{} perfiles de muestra y
-          \FinAgrSegmentos{} segmentos de clientes, estables entre semillas
-          pero con fronteras difusas (silueta de \FinAgrSilueta{}), útiles
-          para describir, no para decidir de forma automática.
-\end{itemize}
+En la Tabla~\ref{tab:preguntas} está la respuesta a cada pregunta del
+laboratorio con la evidencia de la prueba y su limitación principal. La
+predicción de la carga diaria acierta lo suficiente para apoyar la
+planeación de turnos (error absoluto medio de \FinMAEPrueba{} muestras y
+habilidad de \FinHabilidadPrueba{} frente a la media de los cinco días
+anteriores), aunque el \FinDiasFueraPct{}\,\% de los días queda fuera de la
+tolerancia práctica. La alerta en recepción ahorra el \FinAhorroPct{}\,\% del
+costo frente a la mejor política sin modelo pero solo detecta una fracción de
+\FinRecallPrueba{} de las no conformes así que serviría para priorizar la
+revisión y no para reemplazarla. La capa bayesiana anticipa bien la fracción
+de reensayos conformes, que se concentran en los recuentos que superan el
+límite en menos de \ClfReglaVecesLimite{} veces. Por último los grupos tienen
+fronteras difusas y sirven para describir pero no para decidir de forma
+automática.
+
+\begin{table}[!htbp]
+\centering
+\small
+\tablagen{final_preguntas}
+\caption{Preguntas del laboratorio con la respuesta del proyecto, la
+evidencia en la prueba y la limitación principal.}
+\label{tab:preguntas}
+\end{table}
 
 \subsection{Recomendaciones}
 
-Las recomendaciones son deliberadamente modestas, porque las cifras vienen de
-datos simulados y lo primero es comprobarlas con los reales:
+Son modestas a propósito porque las cifras vienen de datos simulados y lo
+primero sería comprobarlas con los reales:
 
-\begin{itemize}
-    \item \textbf{Planeación de turnos:} usar la predicción diaria como apoyo
-          para asignar personal de recepción y siembra, con una revisión manual
-          en las primeras semanas del año, donde el modelo sobreestima.
-    \item \textbf{Piloto de alertas en recepción:} marcar las muestras que
-          superan el umbral durante algunas semanas, sin cambiar el flujo,
-          y medir con los datos reales la precisión, el recall y la carga de
-          alertas por semana antes de adoptarlas.
-    \item \textbf{Regla de reensayo:} priorizar el reensayo de los no conformes
-          cuyo recuento quede por debajo de \ClfReglaVecesLimite{} veces el
-          límite, que es donde se concentran los reensayos conformes.
-    \item \textbf{Seguimiento de clientes:} revisar con el área comercial y de
-          calidad el segmento con más no conformidad y más entregas tardías.
-\end{itemize}
+\begin{enumerate}[label=\alph*.]
+    \item \textbf{Planeación de turnos.} Usaríamos la predicción diaria como
+          apoyo para asignar el personal de recepción y siembra, con una
+          revisión manual en las primeras semanas del año, que es donde el
+          modelo sobreestima.
+    \item \textbf{Piloto de alertas en recepción.} Durante algunas semanas
+          marcaríamos las muestras que superan el umbral sin cambiar el flujo
+          y mediríamos la precisión, el recall y las alertas por semana.
+    \item \textbf{Regla de reensayo.} Le daríamos prioridad al reensayo de
+          los no conformes con recuento por debajo de \ClfReglaVecesLimite{}
+          veces el límite.
+    \item \textbf{Seguimiento de clientes.} Revisaríamos con las áreas
+          comercial y de calidad el segmento con más no conformidad y más
+          entregas tardías.
+\end{enumerate}
 
 \subsection{Limitaciones}
 
-\begin{itemize}
-    \item \textbf{Datos simulados:} las métricas muestran que el procedimiento
-          funciona de punta a punta y que no hay fugas, pero no miden la
-          operación real; el generador fija relaciones que los modelos luego
-          encuentran, así que con datos reales las habilidades pueden ser más
-          modestas, y las razones de odds o los perfiles no deben leerse como
-          hallazgos sobre el laboratorio.
-    \item \textbf{Pocos casos en algunos ensayos:} \textit{Salmonella} y
-          esterilidad tienen pocos positivos, de forma que su VPP y su
-          fracción de reensayos conformes tienen intervalos anchos y, en
-          prueba, no se interpretan.
-    \item \textbf{Reensayo como referencia:} un reensayo conforme no equivale a
-          un falso positivo, porque el reensayo también falla; con datos
-          reales no existe otra verdad contra la cual comparar.
-    \item \textbf{Siluetas bajas:} los grupos tienen fronteras difusas y la
-          silueta del cribado no era comparable con la del estudio a fondo,
-          por un cambio de preprocesamiento que el cribado debió compartir.
-    \item \textbf{Intervalos bootstrap:} remuestrean filas como si fueran
-          independientes, lo que en la serie diaria ignora la autocorrelación
-          y hace que los intervalos de la regresión sean probablemente
-          demasiado estrechos.
-    \item \textbf{Un solo corte de prueba:} la prueba cubre un único periodo
-          (\FinPruebaDesde{} a \FinPruebaHasta{}), así que las diferencias
+\begin{enumerate}[label=\alph*.]
+    \item \textbf{Datos simulados.} Las métricas muestran que el
+          procedimiento funciona de punta a punta y sin fugas, pero no miden
+          la operación real. Como el generador fija las relaciones que luego
+          encuentran los modelos, con datos reales las habilidades podrían ser
+          menores y las razones de odds o los perfiles no son hallazgos sobre
+          el laboratorio.
+    \item \textbf{Pocos casos en algunos ensayos.} \textit{Salmonella} y
+          esterilidad tienen pocos positivos y por eso sus intervalos son
+          anchos y en la prueba no los interpretamos.
+    \item \textbf{El reensayo como referencia.} Un reensayo conforme no
+          equivale a un falso positivo porque el reensayo también falla. Con
+          datos reales no hay otra verdad contra la cual comparar.
+    \item \textbf{Siluetas bajas.} Los grupos tienen fronteras difusas y la
+          silueta del cribado no era comparable con la del estudio a fondo.
+    \item \textbf{Intervalos bootstrap.} Remuestrean los días como si fueran
+          independientes aunque un día se parece al anterior así que los de
+          la regresión probablemente son demasiado estrechos.
+    \item \textbf{Un solo corte de prueba.} La prueba cubre un único periodo
+          (\FinPruebaDesde{} a \FinPruebaHasta{}) así que las diferencias
           entre validación y prueba mezclan el desempeño del modelo con los
           cambios de nivel de la serie.
-\end{itemize}
+\end{enumerate}
 
 \subsection{Trabajo futuro con la exportación real}
 
-El siguiente paso es conectar la exportación real, que solo requiere copiar
-los archivos, completar el mapeo de columnas y reconstruir los notebooks,
-revisar primero la tabla de cobertura y la auditoría de limpieza, y ajustar
-las fechas de corte para que caigan dentro del periodo exportado. Después,
-conviene repetir el cribado con el mismo preprocesamiento del estudio a
-fondo, usar intervalos por bloques (bootstrap de bloques móviles) en la serie
-diaria y, si el piloto de alertas confirma su utilidad, recalibrar el modelo
-periódicamente, ya que la tasa de no conformidad cambia con la mezcla de
-clientes.
+El siguiente paso sería conectar la exportación real
+(Sección~\ref{sec:simulacion}), revisar la tabla de cobertura y la auditoría
+de limpieza y mover las fechas de corte al periodo exportado. Después
+repetiríamos el cribado con el mismo preprocesamiento del estudio a fondo,
+usaríamos en la serie diaria un bootstrap de bloques móviles (que remuestrea
+tramos seguidos de días) y, si el piloto de alertas sirve, recalibraríamos el
+modelo cada cierto tiempo porque la tasa de no conformidad cambia con la
+mezcla de clientes.

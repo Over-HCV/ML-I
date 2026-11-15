@@ -46,6 +46,7 @@ def escapar(texto):
     texto = texto.replace("\\", "\0")
     for original, nuevo in _REEMPLAZOS[1:]:
         texto = texto.replace(original, nuevo)
+    texto = re.sub(r'"([^"]*)"', r"``\1''", texto)   # comillas normales emparejadas → comillas de LaTeX
     return texto.replace("\0", _REEMPLAZOS[0][1])
 
 
@@ -104,18 +105,31 @@ def _celda(valor, decimales):
 
 def exportar_tabla(tabla, nombre, descripcion, decimales=4, indice=False, alineacion=None):
     """Escribe `informe/generado/tabla_<nombre>.tex` con un `tabular` de booktabs.
-    `decimales` es un entero o un diccionario `{columna: decimales}` (por defecto 4).
-    Devuelve la ruta del archivo."""
+    `decimales` es un entero o un diccionario `{columna: decimales}` (por defecto 4); una
+    columna de decimales cuyos valores son todos enteros (conteos que pandas guardó como
+    float) se escribe sin decimales, salvo que el diccionario diga otra cosa.
+    `alineacion` es la especificación completa de columnas (p. ej. `"lp{4cm}r"`) o un
+    diccionario `{columna: especificación}` que reemplaza solo esas columnas (p. ej.
+    `{"Respuesta": r">{\raggedright\arraybackslash}p{4cm}"}`); por defecto, `r` en las
+    numéricas y `l` en las demás. Devuelve la ruta del archivo."""
     if not re.fullmatch(r"[a-z0-9_]+", nombre):
         raise ValueError(f"Nombre de tabla inválido: {nombre!r} (minúsculas, cifras y «_»)")
     df = tabla.reset_index() if indice else tabla.copy()
-    por_columna = decimales if isinstance(decimales, dict) else {}
+    por_columna = dict(decimales) if isinstance(decimales, dict) else {}
     defecto = 4 if isinstance(decimales, dict) else decimales
 
     def es_numerica(columna):
         return pd.api.types.is_numeric_dtype(df[columna]) and not pd.api.types.is_bool_dtype(df[columna])
 
-    alineacion = alineacion or "".join("r" if es_numerica(c) else "l" for c in df.columns)
+    for columna in df.columns:
+        if columna not in por_columna and pd.api.types.is_float_dtype(df[columna]):
+            valores = df[columna].dropna().to_numpy(dtype=float)
+            if len(valores) and np.all(np.isfinite(valores)) and np.all(valores == np.round(valores)):
+                por_columna[columna] = 0
+
+    if not isinstance(alineacion, str):
+        propias = alineacion or {}
+        alineacion = "".join(propias.get(c, "r" if es_numerica(c) else "l") for c in df.columns)
     encabezado = " & ".join(escapar(c) for c in df.columns) + r" \\"
     filas = [" & ".join(_celda(v, por_columna.get(c, defecto)) for c, v in zip(df.columns, fila)) + r" \\"
              for fila in df.itertuples(index=False)]

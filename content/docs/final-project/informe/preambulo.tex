@@ -9,7 +9,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
-% es-tabla: los cuadros se titulan «Tabla»; es-nodecimaldot: punto decimal
+% es-tabla: los cuadros se titulan "Tabla"; es-nodecimaldot: punto decimal
 % en matemáticas (convención de todo el documento: punto decimal, sin
 % separador de miles, igual que en las macros generadas).
 \usepackage[spanish,es-noshorthands,es-tabla,es-nodecimaldot]{babel}
@@ -30,6 +30,7 @@
 
 % --- Tablas y figuras ---------------------------------------------------
 \usepackage{graphicx}
+\usepackage{adjustbox}
 \graphicspath{{../figuras/}}
 \usepackage{booktabs}
 \usepackage{array}
@@ -58,7 +59,7 @@
     citecolor  = urosariored!75!black,
     urlcolor   = urosariored!75!black,
     pdftitle   = {Analítica predictiva sobre la base de muestras de un laboratorio de microbiología},
-    pdfauthor  = {Tania Fernanda Mora Cubillos, Daniel Arias Mutis, Over Haider Castrillón Valencia},
+    pdfauthor  = {Tania Fernanda Mora Cubillos, Over Haider Castrillón Valencia y Daniel Arias Mutis},
 }
 
 % --- Espaciado de tablas y párrafos ---------------------------------------
@@ -86,10 +87,17 @@
 \fancyfoot[R]{\includegraphics[height=0.42cm]{figuras/logo_urosario_icono.png}}
 
 % --- Atajos de redacción ----------------------------------------------------
-\newcommand{\codigo}[1]{\texttt{#1}}
-% Tabla generada: \tablagen{nombre}{ancho relativo (o vacío)}
+% Identificadores en monoespaciada que pueden cortarse después de cada "_"
+% (los nombres de columna largos no caben en la línea y no se separan en sílabas).
+\newcommand{\guionbajocortable}{\textunderscore\allowbreak}
+\newcommand{\codigo}[1]{{\let\_\guionbajocortable\texttt{#1}}}
+% Tabla generada: \tablagen{nombre}; \tablaancha la escala al ancho del texto;
+% \tablacompacta la pone en letra pequeña con columnas más juntas y solo la
+% reduce si aún no cabe, para que la letra no baje de unos 8 pt.
 \newcommand{\tablagen}[1]{\input{generado/tabla_#1}}
 \newcommand{\tablaancha}[1]{\resizebox{\textwidth}{!}{\input{generado/tabla_#1}}}
+\newcommand{\tablacompacta}[1]{{\footnotesize\setlength{\tabcolsep}{3pt}%
+  \adjustbox{max width=\textwidth}{\input{generado/tabla_#1}}}}
 
 % --- Cifras generadas por los notebooks -------------------------------------
 % generado/resultados.tex define una macro \NombreDeCifra por cada número

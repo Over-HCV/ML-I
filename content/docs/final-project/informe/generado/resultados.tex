@@ -28,7 +28,8 @@
 \newcommand{\DatRecuentosNoNumericosPct}{75.9}
 \newcommand{\DatSemilla}{42}
 \newcommand{\DatTablasContrato}{4}
-\newcommand{\DatValoresImposibles}{366}
+\newcommand{\DatValoresImposiblesCrudos}{366}
+\newcommand{\DatValoresImposiblesEnDuplicadas}{1}
 \newcommand{\DatVisitas}{1812}
 
 % --- 02_exploracion ---
@@ -72,7 +73,7 @@
 \newcommand{\ExpPeorFaltanteColumna}{actividad\_agua}
 \newcommand{\ExpPeorFaltantePct}{9.8}
 \newcommand{\ExpPrimerAnio}{2023}
-\newcommand{\ExpProblemaMayor}{recuento censurado («<N» o «>N»)}
+\newcommand{\ExpProblemaMayor}{recuento censurado (``<N'' o ``>N'')}
 \newcommand{\ExpProblemaMayorFilas}{18816}
 \newcommand{\ExpReglasConHallazgos}{18}
 \newcommand{\ExpRhoObjetivo}{0.07}
@@ -126,7 +127,7 @@
 \newcommand{\CriMinimoPositivos}{100}
 \newcommand{\CriNoDisponibles}{0}
 \newcommand{\CriProfundidadArbol}{4}
-\newcommand{\CriSegundosPrueba}{15.1}
+\newcommand{\CriSegundosPrueba}{10.5}
 \newcommand{\CriSeleccionAgr}{perfiles\_muestra}
 \newcommand{\CriSeleccionAgrPuntaje}{0.144}
 \newcommand{\CriSeleccionAgrSilueta}{0.433}
@@ -229,8 +230,8 @@
 \newcommand{\RegSNMejorCorrida}{$-$22.63}
 \newcommand{\RegSNObservada}{$-$22.78}
 \newcommand{\RegSNPredicha}{$-$22.76}
-\newcommand{\RegSegundosCompleto}{11.3}
-\newcommand{\RegSegundosLSixteen}{1.5}
+\newcommand{\RegSegundosCompleto}{7.8}
+\newcommand{\RegSegundosLSixteen}{1.0}
 \newcommand{\RegToleranciaEmpatePct}{1}
 \newcommand{\RegToleranciaOperativa}{10.8}
 \newcommand{\RegToleranciaOperativaPct}{20}
@@ -305,10 +306,28 @@
 \newcommand{\ClfHojasSinPoda}{546}
 \newcommand{\ClfInteraccionesLibres}{9}
 \newcommand{\ClfKSeleccion}{26}
+\newcommand{\ClfLogisticaParametros}{136}
+\newcommand{\ClfMLPActivacion}{relu}
+\newcommand{\ClfMLPAlfa}{0.0010}
+\newcommand{\ClfMLPCapasOcultas}{1}
+\newcommand{\ClfMLPEntradas}{135}
+\newcommand{\ClfMLPEpocas}{32}
+\newcommand{\ClfMLPExactitudMejor}{0.921}
+\newcommand{\ClfMLPFraccionValidacionPct}{15}
+\newcommand{\ClfMLPMejorEpoca}{23}
+\newcommand{\ClfMLPOcultas}{32}
+\newcommand{\ClfMLPOptimizador}{adam}
+\newcommand{\ClfMLPPaciencia}{8}
+\newcommand{\ClfMLPParametros}{4385}
+\newcommand{\ClfMLPPerdidaFinal}{0.222}
+\newcommand{\ClfMLPTopeEpocas}{150}
+\newcommand{\ClfMLPVecesParametros}{32}
 \newcommand{\ClfMejorCorrida}{8}
 \newcommand{\ClfMejorDidactico}{Regresión logística}
 \newcommand{\ClfModeloFinal}{Regresión logística}
+\newcommand{\ClfModeloMejorNivel}{regresión logística}
 \newcommand{\ClfModeloOtro}{Árbol de decisión}
+\newcommand{\ClfModeloPeorNivel}{perceptrón multicapa}
 \newcommand{\ClfMomento}{recepcion}
 \newcommand{\ClfMuestrasEntrenamiento}{22463}
 \newcommand{\ClfMuestrasValidacion}{6549}
@@ -348,10 +367,12 @@
 \newcommand{\ClfRejillaLogisticaAUC}{0.699}
 \newcommand{\ClfRevisadasPorDetectado}{2.6}
 \newcommand{\ClfSNMejorCorrida}{$-$3.17}
+\newcommand{\ClfSNModeloMejor}{$-$3.272}
+\newcommand{\ClfSNModeloPeor}{$-$4.302}
 \newcommand{\ClfSNObservada}{$-$3.117}
 \newcommand{\ClfSNPredicha}{$-$2.798}
-\newcommand{\ClfSegundosCompletoEstimados}{303}
-\newcommand{\ClfSegundosLSixteen}{37.8}
+\newcommand{\ClfSegundosCompletoEstimados}{209}
+\newcommand{\ClfSegundosLSixteen}{26.1}
 \newcommand{\ClfSemanasValidacion}{27}
 \newcommand{\ClfSensMax}{0.966}
 \newcommand{\ClfSensMin}{0.897}
@@ -366,6 +387,7 @@
 \newcommand{\ClfSorteos}{4000}
 \newcommand{\ClfTN}{5353}
 \newcommand{\ClfTP}{232}
+\newcommand{\ClfTasaMayoritaria}{0.915}
 \newcommand{\ClfTasaTramos}{0.089}
 \newcommand{\ClfToleranciaSN}{0.683}
 \newcommand{\ClfUmbral}{0.167}
@@ -412,11 +434,11 @@
 \newcommand{\AgrCompEstabilidadMax}{0.948}
 \newcommand{\AgrCompEstabilidadMin}{0.934}
 \newcommand{\AgrCompFilas}{186}
-\newcommand{\AgrCompGrupos}{Más no conformidad $\cdot$ más entregas tardías, Más muestreo en planta $\cdot$ más tamaño de lote, Menos volumen mensual $\cdot$ menos muestreo en planta}
+\newcommand{\AgrCompGrupos}{Más no conformidad y más entregas tardías, Más muestreo en planta y más tamaño de lote, Menos volumen mensual y menos muestreo en planta}
 \newcommand{\AgrCompHopkins}{0.710}
 \newcommand{\AgrCompK}{3}
 \newcommand{\AgrCompPCAVarianzaPct}{40.2}
-\newcommand{\AgrCompSegmentoMayor}{Más muestreo en planta $\cdot$ más tamaño de lote}
+\newcommand{\AgrCompSegmentoMayor}{Más muestreo en planta y más tamaño de lote}
 \newcommand{\AgrCompSegmentoMayorClientesPct}{39.2}
 \newcommand{\AgrCompSegmentoMayorMuestrasPct}{73.6}
 \newcommand{\AgrCompSilueta}{0.186}
@@ -450,7 +472,7 @@
 \newcommand{\AgrSelEstabilidadMax}{0.996}
 \newcommand{\AgrSelEstabilidadMin}{0.981}
 \newcommand{\AgrSelFilas}{5000}
-\newcommand{\AgrSelGrupos}{Recepción tardía $\cdot$ transporte más frío, Transporte largo, Recepción temprana, Plazo prometido largo $\cdot$ entrega lenta}
+\newcommand{\AgrSelGrupos}{Recepción tardía y transporte más frío, Transporte largo, Recepción temprana, Plazo prometido largo y entrega lenta}
 \newcommand{\AgrSelHopkins}{0.714}
 \newcommand{\AgrSelK}{4}
 \newcommand{\AgrSelPCAVarianzaPct}{38.1}
@@ -503,6 +525,7 @@
 \newcommand{\FinMinimoPositivos}{30}
 \newcommand{\FinMuestrasPrueba}{8657}
 \newcommand{\FinPositivosPrueba}{775}
+\newcommand{\FinPositivosReensayados}{691}
 \newcommand{\FinPrecisionMediaPrueba}{0.243}
 \newcommand{\FinPrecisionPrueba}{0.270}
 \newcommand{\FinPrecisionPruebaInf}{0.242}
@@ -518,12 +541,12 @@
 \newcommand{\FinRecallPrueba}{0.325}
 \newcommand{\FinRecallPruebaInf}{0.293}
 \newcommand{\FinRecallPruebaSup}{0.357}
-\newcommand{\FinReensayados}{691}
 \newcommand{\FinReensayoConformeEsperadoPct}{24.1}
 \newcommand{\FinReensayoConformeObservadoInfPct}{20.3}
 \newcommand{\FinReensayoConformeObservadoPct}{23.3}
 \newcommand{\FinReensayoConformeObservadoSupPct}{26.6}
-\newcommand{\FinReensayosPrueba}{698}
+\newcommand{\FinReensayosLecturaPrueba}{698}
+\newcommand{\FinReensayosRecibidosAntes}{7}
 \newcommand{\FinRegModelo}{Regresión lineal}
 \newcommand{\FinRegReferencia}{base\_media\_5}
 \newcommand{\FinReglaBajoBorde}{93}

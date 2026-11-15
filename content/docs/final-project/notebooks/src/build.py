@@ -79,7 +79,7 @@ from proyecto.base.config import ETAPAS, TITULOS_ETAPAS  # noqa: E402
 ORDEN_CAPAS = ["base", "datos", "preparacion", "variables", "modelos",
                "evaluacion", "cribado", "reporte", "etapas"]
 NUCLEO = {"name": "python3", "display_name": "Python 3", "language": "python"}
-TITULO_PROYECTO = "Proyecto final · Aprendizaje Automático de Máquina I"
+TITULO_PROYECTO = "Aprendizaje Automático de Máquina I, proyecto final"
 
 
 # ----------------------------------------------------------------------
@@ -201,39 +201,52 @@ def artefactos_de_presentacion():
     """Artefactos pequeños que lee la presentación: el JSON de cada etapa, su registro de cifras, los arreglos
     que preparó `presentacion.preparar_datos` y el modelo de regresión congelado (unos pocos kB)."""
     extra = [DIR_ARTEFACTOS / n for n in ARTEFACTOS_EXTRA if (DIR_ARTEFACTOS / n).exists()]
-    # Videos de Manim (si existen): sin ellos, al volver a ejecutar en Colab las celdas de video
-    # mostrarían solo el aviso, y la exposición se hace con el núcleo en marcha.
-    videos = sorted((RAIZ / "figuras" / "manim").glob("*.mp4")) + sorted((RAIZ / "figuras" / "manim").glob("*.png"))
-    return sorted(DIR_ARTEFACTOS.glob("0*.json")) + sorted(DIR_ARTEFACTOS.glob("macros_*.json")) + extra + videos
+    return sorted(DIR_ARTEFACTOS.glob("0*.json")) + sorted(DIR_ARTEFACTOS.glob("macros_*.json")) + extra + videos_manim()
 
 
-def celdas_de_arranque(etapas_previas=(), presentacion=False):
+def videos_manim():
+    """Videos de Manim ya renderizados y sus portadas (si existen). Sin ellos, al volver a ejecutar en Colab
+    las celdas de video mostrarían solo el aviso."""
+    carpeta = RAIZ / "figuras" / "manim"
+    return sorted(carpeta.glob("*.mp4")) + sorted(carpeta.glob("*.png"))
+
+
+# Etapas que muestran videos de Manim: su arranque (y el del notebook único) los lleva.
+ETAPAS_CON_VIDEO = ["05_clasificacion_bayes"]
+
+
+def celdas_de_arranque(etapas_previas=(), presentacion=False, videos=False):
     """Título plegable y una sola celda que recrea el paquete (y los guiones previos, o los
-    artefactos que lee la presentación)."""
+    artefactos que lee la presentación, y los videos de Manim si la etapa los muestra)."""
     rutas_archivos, guiones = archivos_de_arranque(etapas_previas)
     if presentacion:
         rutas_archivos = rutas_archivos + artefactos_de_presentacion()
+    elif videos:
+        rutas_archivos = rutas_archivos + videos_manim()
     datos = archivo_determinista(rutas_archivos)
     modulos = [m for m in modulos_del_paquete() if m.stat().st_size > 0]
     explicacion = (
         "## Código del proyecto\n\n"
-        "La celda siguiente recrea el paquete `proyecto/` dentro de la sesión, de forma que el notebook funciona en "
-        "Google Colab sin clonar ningún repositorio: basta con ejecutarla una vez (*Entorno de ejecución → Ejecutar "
-        "todas*). En una copia local del repositorio no reemplaza ningún archivo. La sección puede plegarse desde su "
+        "La celda siguiente vuelve a crear el paquete `proyecto/` dentro de la sesión. Así el notebook funciona en "
+        "Google Colab sin clonar ningún repositorio: Basta con ejecutarla una vez (*Entorno de ejecución → Ejecutar "
+        "todas*). En una copia local del repositorio no reemplaza ningún archivo y la sección se puede plegar desde su "
         "título."
     )
     if presentacion:
-        explicacion += (" Trae también los artefactos pequeños que leen las diapositivas (JSON, arreglos y el modelo de regresión), de modo que no hace "
+        explicacion += (" Trae también los artefactos pequeños que leen las diapositivas (JSON, arreglos y el modelo de regresión), así que no hace "
                         "falta volver a ejecutar las etapas.")
+    if videos and not presentacion and videos_manim():
+        explicacion += " Trae también los videos de Manim que muestra la etapa."
     if guiones:
-        explicacion += (" Trae también los guiones de las etapas anteriores: si sus resultados no están en la sesión, "
+        explicacion += (" Trae también los guiones de las etapas anteriores: Si sus resultados no están en la sesión, "
                         "la etapa los vuelve a calcular en silencio antes de empezar.")
     codigo = CODIGO_ARRANQUE.format(
         modulos=len(modulos),
         guiones=(f"\n#   - los guiones de las {len(guiones)} etapas previas (se reconstruyen si faltan);"
                  if guiones else
                  f"\n#   - los {len(artefactos_de_presentacion())} artefactos pequeños que lee la presentación;"
-                 if presentacion else ""),
+                 if presentacion else "")
+                + ("\n#   - los videos de Manim que muestra la etapa;" if videos and not presentacion else ""),
         archivos=len(rutas_archivos), tamano=round(len(datos) / 1024),
         huella=hashlib.sha256(datos).hexdigest(), codificado=base64.b64encode(datos).decode("ascii"),
     )
@@ -242,7 +255,7 @@ def celdas_de_arranque(etapas_previas=(), presentacion=False):
 
 
 def _rotulo(etapa):
-    return f"{etapa[:2]} · {TITULOS_ETAPAS.get(etapa, etapa)}"
+    return f"Etapa {etapa[:2]}: {TITULOS_ETAPAS.get(etapa, etapa)}"
 
 
 def celda_de_navegacion(etapa, disponibles, identificador):
@@ -256,7 +269,7 @@ def celda_de_navegacion(etapa, disponibles, identificador):
     if posicion < len(disponibles) - 1:
         siguiente = disponibles[posicion + 1]
         partes.append(f"Siguiente: [{_rotulo(siguiente)}]({siguiente}.ipynb) →")
-    return _texto(" &nbsp;·&nbsp; ".join(partes), "navegacion", identificador)
+    return _texto("<br>".join(partes), "navegacion", identificador)
 
 
 def _posicion_tras_primer_texto(celdas):
@@ -287,7 +300,7 @@ def armar_encadenado(etapa, celdas_etapa, disponibles):
     resto = celdas_etapa[corte:]
     celdas = list(celdas_etapa[:corte])
     celdas.append(celda_de_navegacion(etapa, disponibles, f"nav-{etapa[:2]}-inicio"))
-    celdas += celdas_de_arranque(ETAPAS[: ETAPAS.index(etapa)])
+    celdas += celdas_de_arranque(ETAPAS[: ETAPAS.index(etapa)], videos=etapa in ETAPAS_CON_VIDEO)
     if not _empieza_con_titulo(resto):  # cierra la sección plegable del arranque
         celdas.append(_texto("## Desarrollo de la etapa", "navegacion",
                              f"nav-{etapa[:2]}-desarrollo"))
@@ -301,10 +314,11 @@ def armar_fusionado(celdas_por_etapa):
     indice = "\n".join(f"{i}. {TITULOS_ETAPAS.get(e, e)}"
                        for i, e in enumerate(celdas_por_etapa, start=1))
     portada = (f"# {TITULO_PROYECTO}\n\n"
-               "Notebook completo: reúne, en orden, todas las etapas del "
-               "proyecto. Cada etapa guarda sus resultados en disco y la "
-               "siguiente los lee de allí.\n\n" + indice)
-    celdas = [_texto(portada, "navegacion", "portada")] + celdas_de_arranque()
+               "Este notebook reúne en orden todas las etapas del proyecto. "
+               "Cada etapa guarda sus resultados en disco y la siguiente los "
+               "lee de allí.\n\n" + indice)
+    celdas = [_texto(portada, "navegacion", "portada")] + celdas_de_arranque(
+        videos=any(e in ETAPAS_CON_VIDEO for e in celdas_por_etapa))
     contador = 0
     for etapa, celdas_etapa in celdas_por_etapa.items():
         if not _empieza_con_titulo(celdas_etapa):
@@ -377,7 +391,7 @@ def leer_construido(etapa):
 def _escribir(nb, ruta):
     nbformat.validate(nb)
     nbformat.write(nb, ruta)
-    try:  # firma local: JupyterLab muestra el HTML completo sin pedir «confiar»
+    try:  # firma local: JupyterLab muestra el HTML completo sin pedir "confiar"
         from nbformat.sign import NotebookNotary
         NotebookNotary().sign(nbformat.read(ruta, as_version=4))
     except Exception:  # la firma es una comodidad, nunca un requisito

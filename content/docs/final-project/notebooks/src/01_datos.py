@@ -1,9 +1,9 @@
 # %% [markdown]
-# # 01 · Datos: el problema y el conjunto de datos
+# # Etapa 01: El problema y la base de muestras
 #
-# Esta etapa plantea el problema, presenta el conjunto de datos (qué tablas y columnas se esperan y en
-# qué momento del proceso se conoce cada una) y entrega las tablas crudas con las que trabaja el resto
-# del proyecto, sin limpiar nada todavía.
+# En esta etapa contamos qué pregunta queríamos responder, qué columnas esperamos de la base del laboratorio
+# (y en qué momento del proceso se conoce cada una) y dejamos guardadas las tablas crudas tal como llegan, sin
+# limpiar nada todavía.
 
 # %%
 from proyecto.base.artefactos import iniciar_etapa
@@ -17,64 +17,74 @@ mostrar(c.encabezado, c.autores)
 # %% [markdown]
 # ## 1. El problema
 #
-# Un laboratorio de microbiología recibe a diario muestras de producto terminado, materia prima, agua
-# y muestreos en planta de clientes de los sectores cosmético, farmacéutico, de alimentos, veterinario
-# y de centrales de mezclas, y de cada muestra guarda quién la envió, en qué condiciones llegó, qué
-# ensayo se le hizo, quién la procesó y cuál fue el resultado (contexto de empresa: Rodam Análisis
-# SAS, Bogotá; el objeto de estudio es la base de muestras, no la empresa). Con esa base se plantean
-# tres preguntas:
+# Un laboratorio de microbiología recibe todos los días muestras de producto terminado, materia prima, agua y
+# muestreos en planta de clientes cosméticos, farmacéuticos, de alimentos, veterinarios y de centrales de mezclas.
+# De cada muestra guarda quién la envió, cómo llegó, qué ensayo se le hizo, quién la procesó y qué resultado dio. El
+# contexto es el de Rodam Análisis SAS en Bogotá, aunque lo que estudiamos es la base de muestras y no la empresa.
+# Con esa base nos propusimos tres preguntas:
 #
-# - **Anticipar la demanda:** cuántas muestras van a llegar, para programar analistas, medios e
-#   incubadoras.
-# - **Estimar el riesgo de cada resultado:** qué tan probable es que una muestra resulte no conforme
-#   y, si sale positiva, que se trate de un falso positivo.
-# - **Entender los grupos:** qué clientes o muestras se parecen entre sí.
+# a. **Demanda.** Cuántas muestras van a llegar, para programar analistas, medios de cultivo e incubadoras.
+# b. **Riesgo.** Qué tan probable es que una muestra salga no conforme (fuera del límite que exige la norma) y, si
+#    sale positiva, qué tan probable es que sea un falso positivo.
+# c. **Grupos.** Qué clientes o muestras se parecen entre sí.
 #
-# De cada pregunta salen varios análisis posibles, de forma que el proyecto declara un catálogo de
-# candidatos, los somete a la misma prueba rápida (etapa 03) y solo estudia a fondo a los ganadores.
+# De cada pregunta salían varios análisis posibles y no nos daba el tiempo para estudiarlos todos a fondo. Por eso
+# armamos un catálogo de candidatos, los pasamos por la misma prueba rápida en la etapa 03 y solo a los ganadores
+# los modelamos en serio.
 
 # %% [markdown]
 # ## 2. El contrato de datos
 #
-# El contrato (`proyecto/datos/esquema.py`) es la única fuente de verdad sobre los nombres de
-# columna: de cada una declara su tipo, su papel, si es obligatoria y el **momento** del proceso en que
-# el dato pasa a conocerse. Si la exportación real no trae una columna opcional, los análisis que la
-# usan simplemente se omiten.
-#
-# El momento es lo que más adelante impide la fuga de información: cada análisis declara en qué
-# momento se hace la predicción, y sus variables solo pueden ser columnas conocidas hasta ese momento.
+# Antes de tener datos escribimos un contrato (`proyecto/datos/esquema.py`), que es el único lugar del código
+# donde aparecen los nombres de las columnas. De cada columna dice su tipo, su papel, si es obligatoria y el
+# **momento** del proceso en que el dato pasa a conocerse (la toma, la llegada, la recepción, la lectura...). Si
+# la exportación real no trae una columna opcional, los análisis que la usan simplemente se omiten.
 
 # %%
 datos.contrato(c).mostrar()
 
 # %% [markdown]
+# El momento es lo que más adelante nos protege de la fuga de información, que es usar para predecir un dato que
+# todavía no existe en el instante de la predicción. Cada análisis declara en qué momento predice y solo puede
+# usar las columnas conocidas hasta ahí. Así se lo preguntamos al contrato para una predicción en la recepción:
+
+# %%
+from proyecto.datos import esquema
+from proyecto.reporte.html import fichas
+
+al_recibir = esquema.columnas("muestras", hasta="recepcion")   # lo que ya se sabe cuando la muestra llega
+despues = [x for x in esquema.columnas("muestras") if x not in al_recibir]
+mostrar(fichas(al_recibir, f"{len(al_recibir)} columnas de muestras que se conocen al recibirla"),
+        fichas(despues, f"{len(despues)} que llegan después y quedan prohibidas para esa predicción", color="rojo"))
+
+# %% [markdown]
 # ## 3. Las tablas crudas
 #
-# Se obtienen las tablas, se validan contra el contrato (si falta una columna obligatoria la etapa se
-# detiene con la lista completa) y se guardan tal como llegan, en CSV, de forma que la limpieza de la
-# etapa 02 quede como un paso aparte y auditable.
+# Obtenemos las tablas, las validamos contra el contrato (si falta una columna obligatoria la etapa se detiene y
+# dice cuáles) y las guardamos tal como llegan, en CSV. Así la limpieza de la etapa 02 queda como un paso aparte
+# que se puede auditar.
 
 # %%
 datos.tablas_crudas(c).mostrar()
 
 # %% [markdown]
-# ### Cómo llegan los datos
-#
-# Basta mirar las tablas para ver por qué hace falta una etapa de limpieza: la misma categoría
-# escrita de varias formas, recuentos reportados como texto, valores imposibles y filas repetidas.
+# Bastó con mirar las tablas para ver que hacía falta una etapa de limpieza: La misma categoría escrita de varias
+# formas, recuentos reportados como texto, valores imposibles y filas repetidas.
 
 # %%
 datos.como_llegan(c).mostrar()
 
 # %% [markdown]
-# ## 4. De dónde salen los datos y cómo se conecta la exportación real
+# ## 4. Los datos simulados y la exportación real
 #
-# La exportación real todavía no está disponible, de forma que mientras tanto las tablas salen de un
-# simulador que reproduce el recorrido de cada muestra por el laboratorio (con la misma «suciedad»);
-# las variables latentes que usa (si la muestra estaba de verdad contaminada, la higiene del cliente)
-# se guardan aparte en `datos/auditoria/` y ningún modelo las lee. Para usar los datos reales basta
-# copiar los archivos en `datos/reales/`, describir en `configuracion/mapeo_columnas.json` cómo se
-# llama cada columna y cada etiqueta, y fijar `PROYECTO_ORIGEN=real`, sin tocar el código.
+# Daniel, del equipo, va a conseguir la exportación real del laboratorio, pero no la teníamos a tiempo para
+# construir el proyecto. Mientras tanto trabajamos con una base simulada que reproduce el recorrido de cada muestra
+# por el laboratorio, con la misma suciedad que esperamos encontrar. Las variables ocultas que usa el simulador (si
+# la muestra estaba de verdad contaminada, qué tan higiénico es cada cliente) quedan aparte en `datos/auditoria/` y
+# ningún modelo las lee. Cuando llegue la exportación bastaría copiarla en `datos/reales/`, describir en
+# `configuracion/mapeo_columnas.json` cómo se llama cada columna y cada etiqueta y fijar `PROYECTO_ORIGEN=real`, sin
+# tocar el código. Eso sí, todas las cifras de estos notebooks describen la base simulada y el método, no todavía
+# al laboratorio.
 
 # %%
 datos.exportacion_real(c).mostrar()
@@ -82,10 +92,11 @@ datos.exportacion_real(c).mostrar()
 # %% [markdown]
 # ## 5. Protocolo de evaluación y mapa del proyecto
 #
-# La partición es por tiempo, con cortes fijados en `config` antes de mirar resultados:
-# **entrenamiento** para ajustar y comparar (validación cruzada de ventana creciente),
-# **validación** para decidir (umbral, modelo que se congela) y **prueba**, que se guarda aparte y se
-# abre una sola vez en la etapa 07. Las etapas solo se comunican por archivos en disco.
+# Partimos la base por tiempo con cortes que fijamos en `config` antes de ver un solo resultado. El
+# **entrenamiento** sirve para ajustar y comparar modelos (con validación cruzada de ventana creciente, que
+# explicamos en la etapa 02), la **validación** para decidir (el umbral, el modelo que se congela) y la **prueba**
+# se guarda aparte y solo se abre una vez, en la etapa 07. Las etapas se pasan la información únicamente por
+# archivos en disco.
 
 # %%
 datos.protocolo(c).mostrar()

@@ -11,7 +11,7 @@
 # ---
 
 # %% [markdown]
-# # Presentación · Analítica predictiva sobre la base de muestras de un laboratorio de microbiología
+# # Presentación: Analítica predictiva sobre la base de muestras de un laboratorio de microbiología
 #
 # Versión corta para la exposición de diez minutos: once diapositivas con las cifras que ya calcularon los
 # notebooks de las etapas y, entre ellas, los fragmentos de código que muestran cómo se hizo cada paso (las mismas
@@ -159,7 +159,7 @@ mostrar_figura(g.figura_activaciones())
 # %%
 # Al construir: tuberia = construir_tuberia("clasificacion", "mlp", ...).fit(X_ent, y_ent); red = tuberia[-1]
 curvas = g.figura_curva_perdida(d.mlp_perdida, d.mlp_validacion, d.mlp["paciencia"], d.mlp["fraccion_validacion"],
-                                d.mlp["tasa_mayoritaria"])   # la exactitud de responder siempre «conforme», como referencia
+                                d.mlp["tasa_mayoritaria"])   # la exactitud de responder siempre "conforme", como referencia
 mostrar_figura(curvas)
 
 # %%

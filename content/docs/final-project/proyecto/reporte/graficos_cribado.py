@@ -15,7 +15,7 @@ from proyecto.base.config import COLORES
 SUPERVISADOS = ("regresion", "clasificacion")
 TITULOS_TIPO = {"regresion": "Regresión", "clasificacion": "Clasificación", "agrupamiento": "Agrupamiento"}
 ETIQUETA_HABILIDAD = {"regresion": "Habilidad = 1 − RMSE / RMSE de referencia",
-                      "clasificacion": "Habilidad = 2 · AUC − 1"}
+                      "clasificacion": "Habilidad = 2 AUC − 1"}
 
 
 def _ejes(ax, rejilla="x"):
@@ -106,7 +106,7 @@ def figura_regla_simple(tabla_cribado, umbral):
     posiciones = np.arange(len(datos))
     ax.barh(posiciones, datos["proporcion_regla"], color=colores, height=0.6)
     for posicion, (_, fila) in zip(posiciones, datos.iterrows()):
-        ax.text(max(fila["proporcion_regla"], 0) + 0.01, posicion, f"{fila['proporcion_regla']:.2f} · {fila['variable_regla']}",
+        ax.text(max(fila["proporcion_regla"], 0) + 0.01, posicion, f"{fila['proporcion_regla']:.2f}, {fila['variable_regla']}",
                 va="center", fontsize=8, color=COLORES["tinta"], zorder=4,
                 bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.6})
     ax.axvline(umbral, color=COLORES["rojo"], linestyle="--", linewidth=1)

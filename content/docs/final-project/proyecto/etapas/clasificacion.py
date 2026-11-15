@@ -9,7 +9,9 @@ etapa, y registrar sus cifras para el informe.
 """
 import time
 import warnings
+from types import SimpleNamespace
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -20,15 +22,17 @@ from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_modelo, leer_json, leer_modelado
 from proyecto.cribado import arreglos, catalogo, corridas
 from proyecto.datos import carga
-from proyecto.etapas import taguchi
-from proyecto.etapas.comun import Resultado, abrir, cerrar, legible, aviso_origen
+from proyecto.etapas import presentacion, taguchi
+from proyecto.etapas.comun import Resultado, abrir, cerrar, enumerar, legible, aviso_origen
 from proyecto.evaluacion import bayes, metricas, umbral, validacion
 from proyecto.evaluacion.remuestreo import intervalo_bootstrap
 from proyecto.modelos import registro, tuberias
 from proyecto.preparacion import particion
 from proyecto.reporte import graficos_clasificacion as graficos_clf
 from proyecto.reporte import graficos_modelado as graficos
+from proyecto.reporte import graficos_presentacion as graficos_red
 from proyecto.reporte import latex
+from proyecto.reporte.figuras import guardar_figura
 from proyecto.reporte.html import comparacion, nota, pasos, pestanas, tabla_html, tarjetas
 from proyecto.variables.comunes import columnas_de_grupo
 
@@ -76,7 +80,7 @@ def _fila_resumen(nombre, valores):
     for metrica, por_bloque in valores.items():
         fila[metrica] = float(np.mean(por_bloque))
         fila[f"± {metrica}"] = float(np.std(por_bloque, ddof=1))
-    fila["Habilidad (2·AUC − 1)"] = 2 * fila["ROC-AUC"] - 1
+    fila["Habilidad (2 AUC − 1)"] = 2 * fila["ROC-AUC"] - 1
     return fila
 
 
@@ -86,7 +90,7 @@ def iniciar():
     c.inicio = time.perf_counter()
     c.nombre = leer_json(rutas.DIR_ARTEFACTOS / "03_cribado.json")["seleccion"][TAREA]
     if c.nombre is None:
-        raise RuntimeError("La etapa 03 no eligió ningún análisis de clasificación: no hay nada que modelar.")
+        raise RuntimeError("La etapa 03 no eligió ningún análisis de clasificación: No hay nada que modelar.")
     c.ficha = catalogo.ficha_por_nombre(c.nombre)
     c.papeles = leer_json(rutas.DIR_MODELADO / f"{c.nombre}.json")
     c.objetivo, c.fecha = c.papeles["objetivo"], c.papeles["fecha"]
@@ -104,7 +108,7 @@ def iniciar():
 
 
 # ----------------------------------------------------------------------
-# Parte A · Clasificación
+# Parte A: Clasificación
 # ----------------------------------------------------------------------
 def planteamiento(c):
     """Costos, umbral teórico, tamaños, prevalencias y la referencia Dummy."""
@@ -113,16 +117,16 @@ def planteamiento(c):
     c.umbral_teorico = umbral.umbral_teorico()
     c.prev_ent, c.prev_val = float(c.y_ent.mean()), float(c.y_val.mean())
     r.agregar(pasos([
-        ("Qué se predice", f"«{c.ficha.titulo}»: si una {c.papeles['unidad']} terminará con `{c.objetivo}` = 1, con la "
-                           f"información disponible en el momento «{c.papeles['momento']}» (antes de sembrarla)."),
-        ("Qué decisión apoya", f"{c.ficha.decision} En la práctica, marcar la muestra en recepción para leerla antes, "
-                               "asignarle un segundo analista o prevenir al cliente."),
-        ("Cuánto cuesta cada error", f"Una falsa alarma (alertar una muestra que sale conforme) cuesta {fp} unidad, el "
-                                     "tiempo extra de revisión; una omisión (no alertar una muestra que sale no conforme) "
-                                     f"cuesta {fn}, porque el aviso al cliente llega tarde."),
-        ("Umbral teórico", f"Si las probabilidades están bien calibradas, conviene alertar cuando p ≥ {fp} / ({fp} + {fn}) "
-                           f"= {c.umbral_teorico:.3f}, que es el punto donde el costo esperado de alertar y de no alertar "
-                           "se igualan."),
+        ("Qué predecimos", f"{c.ficha.titulo}: Si una {c.papeles['unidad']} va a terminar con `{c.objetivo}` = 1, con lo "
+                           f"que se sabe en el momento \"{c.papeles['momento']}\", o sea antes de sembrarla."),
+        ("Qué decisión apoya", f"{c.ficha.decision} En la práctica sería marcar la muestra en recepción para leerla antes, "
+                               "asignarle un segundo analista o avisarle al cliente."),
+        ("Cuánto cuesta cada error", f"Una falsa alarma (alertar una muestra que sale conforme) cuesta {fp} unidad, que es "
+                                     "el tiempo extra de revisión. Una omisión (no alertar una muestra que sale no "
+                                     f"conforme) cuesta {fn} porque el aviso al cliente llega tarde."),
+        ("Umbral teórico", f"Si las probabilidades están bien calibradas conviene alertar cuando p ≥ {fp} / ({fp} + {fn}) "
+                           f"= {c.umbral_teorico:.3f}, que es el punto donde alertar y no alertar cuestan lo mismo en "
+                           "promedio."),
     ], titulo="Planteamiento"))
     r.agregar(tarjetas([
         {"titulo": "Muestras de entrenamiento", "valor": len(c.entrenamiento), "decimales": 0,
@@ -137,9 +141,10 @@ def planteamiento(c):
     c.predichas_dummy = fuera_de_bloque(registro.linea_base(TAREA), c.X_ent, c.y_ent, c.bloques)
     c.metricas_dummy = d = resumir_bloques(c.predichas_dummy, c.y_ent)
     r.agregar(nota(
-        f"El `Dummy` tiene un ROC-AUC de {d['ROC-AUC'].mean():.3f} (no ordena nada), una precisión media de "
-        f"{d['Precisión media'].mean():.3f} (la prevalencia de cada tramo) y un Brier de {d['Brier'].mean():.4f}, que es lo "
-        "que cuesta predecir siempre la tasa base. Un modelo útil debe superar esas tres cifras en los mismos bloques.",
+        f"El `Dummy` tiene un ROC-AUC de {d['ROC-AUC'].mean():.3f}, o sea que no ordena nada. Su precisión media es "
+        f"{d['Precisión media'].mean():.3f} (la prevalencia de cada tramo) y su Brier {d['Brier'].mean():.4f}, que es lo "
+        "que cuesta predecir siempre la tasa base. Un modelo que sirva tiene que mejorar esas tres cifras en los mismos "
+        "bloques.",
         "info", titulo="Referencia",
     ))
     latex.registrar_varias([
@@ -181,11 +186,11 @@ def poda(c):
     r.agregar(tabla_html(t, "Ruta de poda por costo-complejidad del árbol de clasificación", decimales=decimales,
                          resaltar=(t["ccp_alpha"] == c.alfa).to_numpy(), columnas_resaltadas="ROC-AUC medio"))
     r.agregar(nota(
-        f"Sin poda el árbol tiene {int(t.iloc[0]['Hojas'])} hojas y un ROC-AUC medio de {t.iloc[0]['ROC-AUC medio']:.3f}; "
-        f"el alfa elegido ({c.alfa:.6f}) lo deja en {int(fila['Hojas'])} hojas con ROC-AUC {fila['ROC-AUC medio']:.3f}"
-        + (", de forma que podar mejora la capacidad de ordenar además de simplificar el árbol, señal de que las ramas "
-           "profundas aprendían ruido de las muestras de entrenamiento." if c.alfa > 0 else
-           ", es decir, en este caso ningún nivel de poda mejora al árbol completo."),
+        f"Sin poda el árbol tiene {int(t.iloc[0]['Hojas'])} hojas y un ROC-AUC medio de {t.iloc[0]['ROC-AUC medio']:.3f}. "
+        f"El alfa elegido ({c.alfa:.6f}) lo deja en {int(fila['Hojas'])} hojas con ROC-AUC {fila['ROC-AUC medio']:.3f}"
+        + (", o sea que podar mejora la capacidad de ordenar además de simplificar el árbol. Es la señal de que las ramas "
+           "profundas estaban aprendiendo ruido de las muestras de entrenamiento." if c.alfa > 0 else
+           ". Es decir que en este caso ningún nivel de poda mejora al árbol completo."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -225,18 +230,18 @@ def didactica(c):
     auc_mlp, c.auc_log = pm.loc["Perceptrón multicapa", "ROC-AUC"], pm.loc["Regresión logística", "ROC-AUC"]
     peor = t.iloc[1:].sort_values("ROC-AUC").iloc[0]
     r.agregar(nota(
-        f"El mejor modelo de la pasada es «{mejor['Modelo']}», con ROC-AUC medio **{mejor['ROC-AUC']:.3f}** "
-        f"(± {mejor['± ROC-AUC']:.3f} entre bloques), precisión media {mejor['Precisión media']:.3f} frente a "
-        f"{pm.loc[NOMBRE_DUMMY, 'Precisión media']:.3f} del `Dummy` y Brier {mejor['Brier']:.4f} frente a "
-        f"{pm.loc[NOMBRE_DUMMY, 'Brier']:.4f}. El más débil es «{peor['Modelo']}» ({peor['ROC-AUC']:.3f}).\n\n"
-        + (f"El perceptrón ({auc_mlp:.3f}) no supera a la regresión logística ({c.auc_log:.3f}), lo que sugiere que el riesgo "
-           "de no conformidad se explica sobre todo por efectos aditivos en la escala logit y la red no encuentra "
-           "estructura adicional que justifique su costo." if auc_mlp <= c.auc_log else
-           f"El perceptrón ({auc_mlp:.3f}) supera a la regresión logística ({c.auc_log:.3f}), de forma que hay algo de no "
+        f"El mejor modelo de la pasada es \"{mejor['Modelo']}\", con ROC-AUC medio **{mejor['ROC-AUC']:.3f}** "
+        f"(± {mejor['± ROC-AUC']:.3f} entre bloques). Su precisión media es {mejor['Precisión media']:.3f} frente a "
+        f"{pm.loc[NOMBRE_DUMMY, 'Precisión media']:.3f} del `Dummy` y su Brier {mejor['Brier']:.4f} frente a "
+        f"{pm.loc[NOMBRE_DUMMY, 'Brier']:.4f}. El más débil es \"{peor['Modelo']}\" ({peor['ROC-AUC']:.3f}).\n\n"
+        + (f"El perceptrón ({auc_mlp:.3f}) no le gana a la regresión logística ({c.auc_log:.3f}), lo que sugiere que el "
+           "riesgo de no conformidad se explica sobre todo por efectos que se suman en la escala logit y que la red no "
+           "encuentra estructura adicional que justifique su costo." if auc_mlp <= c.auc_log else
+           f"El perceptrón ({auc_mlp:.3f}) le gana a la regresión logística ({c.auc_log:.3f}) así que hay algo de no "
            "linealidad o de interacción que la red aprovecha.")
-        + (f" Cabe mencionar que un ROC-AUC de {mejor['ROC-AUC']:.2f} es moderado: el modelo ordena mejor que el azar, pero "
-           "muchas muestras conformes y no conformes reciben riesgos parecidos, algo esperable si una parte de la "
-           "contaminación ocurre después de la recepción, donde estas variables no llegan."
+        + (f" Eso sí, un ROC-AUC de {mejor['ROC-AUC']:.2f} es moderado: El modelo ordena mejor que el azar pero muchas "
+           "muestras conformes y no conformes reciben riesgos parecidos. Sería lo esperable si una parte de la "
+           "contaminación ocurre después de la recepción, adonde estas variables no llegan."
            if mejor["ROC-AUC"] < 0.8 else ""),
         "hallazgo",
     ))
@@ -256,6 +261,77 @@ def didactica(c):
     return r
 
 
+def red_neuronal(c):
+    """El perceptrón didáctico por dentro: Lo ajusta una vez con todo el entrenamiento y lo vuelve a entrenar
+    época por época (`presentacion.datos_red`, el mismo cálculo de la presentación), dibuja su arquitectura y sus
+    curvas de parada temprana, lo compara con la logística y deja listos los datos de los paneles."""
+    r = Resultado()
+    arreglos, meta = presentacion.datos_red(c)
+    mlp = meta["mlp"]
+    partida = registro.crear_modelo(TAREA, "mlp").get_params()
+    logistica = clone(c.didacticos["Regresión logística"]).fit(c.X_ent, c.y_ent).named_steps["modelo"]
+    parametros, parametros_log = mlp["parametros"], int(logistica.coef_.size + logistica.intercept_.size)
+    perdida, puntaje = arreglos["mlp_perdida"], arreglos["mlp_validacion"]
+    mayoritaria = mlp["tasa_mayoritaria"]
+    sub, variables = presentacion.submuestras_paneles(c)
+    c.paneles = SimpleNamespace(**arreglos, **sub, mlp=mlp)
+    c.variables_paneles = variables
+    _actualizar_paneles(c)
+    r.figura(graficos_red.figura_arquitectura(mlp["n_entradas"], tuple(mlp["ocultas"]), mlp["activacion"]),
+             "05_red_arquitectura")
+    r.figura(graficos_red.figura_curva_perdida(perdida, puntaje, mlp["paciencia"], mlp["fraccion_validacion"],
+                                               mayoritaria, pie=False), "05_red_curvas")
+    auc_mlp = c.por_modelo.loc["Perceptrón multicapa", "ROC-AUC"]
+    r.agregar(comparacion([
+        {"titulo": "Regresión logística", "valor": c.auc_log, "etiqueta": "ROC-AUC medio en los bloques", "decimales": 3,
+         "puntos": [f"{parametros_log} parámetros", "un peso por variable y un intercepto"]},
+        {"titulo": "Perceptrón multicapa", "valor": auc_mlp, "etiqueta": "ROC-AUC medio en los bloques", "decimales": 3,
+         "puntos": [f"{parametros} parámetros", f"{mlp['epocas']} épocas hasta la parada temprana"]},
+    ], titulo="La red frente a la logística en los mismos bloques",
+        elegida="Perceptrón multicapa" if auc_mlp > c.auc_log else "Regresión logística", sello="Mayor ROC-AUC"))
+    r.agregar(nota(
+        f"La red que ajustamos con todo el entrenamiento tiene {mlp['n_entradas']} entradas, una capa oculta de "
+        f"{sum(mlp['ocultas'])} neuronas ({mlp['activacion']}) y {parametros} parámetros, unas "
+        f"{parametros / parametros_log:.0f} veces los {parametros_log} de la logística. La parada temprana la detuvo en "
+        f"la época {mlp['epocas']} (la mejor fue la {mlp['mejor_epoca']}) y en la fracción apartada su exactitud apenas "
+        f"pasa del {mayoritaria:.3f} que se logra respondiendo siempre \"conforme\". O sea que la exactitud no sirve "
+        "para comparar modelos aquí y por eso usamos el ROC-AUC.",
+        "info", titulo="Qué aprendió la red",
+    ))
+    latex.registrar_varias([
+        ("ClfMLPEntradas", mlp["n_entradas"], "entradas del perceptrón (columnas tras el preprocesamiento)"),
+        ("ClfMLPOcultas", ", ".join(str(n) for n in mlp["ocultas"]), "neuronas por capa oculta (hidden_layer_sizes)"),
+        ("ClfMLPCapasOcultas", len(mlp["ocultas"]), "número de capas ocultas del perceptrón"),
+        ("ClfMLPActivacion", mlp["activacion"], "función de activación de las capas ocultas"),
+        ("ClfMLPOptimizador", partida["solver"], "optimizador del perceptrón en scikit-learn"),
+        ("ClfMLPAlfa", float(mlp["alpha"]), "penalización L2 (alpha) del perceptrón", 4),
+        ("ClfMLPParametros", parametros, "pesos y sesgos del perceptrón"),
+        ("ClfLogisticaParametros", parametros_log, "coeficientes e intercepto de la regresión logística"),
+        ("ClfMLPVecesParametros", parametros / parametros_log, "cuántas veces más parámetros tiene la red", 0),
+        ("ClfMLPEpocas", int(mlp["epocas"]), "épocas hasta la parada temprana"),
+        ("ClfMLPMejorEpoca", mlp["mejor_epoca"], "época con la mejor exactitud en la fracción apartada"),
+        ("ClfMLPPaciencia", int(mlp["paciencia"]), "épocas sin mejora antes de detenerse (n_iter_no_change)"),
+        ("ClfMLPFraccionValidacionPct", 100 * mlp["fraccion_validacion"], "porcentaje del entrenamiento apartado", 0),
+        ("ClfMLPTopeEpocas", int(partida["max_iter"]), "tope de épocas (max_iter)"),
+        ("ClfMLPExactitudMejor", float(np.max(puntaje)), "mejor exactitud en la fracción apartada", 3),
+        ("ClfTasaMayoritaria", mayoritaria, "exactitud de responder siempre la clase mayoritaria", 3),
+        ("ClfMLPPerdidaFinal", float(perdida[-1]), "pérdida logarítmica de entrenamiento en la última época", 3),
+    ])
+    return r
+
+
+def _actualizar_paneles(c):
+    """Rehace los valores congelados que marcan los paneles (`c.paneles.interactivo`) con lo que la etapa ya
+    decidió: Se llama al avanzar (red, afinamiento, umbral y VPP por ensayo)."""
+    busquedas = getattr(c, "busquedas", {})
+    c.paneles.interactivo = presentacion.meta_paneles(
+        c.variables_paneles, getattr(c, "umbral", None),
+        list(c.tabla_umbral["Umbral"]) if hasattr(c, "tabla_umbral") else [],
+        {"falso_positivo": config.COSTO_FP, "falso_negativo": config.COSTO_FN, "umbral_teorico": c.umbral_teorico},
+        c.semanas_val, c.tabla_vpp.to_dict("records") if hasattr(c, "tabla_vpp") else [],
+        taguchi.hiper_de(busquedas["arbol"]) if "arbol" in busquedas else {})
+
+
 def logistica(c):
     """Coeficientes y razones de odds de la regresión logística."""
     r = Resultado()
@@ -269,11 +345,11 @@ def logistica(c):
     r.agregar(tabla_html(odds, "Las ocho variables con mayor peso en la regresión logística", decimales=3))
     sube, baja = principales[principales > 0], principales[principales < 0]
     r.agregar(nota(
-        "Entre las de mayor peso, aumentan el riesgo "
-        + (", ".join(f"«{n}» (razón de odds {np.exp(v):.2f})" for n, v in sube.head(3).items()) or "ninguna")
-        + " y lo reducen " + (", ".join(f"«{n}» ({np.exp(v):.2f})" for n, v in baja.head(3).items()) or "ninguna")
-        + ". Los coeficientes describen asociaciones dentro del modelo ajustado, no efectos causales, y cuando dos "
-          "variables están correlacionadas el peso se reparte entre ellas de manera inestable.",
+        "Entre las de mayor peso suben el riesgo "
+        + (enumerar(f'"{n}" (razón de odds {np.exp(v):.2f})' for n, v in sube.head(3).items()) or "ninguna")
+        + " y lo bajan " + (enumerar(f'"{n}" ({np.exp(v):.2f})' for n, v in baja.head(3).items()) or "ninguna")
+        + ". Eso sí, los coeficientes describen asociaciones dentro del modelo ajustado y no efectos causales. Cuando dos "
+          "variables están correlacionadas el peso se distribuye entre ellas de forma inestable.",
         "hallazgo",
     ))
     if len(sube):
@@ -300,13 +376,13 @@ def reglas_arbol(c):
     primera = reglas.iloc[0]
     r.agregar(nota(
         f"La hoja de mayor riesgo agrupa {int(primera['Filas'])} muestras de entrenamiento con una fracción de no conformes "
-        f"de {primera['Fracción de positivos']:.3f}, es decir, {primera['Fracción de positivos'] / c.prev_ent:.1f} veces la "
-        f"tasa general ({c.prev_ent:.3f}). Las reglas son fáciles de comunicar en recepción, pero el árbol ordena peor que "
-        f"la regresión logística ({auc_arbol:.3f} frente a {c.auc_log:.3f}), porque reparte el riesgo en pocos escalones en "
-        "lugar de sumar muchas señales pequeñas." if auc_arbol < c.auc_log else
+        f"de {primera['Fracción de positivos']:.3f}, o sea {primera['Fracción de positivos'] / c.prev_ent:.1f} veces la "
+        f"tasa general ({c.prev_ent:.3f}). Las reglas son fáciles de explicar en recepción pero el árbol ordena peor que "
+        f"la regresión logística ({auc_arbol:.3f} frente a {c.auc_log:.3f}) porque divide el riesgo en pocos escalones en "
+        "vez de sumar muchas señales pequeñas." if auc_arbol < c.auc_log else
         f"La hoja de mayor riesgo agrupa {int(primera['Filas'])} muestras de entrenamiento con una fracción de no conformes "
-        f"de {primera['Fracción de positivos']:.3f}, y el árbol ordena al menos tan bien como la regresión logística, de "
-        "forma que unas pocas reglas bastan para describir el riesgo.",
+        f"de {primera['Fracción de positivos']:.3f} y el árbol ordena al menos tan bien como la regresión logística así "
+        "que unas pocas reglas bastan para describir el riesgo.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -333,37 +409,41 @@ def diseno(c):
     arreglo, c.diseno_l16 = taguchi.diseno_l16(c.factores, COLUMNAS_L16)
     ortogonal = arreglos.verificar_ortogonalidad(arreglo)
     r.agregar(pasos([
-        ("modelo (columna A, 4 niveles)", " / ".join(registro.NOMBRES_LEGIBLES[m] for m in c.factores["modelo"]) + "."),
-        ("escalado (c)", "Estandarización o escalado al intervalo [0, 1] de las variables numéricas."),
+        ("modelo (columna A, 4 niveles)", enumerar(registro.NOMBRES_LEGIBLES[m] for m in c.factores["modelo"]).replace(
+            " y ", " o ") + "."),
+        ("escalado (c)", "Estandarizar (restar la media y dividir entre la desviación estándar) o llevar al intervalo "
+                         "[0, 1] las variables numéricas."),
         ("grupo (d)", f"Grupo base ({len(c.papeles['grupos']['base'])} variables) o ampliado ({len(c.columnas_todas)}, con "
-                      "historia del cliente y del producto y variables derivadas)."),
-        ("desbalance (abd)", "Sin tratamiento o sobremuestreo aleatorio de los no conformes hasta igualar las clases, "
-                             "aplicado solo al ajustar."),
+                      "la historia del cliente y del producto y variables derivadas)."),
+        ("desbalance (abd)", "Nada o sobremuestrear al azar los no conformes hasta igualar las clases, solo al ajustar."),
         ("seleccion (acd)", f"Sin selección o conservar las {c.k_seleccion} variables con mayor estadístico F."),
         ("codificacion (bcd)", "One-hot u ordinal para las categóricas y las discretas ("
-         + ", ".join(f"«{x}»" for x in c.discretas) + ")."),
-    ], titulo=f"Factores del L16 (ortogonalidad verificada: {'sí' if ortogonal else 'no'})"))
-    r.agregar(tabla_html(taguchi.vista_niveles(c.diseno_l16, c.nombres_factor).reset_index(names="Corrida"),
-                         "Diseño L16 con los niveles reales", decimales=0, maximo_filas=16))
+         + ", ".join(f'"{x}"' for x in c.discretas) + ")."),
+    ], titulo=f"Factores del L16 (ortogonalidad verificada: {'Sí' if ortogonal else 'No'})"))
     confusiones = arreglos.confusiones(COLUMNAS_L16)
     vista = taguchi.vista_confusiones(confusiones)
-    r.agregar(tabla_html(vista, "Dónde cae cada interacción de dos factores", decimales=0,
-                         resaltar=(vista["Confundida con"] == "libre").to_numpy()))
+    r.agregar(pestanas({
+        "Diseño con niveles reales": tabla_html(taguchi.vista_niveles(c.diseno_l16, c.nombres_factor)
+                                                .reset_index(names="Corrida"), "Diseño L16 con los niveles reales",
+                                                decimales=0, maximo_filas=16),
+        "Confusiones": tabla_html(vista, "Dónde cae cada interacción de dos factores", decimales=0,
+                                  resaltar=(vista["Confundida con"] == "libre").to_numpy()),
+    }, titulo="El diseño que corrimos"))
     fila_md = confusiones[((confusiones["factor_1"] == "modelo") & (confusiones["factor_2"] == "desbalance"))
                           | ((confusiones["factor_1"] == "desbalance") & (confusiones["factor_2"] == "modelo"))]
     confusores = list(fila_md["confundida_con"].iloc[0]) if len(fila_md) else []
     libres = taguchi.interacciones_libres(confusiones)
     r.agregar(nota(
-        f"De las {len(confusiones)} interacciones de dos factores, {len(libres)} quedan libres (" + ", ".join(libres)
-        + "). La asignación protege la interacción modelo × escalado, que se espera grande (el escalado cambia las "
-          "distancias de KNN y el entrenamiento del perceptrón, pero no afecta al árbol). La interacción modelo × "
-          "desbalance, en cambio, "
-        + (f"queda mezclada con {', '.join('«' + x + '»' for x in confusores)}, de forma que, si existe, se leerá en "
-           + ("parte como efecto principal de ese factor" if len(confusores) == 1 else
-              "parte como efecto principal de esos factores")
-           + "; por eso se comprueba aparte más abajo." if confusores else "queda libre.")
-        + " Las demás interacciones se suponen pequeñas, supuesto que se pone a prueba con la corrida de confirmación.",
-        "info", titulo="Qué se confunde y por qué es aceptable",
+        f"De las {len(confusiones)} interacciones de dos factores {len(libres)} quedan libres ("
+        + ", ".join(x.replace(" × ", " con ") for x in libres)
+        + "). Igual que en la etapa 04 la asignación protege la interacción entre modelo y escalado porque el escalado "
+          "cambia las distancias de KNN y el entrenamiento del perceptrón pero no afecta al árbol. La interacción entre "
+          "modelo y desbalance, en cambio, "
+        + (f"queda mezclada con {enumerar(chr(34) + x + chr(34) for x in confusores)}. Si existe, una parte se va a leer "
+           + ("como efecto principal de ese factor" if len(confusores) == 1 else "como efecto principal de esos factores")
+           + " y por eso la comprobamos aparte más abajo." if confusores else "queda libre.")
+        + " Las demás interacciones las suponemos pequeñas y ese supuesto lo pone a prueba la corrida de confirmación.",
+        "info", titulo="Qué se confunde y por qué lo aceptamos",
     ))
     latex.registrar_varias([
         ("ClfKSeleccion", c.k_seleccion, "variables que conserva la selección por F"),
@@ -383,12 +463,12 @@ def corridas_l16(c):
                                   c.nombres_factor)
     c.mejor_corrida = mejor = res["sn"].idxmax()
     decimales = {**{x: 3 for x in columnas_bloque}, "media": 3, "desv": 3, "sn": 2, "segundos": 1}
-    r.agregar(tabla_html(vista.reset_index(names="Corrida"), "Resultados del L16: ROC-AUC por bloque, media, desviación y "
-                         "S/N (dB)", decimales=decimales, resaltar=(res.index == mejor), columnas_resaltadas="sn",
-                         maximo_filas=16))
+    tabla_corridas = tabla_html(vista.reset_index(names="Corrida"), "Resultados del L16: ROC-AUC por bloque, media, "
+                                "desviación y S/N (dB)", decimales=decimales, resaltar=(res.index == mejor),
+                                columnas_resaltadas="sn", maximo_filas=16)
     fallidas = res[res["error"] != ""]
     r.agregar(nota(
-        f"Las 16 corridas tardan **{c.segundos_l16:.1f} s** en total"
+        f"Las 16 corridas tardaron **{c.segundos_l16:.1f} s** en total"
         + (f" y {len(fallidas)} fallaron ({'; '.join(fallidas['error'])})." if len(fallidas) else ", sin fallos.")
         + f" La mejor corrida observada es la {mejor} ("
         + ", ".join(f"{f} = {legible(res.loc[mejor, f])}" for f in c.nombres_factor)
@@ -403,27 +483,29 @@ def corridas_l16(c):
     vr = taguchi.respuesta_legible(c.respuesta, c.nombres_factor)
     vr_vista = vr.rename(columns={"mejor_nivel": "Mejor nivel", "media_mejor": "S/N mejor", "peor_nivel": "Peor nivel",
                                   "media_peor": "S/N peor", "delta": "Delta", "rango": "Rango"})
-    r.agregar(tabla_html(vr_vista, "Tabla de respuesta de Taguchi (S/N en dB)", decimales=3, barras="Delta"))
+    r.agregar(pestanas({"Tabla de respuesta": tabla_html(vr_vista, "Tabla de respuesta de Taguchi (S/N en dB)",
+                                                         decimales=3, barras="Delta"),
+                        "Las 16 corridas": tabla_corridas}, titulo="Detalle del L16"))
     interaccion = res.pivot_table(index="modelo", columns="escalado", values="sn", aggfunc="mean")
     efecto_escalado = (interaccion["estandar"] - interaccion["minmax"]).abs()
     primero, segundo = vr.iloc[0], vr.iloc[1]
     indiferentes = c.respuesta.loc[c.respuesta["delta"] < 0.1 * c.respuesta["delta"].max(), "delta"]
     r.agregar(nota(
-        f"El factor más influyente es «{primero['Factor']}» (delta {primero['delta']:.3f} dB, mejor nivel "
-        f"«{primero['mejor_nivel']}»), seguido de «{segundo['Factor']}» ({segundo['delta']:.3f} dB, mejor nivel "
-        f"«{segundo['mejor_nivel']}»). "
-        + f"Como la interacción modelo × escalado quedó libre, se puede leer por separado: el cambio de escalado mueve la "
-          f"S/N {efecto_escalado.max():.3f} dB en «{efecto_escalado.idxmax()}» y solo {efecto_escalado.min():.3f} dB en "
-          f"«{efecto_escalado.idxmin()}». "
-        + (("Los factores " if len(indiferentes) > 1 else "El factor ") + ", ".join(
-            f"«{f}» (delta {d:.3f} dB)" for f, d in indiferentes.items())
+        f"El factor que más pesa es \"{primero['Factor']}\" (delta de {primero['delta']:.3f} dB, mejor nivel "
+        f"\"{primero['mejor_nivel']}\"), seguido de \"{segundo['Factor']}\" ({segundo['delta']:.3f} dB, mejor nivel "
+        f"\"{segundo['mejor_nivel']}\"). "
+        + f"Como la interacción entre modelo y escalado quedó libre podemos leerla por separado: Cambiar el escalado mueve "
+          f"la S/N {efecto_escalado.max():.3f} dB en \"{efecto_escalado.idxmax()}\" y solo {efecto_escalado.min():.3f} dB "
+          f"en \"{efecto_escalado.idxmin()}\". "
+        + (("Los factores " if len(indiferentes) > 1 else "El factor ") + enumerar(
+            f'"{f}" (delta {d:.3f} dB)' for f, d in indiferentes.items())
            + (" son prácticamente indiferentes" if len(indiferentes) > 1 else " es prácticamente indiferente")
-           + " (menos del 10 % del delta mayor), de forma que su nivel óptimo se decide por diferencias sin peso práctico."
+           + " (menos del 10 % del delta mayor) así que su nivel óptimo lo deciden diferencias sin peso práctico."
            if len(indiferentes) else "")
         + "\n\nEl óptimo que predice el modelo aditivo es "
         + ", ".join(f"{f} = {legible(v)}" for f, v in c.niveles_optimo.items())
-        + f", con S/N predicha de **{c.sn_predicha:.3f} dB** (equivale a un ROC-AUC de {10 ** (c.sn_predicha / 20):.3f} si "
-          "los bloques fueran iguales).",
+        + f", con S/N predicha de **{c.sn_predicha:.3f} dB**. Si todos los bloques dieran lo mismo eso equivaldría a un "
+          f"ROC-AUC de {10 ** (c.sn_predicha / 20):.3f}.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -438,6 +520,15 @@ def corridas_l16(c):
         ("ClfSNPredicha", c.sn_predicha, "S/N (dB) predicha para el óptimo aditivo", 3),
         ("ClfAUCEquivalentePredicha", 10 ** (c.sn_predicha / 20), "ROC-AUC equivalente a la S/N predicha", 3),
         ("ClfOptimo", ", ".join(f"{f} = {legible(v)}" for f, v in c.niveles_optimo.items()), "óptimo aditivo del L16"),
+    ])
+    del_modelo = vr.set_index("Factor").loc["modelo"]
+    latex.registrar_varias([
+        ("ClfModeloMejorNivel", registro.NOMBRES_LEGIBLES.get(del_modelo["mejor_nivel"], del_modelo["mejor_nivel"]).lower(),
+         "mejor nivel del factor modelo en el L16"),
+        ("ClfModeloPeorNivel", registro.NOMBRES_LEGIBLES.get(del_modelo["peor_nivel"], del_modelo["peor_nivel"]).lower(),
+         "peor nivel del factor modelo en el L16"),
+        ("ClfSNModeloMejor", float(del_modelo["media_mejor"]), "S/N media (dB) del mejor modelo en el L16", 3),
+        ("ClfSNModeloPeor", float(del_modelo["media_peor"]), "S/N media (dB) del peor modelo en el L16", 3),
     ])
     latex.exportar_tabla(vista.reset_index(names="Corrida"), "clf_l16_resultados", "Resultados del L16 de clasificación",
                          decimales=decimales)
@@ -468,30 +559,32 @@ def sobremuestreo(c):
         })
     c.tabla_sobre = t = pd.DataFrame(filas)
     tasa = float(np.mean(y_apilada))
-    r.agregar(tabla_html(t, f"Cada modelo didáctico sin y con sobremuestreo (media en los bloques; tasa real de no "
+    r.agregar(tabla_html(t, f"Cada modelo didáctico sin y con sobremuestreo (media en los bloques, tasa real de no "
                             f"conformes en los tramos: {tasa:.3f})", decimales=3, columnas_resaltadas="Δ AUC"))
     orden = t.sort_values("Δ AUC")
     perdedor, segundo, menor = orden.iloc[0], orden.iloc[1], orden.iloc[-1]
     texto_auc = (
-        f"El sobremuestreo le quita más ROC-AUC a «{perdedor['Modelo']}» ({perdedor['Δ AUC']:+.3f}) que a cualquier otro "
-        f"modelo; le siguen «{segundo['Modelo']}» ({segundo['Δ AUC']:+.3f}) y, en el otro extremo, «{menor['Modelo']}» "
-        f"casi no cambia ({menor['Δ AUC']:+.3f}). Hay, por tanto, una interacción modelo × desbalance: "
-        + ("en el perceptrón encaja con la fuga de copias hacia su validación interna, y en el árbol con que las copias "
-           "exactas de los no conformes le permiten aislar hojas pequeñas que no generalizan, mientras que la regresión "
-           "logística apenas se mueve porque repetir filas desplaza sobre todo su intercepto."
+        f"El sobremuestreo le quita más ROC-AUC a \"{perdedor['Modelo']}\" ({perdedor['Δ AUC']:+.3f}) que a cualquier "
+        f"otro modelo. Le sigue \"{segundo['Modelo']}\" ({segundo['Δ AUC']:+.3f}) y en el otro extremo "
+        f"\"{menor['Modelo']}\" casi no cambia ({menor['Δ AUC']:+.3f}). O sea que sí hay una interacción entre modelo y "
+        "desbalance. "
+        + ("En el perceptrón encaja con que las copias se filtran hacia su validación interna y en el árbol con que las "
+           "copias exactas de los no conformes le dejan aislar hojas pequeñas que no generalizan. La regresión logística "
+           "apenas se mueve porque repetir filas desplaza sobre todo su intercepto."
            if perdedor["Modelo"] == "Perceptrón multicapa" else
-           "no la encabeza el perceptrón, de forma que la fuga hacia su validación interna no es aquí el efecto dominante.")
+           "No la encabeza el perceptrón así que la filtración de copias hacia su validación interna no es aquí el efecto "
+           "que más pesa.")
     )
     sube = bool((t["Prob. media con"] > t["Prob. media sin"]).all())
     empeora = bool((t["Brier con"] > t["Brier sin"]).all())
     texto_cal = (
-        f"En todos los modelos la probabilidad media sube con el sobremuestreo (de {t['Prob. media sin'].min():.3f}–"
-        f"{t['Prob. media sin'].max():.3f} a {t['Prob. media con'].min():.3f}–{t['Prob. media con'].max():.3f}, frente a "
-        f"una tasa real de {tasa:.3f})" + (" y el Brier empeora" if empeora else "")
-        + ", que es la descalibración esperada: aunque el orden de las muestras cambie poco, las cifras dejan de ser "
-          "probabilidades, y la parte B necesita probabilidades." if sube else
-        "La probabilidad media no sube en todos los modelos con el sobremuestreo, de forma que la descalibración no es "
-        "uniforme y se revisa con el diagrama de fiabilidad más adelante."
+        f"En todos los modelos la probabilidad media sube con el sobremuestreo (pasa de entre "
+        f"{t['Prob. media sin'].min():.3f} y {t['Prob. media sin'].max():.3f} a entre {t['Prob. media con'].min():.3f} y "
+        f"{t['Prob. media con'].max():.3f}, con una tasa real de {tasa:.3f})" + (" y el Brier empeora" if empeora else "")
+        + ". Es la descalibración que esperábamos: Aunque el orden de las muestras cambie poco las cifras dejan de ser "
+          "probabilidades y la parte B necesita probabilidades." if sube else
+        "La probabilidad media no sube en todos los modelos con el sobremuestreo así que la descalibración no es pareja y "
+        "la revisamos más adelante con el diagrama de fiabilidad."
     )
     r.agregar(nota(texto_auc + "\n\n" + texto_cal, "hallazgo"))
     latex.registrar_varias([
@@ -524,12 +617,12 @@ def confirmacion(c):
         elegida="S/N observada" if obs >= res["sn"].max() else "Mejor corrida del L16", sello="Mayor S/N"))
     r.agregar(nota(
         f"La S/N observada ({obs:.3f} dB) difiere de la predicha en {diferencia:+.3f} dB, "
-        + (f"dentro de la tolerancia de ±{tol:.3f} dB, de forma que el modelo aditivo describe bien la tubería y las "
+        + (f"dentro de la tolerancia de ±{tol:.3f} dB. O sea que el modelo aditivo describe bien la tubería y las "
            "interacciones confundidas no parecen pesar en la combinación óptima." if c.coincide else
-           f"fuera de la tolerancia de ±{tol:.3f} dB, lo que indica que alguna interacción confundida pesa (la de modelo × "
-           "desbalance es la candidata natural) y el óptimo aditivo debe tomarse con cautela.")
-        + (" Además, la confirmación supera a la mejor de las 16 corridas." if obs > res["sn"].max()
-           else " Con todo, la confirmación no supera a la mejor corrida observada del L16."),
+           f"fuera de la tolerancia de ±{tol:.3f} dB. Eso indica que alguna interacción confundida pesa (la de modelo y "
+           "desbalance es la sospechosa natural) y que el óptimo aditivo hay que tomarlo con cautela.")
+        + (" Además la confirmación le gana a la mejor de las 16 corridas." if obs > res["sn"].max()
+           else " Con todo, la confirmación no le gana a la mejor corrida observada del L16."),
         "hallazgo" if c.coincide else "advertencia", titulo="Predicho frente a observado",
     ))
     c.resumen_completo, detalle = taguchi.factorial_completo(
@@ -542,8 +635,8 @@ def confirmacion(c):
             f"Factorial completo ({rc['corridas']} corridas)": detalle["respuesta"].loc[c.respuesta.index, "delta"]}),
             "Influencia de cada factor según el diseño"), "05_l16_contra_completo")
         r.agregar(nota(
-            f"El factorial completo tarda {rc['segundos']:.1f} s frente a {c.segundos_l16:.1f} s del L16; la correlación de "
-            f"rangos entre los deltas de ambos diseños es **{rc['correlacion_rangos']:.2f}** y coinciden en el mejor nivel "
+            f"El factorial completo tardó {rc['segundos']:.1f} s frente a {c.segundos_l16:.1f} s del L16. La correlación de "
+            f"rangos entre los deltas de los dos diseños es **{rc['correlacion_rangos']:.2f}** y coinciden en el mejor nivel "
             f"de {len(rc['factores_mismo_optimo'])} de los {len(c.nombres_factor)} factores.",
             "hallazgo",
         ))
@@ -552,11 +645,12 @@ def confirmacion(c):
             ["modelo", "desbalance"])["segundos"].sum().sort_values(ascending=False)
         lenta = tiempos.index[0]
         r.agregar(nota(
-            f"Con {c.segundos_l16:.1f} s para el L16, el factorial completo tardaría unos {rc['segundos_estimados']:.0f} s, "
-            f"por encima del límite de {taguchi.LIMITE_SEGUNDOS_COMPLETO:.0f} s fijado para la etapa, de forma que no se "
-            f"ejecuta (en el L16 la combinación más lenta es «{lenta[0]}» con desbalance «{legible(lenta[1])}», que se lleva "
-            f"el {100 * tiempos.iloc[0] / c.segundos_l16:.0f} % del tiempo). La comparación entre el atajo y el diseño "
-            "completo ya se hizo en la etapa 04; aquí la corrida de confirmación es la que pone a prueba el modelo aditivo.",
+            f"Con {c.segundos_l16:.1f} s para el L16 el factorial completo tardaría unos {rc['segundos_estimados']:.0f} s, "
+            f"por encima del límite de {taguchi.LIMITE_SEGUNDOS_COMPLETO:.0f} s que fijamos para la etapa. Por eso no lo "
+            f"corrimos. En el L16 la combinación más lenta es \"{lenta[0]}\" con desbalance \"{legible(lenta[1])}\", que "
+            f"se lleva el {100 * tiempos.iloc[0] / c.segundos_l16:.0f} % del tiempo. La comparación entre el atajo y el "
+            "diseño completo ya la hicimos en la etapa 04 y aquí es la corrida de confirmación la que pone a prueba el "
+            "modelo aditivo.",
             "limite",
         ))
     latex.registrar_varias([
@@ -582,10 +676,10 @@ def afinamiento(c):
             f"Mejores combinaciones de la rejilla ({len(t)} en total, {c.segundos_rejilla[m]:.1f} s)", decimales=4)
         for m, t in c.tablas_rejilla.items()}, titulo="Búsqueda en rejilla sobre los bloques temporales (ROC-AUC)"))
     r.agregar(nota(
-        f"La configuración base sale de la {origen}: "
-        + ", ".join(f"{f} = {legible(v)}" for f, v in c.configuracion.items() if f != "modelo") + ". "
+        f"La configuración de partida sale de la {origen} ("
+        + ", ".join(f"{f} = {legible(v)}" for f, v in c.configuracion.items() if f != "modelo") + "). "
         + " ".join(
-            f"En «{registro.NOMBRES_LEGIBLES[m]}» la rejilla elige "
+            f"En \"{registro.NOMBRES_LEGIBLES[m]}\" la rejilla elige "
             + ", ".join(f"{k} = {v:.4g}" if isinstance(v, float) else f"{k} = {legible(v)}"
                         for k, v in taguchi.hiper_de(b).items())
             + f", con ROC-AUC medio de {c.tablas_rejilla[m].iloc[0]['media']:.3f} en los bloques."
@@ -593,6 +687,7 @@ def afinamiento(c):
         "hallazgo",
     ))
     latex.registrar("ClfOrigenConfiguracion", origen, "de dónde sale la configuración que pasa al afinamiento")
+    _actualizar_paneles(c)
     for m in c.busquedas:
         clave = {"logistica": "Logistica", "arbol": "Arbol", "knn": "KNN", "mlp": "MLP"}[m]
         latex.registrar(f"ClfRejilla{clave}AUC", float(c.tablas_rejilla[m].iloc[0]["media"]),
@@ -615,20 +710,20 @@ def evaluacion_validacion(c):
         for m, p in c.proba_val.items()]
         + [{"Candidato": NOMBRE_DUMMY, "ROC-AUC": 0.5, "AUC inf.": np.nan, "AUC sup.": np.nan,
             "Precisión media": c.prev_val, "Brier": metricas.brier(c.y_val, np.full(len(c.y_val), c.prev_ent))}])
-    r.agregar(tabla_html(t, f"Bloque de validación ({len(c.y_val)} muestras; intervalos bootstrap al 95 %)", decimales=4,
+    r.agregar(tabla_html(t, f"Bloque de validación ({len(c.y_val)} muestras, intervalos bootstrap al 95 %)", decimales=4,
                          resaltar=(t["Candidato"] == registro.NOMBRES_LEGIBLES[final]).to_numpy(),
                          columnas_resaltadas="ROC-AUC"))
     rejilla = c.tablas_rejilla[final].iloc[0]["media"]
     r.agregar(nota(
-        f"Según la regla, el candidato final es «{registro.NOMBRES_LEGIBLES[final]}», con ROC-AUC de validación "
-        f"**{c.auc_val[final]:.3f}** (IC 95 %: {ic[final][1]:.3f} a {ic[final][2]:.3f}) frente a {c.auc_val[otro]:.3f} de "
-        f"«{registro.NOMBRES_LEGIBLES[otro]}»"
-        + (f" (la diferencia es menor que {TOLERANCIA_EMPATE} y se prefiere el más sencillo)." if final != mayor else ".")
-        + (f" Comparado con el ROC-AUC medio de la rejilla ({rejilla:.3f}), el de validación es "
-           + ("parecido, de forma que el modelo se sostiene en un periodo que no vio."
+        f"Según la regla el candidato final es \"{registro.NOMBRES_LEGIBLES[final]}\", con ROC-AUC de validación "
+        f"**{c.auc_val[final]:.3f}** (intervalo de {ic[final][1]:.3f} a {ic[final][2]:.3f}) frente a "
+        f"{c.auc_val[otro]:.3f} de \"{registro.NOMBRES_LEGIBLES[otro]}\""
+        + (f" (la diferencia es menor que {TOLERANCIA_EMPATE} y preferimos el más sencillo)." if final != mayor else ".")
+        + (f" Al lado del ROC-AUC medio de la rejilla ({rejilla:.3f}) el de validación es "
+           + ("parecido, o sea que el modelo se sostiene en un periodo que no vio."
               if abs(c.auc_val[final] - rejilla) < 0.02 else
-              ("mayor, " if c.auc_val[final] > rejilla else "menor, ")
-              + "una diferencia que refleja tanto el modelo (entrenado con más filas) como el periodo de validación.")),
+              ("mayor" if c.auc_val[final] > rejilla else "menor")
+              + ", una diferencia que viene tanto del modelo (entrenado con más filas) como del periodo de validación.")),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -668,26 +763,27 @@ def calibracion(c):
     ], titulo=f"Calibración (tasa real de no conformes en validación: {c.prev_val:.3f})",
         elegida="Calibrado" if c.usar_calibrado else "Sin calibrar", sello="Se usa"))
     r.agregar(nota(
-        (f"La tubería elegida sobremuestrea, de forma que se usa la versión calibrada por regla: su probabilidad media pasa "
+        (f"La tubería elegida sobremuestrea así que por la regla usamos la versión calibrada: Su probabilidad media pasa "
          f"de {proba_sin.mean():.3f} a {proba_cal.mean():.3f} y el Brier de {c.brier_sin:.4f} a {c.brier_cal:.4f}."
          if sobremuestrea else
-         "La tubería elegida no sobremuestrea; la calibración "
-         + (f"baja el Brier de {c.brier_sin:.4f} a {c.brier_cal:.4f}, así que se usa la versión calibrada."
+         "La tubería elegida no sobremuestrea y la calibración "
+         + (f"baja el Brier de {c.brier_sin:.4f} a {c.brier_cal:.4f} así que usamos la versión calibrada."
             if c.usar_calibrado else
-            f"no mejora el Brier ({c.brier_cal:.4f} frente a {c.brier_sin:.4f}), así que se conserva el modelo sin calibrar."))
-        + f" El ROC-AUC cambia de {auc_sin:.3f} a {c.auc_cal:.3f}"
-        + (", un cambio despreciable, porque la calibración sigmoide no altera el orden y el promedio de los cuatro modelos "
-           "de bloque apenas lo mueve." if abs(c.auc_cal - auc_sin) < 0.005 else
-           ", porque la versión calibrada promedia cuatro modelos ajustados con ventanas más cortas del entrenamiento.")
+            f"no mejora el Brier ({c.brier_cal:.4f} frente a {c.brier_sin:.4f}) así que nos quedamos con el modelo sin "
+            "calibrar."))
+        + f" El ROC-AUC pasa de {auc_sin:.3f} a {c.auc_cal:.3f}"
+        + (", un cambio despreciable porque la calibración sigmoide no altera el orden y promediar los cuatro modelos de "
+           "bloque apenas lo mueve." if abs(c.auc_cal - auc_sin) < 0.005 else
+           " porque la versión calibrada promedia cuatro modelos ajustados con ventanas más cortas del entrenamiento.")
         + f" La probabilidad media en validación queda en {p.mean():.3f} frente a una tasa real de {c.prev_val:.3f}"
         + (f" (en el entrenamiento era {c.prev_ent:.3f}), "
-           + ("de forma que el modelo calibrado sobrestima un poco el riesgo medio del periodo nuevo; para el umbral esto "
-              "pesa poco, porque se fija con los costos observados en la propia validación."
+           + ("o sea que el modelo calibrado sobrestima un poco el riesgo medio del periodo nuevo. Para el umbral eso pesa "
+              "poco porque lo fijamos con los costos observados en la propia validación."
               if p.mean() > c.prev_val * 1.05 else
-              "de forma que el modelo calibrado subestima un poco el riesgo medio del periodo nuevo; para el umbral esto "
-              "pesa poco, porque se fija con los costos observados en la propia validación."
+              "o sea que el modelo calibrado subestima un poco el riesgo medio del periodo nuevo. Para el umbral eso pesa "
+              "poco porque lo fijamos con los costos observados en la propia validación."
               if p.mean() < c.prev_val * 0.95 else
-              "prácticamente la misma cifra, así que la calibración se sostiene en un periodo que no vio.")),
+              "prácticamente la misma cifra. O sea que la calibración se sostiene en un periodo que no vio.")),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -714,10 +810,12 @@ def umbral_por_costo(c):
     teorico = t.loc[np.isclose(t["Umbral"], round(c.umbral_teorico, 3))].iloc[0]
     vista = t[["Umbral", "Alertas", "Alertas por semana", "Precisión", "Recall", "FP", "FN", "Costo"]]
     decimales = {"Umbral": 3, "Alertas por semana": 1, "Precisión": 3, "Recall": 3}
-    r.agregar(tabla_html(vista, f"Recorrido de umbrales en validación ({c.semanas_val} semanas; costo = {fp}·FP + {fn}·FN)",
-                         decimales=decimales, resaltar=np.isclose(t["Umbral"], u), columnas_resaltadas="Costo",
-                         maximo_filas=30))
+    tabla_umbrales = tabla_html(vista, f"Recorrido de umbrales en validación ({c.semanas_val} semanas, costo = {fp} FP + "
+                                f"{fn} FN)", decimales=decimales, resaltar=np.isclose(t["Umbral"], u),
+                                columnas_resaltadas="Costo", maximo_filas=30)
     r.figura(graficos_clf.figura_umbrales(t, u, c.umbral_teorico), "05_umbrales")
+    c.paneles.proba_validacion, c.paneles.y_validacion = c.p_val, c.y_val
+    _actualizar_paneles(c)
 
     positivos, negativos = int(c.y_val.sum()), int(len(c.y_val) - c.y_val.sum())
     c.costo_nada, c.costo_todo = fn * positivos, fp * negativos
@@ -730,12 +828,16 @@ def umbral_por_costo(c):
         {"titulo": f"Modelo con umbral {u:.3f}", "valor": float(f["Costo"]), "etiqueta": "costo en validación",
          "decimales": 0, "puntos": [f"{f['Alertas por semana']:.1f} alertas por semana",
                                     f"precisión {f['Precisión']:.3f}, recall {f['Recall']:.3f}",
-                                    f"IC 95 % del costo: {ic[1]:.0f} a {ic[2]:.0f}"]},
+                                    f"intervalo del costo de {ic[1]:.0f} a {ic[2]:.0f}"]},
         {"titulo": "Alertar todas", "valor": c.costo_todo, "etiqueta": "costo en validación", "decimales": 0,
          "puntos": [f"{len(c.y_val) / c.semanas_val:.1f} alertas por semana", f"precisión {c.prev_val:.3f}"]},
     ], titulo="El umbral elegido frente a las políticas sin modelo", elegida=1, sello="Menor costo"))
-    r.figura(graficos_clf.figura_confusion(int(f["TN"]), int(f["FP"]), int(f["FN"]), int(f["TP"]),
-                                           f"Matriz de confusión en validación (umbral {u:.3f})"), "05_confusion")
+    confusion = graficos_clf.figura_confusion(int(f["TN"]), int(f["FP"]), int(f["FN"]), int(f["TP"]),
+                                              f"Matriz de confusión en validación (umbral {u:.3f})")
+    guardar_figura(confusion, "05_confusion")
+    plt.close(confusion)
+    r.agregar(pestanas({"Matriz de confusión": confusion, "Recorrido de umbrales": tabla_umbrales},
+                       titulo="El umbral elegido por dentro"))
     trivial = min(c.costo_nada, c.costo_todo)
     r.agregar(nota(
         f"El umbral de menor costo es **{u:.3f}** "
@@ -744,21 +846,21 @@ def umbral_por_costo(c):
            f"(el teórico, {c.umbral_teorico:.3f}, cuesta {teorico['Costo']:.0f} frente a {f['Costo']:.0f}, una diferencia "
            "pequeña que confirma que las probabilidades están razonablemente calibradas)"
            if abs(teorico["Costo"] - f["Costo"]) <= 0.03 * f["Costo"] else
-           f"(el teórico, {c.umbral_teorico:.3f}, cuesta {teorico['Costo']:.0f} frente a {f['Costo']:.0f}, de forma que la "
+           f"(el teórico, {c.umbral_teorico:.3f}, cuesta {teorico['Costo']:.0f} frente a {f['Costo']:.0f} así que la "
            "calibración no es perfecta y conviene fijar el umbral con datos)")
-        + f". Con él se levantan **{f['Alertas por semana']:.1f} alertas por semana**, de las cuales acierta el "
-          f"{100 * f['Precisión']:.0f} % (precisión {f['Precisión']:.3f}), y se alerta el {100 * f['Recall']:.0f} % de los "
-          f"no conformes. Dicho de otra forma, por cada no conforme detectado se revisan "
+        + f". Con él se levantan **{f['Alertas por semana']:.1f} alertas por semana** y acierta el "
+          f"{100 * f['Precisión']:.0f} % de ellas (precisión {f['Precisión']:.3f}). De los no conformes alerta el "
+          f"{100 * f['Recall']:.0f} %. Dicho de otra forma, por cada no conforme que detecta se revisan "
           f"{f['FP'] / max(f['TP'], 1):.1f} muestras que salen conformes.\n\n"
         + (f"El costo baja de {trivial:.0f} (la mejor política sin modelo) a {f['Costo']:.0f}, un ahorro del "
-           f"{100 * (1 - f['Costo'] / trivial):.0f} %, con un intervalo bootstrap del costo de {ic[1]:.0f} a {ic[2]:.0f}"
-           + (" que queda por debajo de esa política." if ic[2] < trivial else
-              " que llega a tocar el costo de esa política, de forma que el ahorro no es seguro.")
+           f"{100 * (1 - f['Costo'] / trivial):.0f} %. El intervalo bootstrap del costo va de {ic[1]:.0f} a {ic[2]:.0f}"
+           + (", todo por debajo de esa política." if ic[2] < trivial else
+              " así que llega a tocar el costo de esa política y el ahorro no es seguro.")
            if f["Costo"] < trivial else
-           f"El modelo no mejora a la mejor política sin modelo ({trivial:.0f}), de forma que con estos costos no conviene "
+           f"El modelo no mejora a la mejor política sin modelo ({trivial:.0f}) así que con estos costos no conviene "
            "usarlo para alertar.")
-        + " Como el umbral se eligió en estos mismos datos, el costo de validación es algo optimista; la etapa 07 lo medirá "
-          "en la prueba con el umbral ya fijo.",
+        + " Eso sí, como elegimos el umbral en estos mismos datos el costo de validación es algo optimista. La etapa 07 lo "
+          "mide en la prueba con el umbral ya fijo.",
         "hallazgo" if f["Costo"] < trivial else "advertencia",
     ))
     latex.registrar_varias([
@@ -801,14 +903,17 @@ def congelar(c):
     r.agregar(tarjetas([
         {"titulo": "Modelo congelado", "valor": c.auc_final, "decimales": 3, "prefijo": "AUC ",
          "detalle": registro.NOMBRES_LEGIBLES[c.final] + (" calibrado" if c.usar_calibrado else "")},
-        {"titulo": "IC 95 % del AUC", "valor": c.ic_auc[1], "decimales": 3, "color": "verde",
-         "detalle": f"a {c.ic_auc[2]:.3f} (bootstrap en validación)"},
+        {"titulo": "Intervalo del AUC", "valor": c.ic_auc[1], "decimales": 3, "color": "verde",
+         "detalle": f"hasta {c.ic_auc[2]:.3f} (bootstrap en validación)"},
         {"titulo": "Umbral de alerta", "valor": c.umbral, "decimales": 3, "color": "naranja",
          "detalle": f"{f['Alertas por semana']:.1f} alertas por semana, precisión {f['Precisión']:.2f}"},
         {"titulo": "Filas del reajuste", "valor": len(c.desarrollo), "decimales": 0, "color": "morado",
          "detalle": "entrenamiento + validación"},
     ]))
     hiper = taguchi.hiper_de(c.busquedas[c.final])
+    c.taguchi = taguchi.taguchi_para_artefacto(c.factores, COLUMNAS_L16, c.respuesta, c.niveles_optimo, c.sn_predicha,
+                                               c.conf, c.coincide, c.segundos_l16, c.resumen_completo,
+                                               efectos=c.efectos, resultados=c.resultados_l16)
     latex.registrar_varias([
         ("ClfAUCValidacion", c.auc_final, "ROC-AUC de validación del modelo que se congela", 3),
         ("ClfAUCValidacionInf", c.ic_auc[1], "límite inferior del IC 95 % del ROC-AUC en validación", 3),
@@ -824,7 +929,7 @@ def congelar(c):
 
 
 # ----------------------------------------------------------------------
-# Parte B · Bayes
+# Parte B: Bayes
 # ----------------------------------------------------------------------
 def sensibilidad_especificidad(c):
     r = Resultado()
@@ -838,12 +943,12 @@ def sensibilidad_especificidad(c):
                          decimales=3))
     menos_esp, menos_sens = se["especificidad"].idxmin(), se["sensibilidad"].idxmin()
     r.agregar(nota(
-        f"La especificidad va de {se['especificidad'].min():.3f} («{menos_esp}») a {se['especificidad'].max():.3f}, y la "
-        f"sensibilidad de {se['sensibilidad'].min():.3f} («{menos_sens}») a {se['sensibilidad'].max():.3f}. Cabe mencionar "
-        "que un control positivo lleva una carga alta y conocida, y un control negativo se manipula en condiciones ideales, "
-        "de forma que ambos números describen el ensayo en su mejor día: con muestras reales la sensibilidad puede ser "
-        "menor (cargas bajas) y la especificidad también (contaminación durante la manipulación de la muestra, que el "
-        "control estéril no sufre).",
+        f"La especificidad va de {se['especificidad'].min():.3f} (\"{menos_esp}\") a {se['especificidad'].max():.3f} y "
+        f"la sensibilidad de {se['sensibilidad'].min():.3f} (\"{menos_sens}\") a {se['sensibilidad'].max():.3f}. Eso sí, "
+        "un control positivo lleva una carga alta y conocida y un control negativo se manipula en condiciones ideales. O "
+        "sea que los dos números describen el ensayo en su mejor día: Con muestras reales la sensibilidad puede ser menor "
+        "(cargas bajas) y la especificidad también (la muestra se puede contaminar al manipularla, algo que el control "
+        "estéril no sufre).",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -899,15 +1004,15 @@ def vpp_por_ensayo(c):
     r.figura(graficos_clf.figura_vpp_ensayo(t), "05_vpp_ensayo")
     peor, mejor = t.sort_values("vpp").iloc[0], t.sort_values("vpp").iloc[-1]
     r.agregar(nota(
-        f"Ponderando por el número de positivos, el VPP estimado del laboratorio es **{g:.3f}**: de cada cien resultados no "
-        f"conformes, unos {100 * (1 - g):.0f} serían falsos positivos según los controles. El ensayo menos fiable es "
-        f"«{peor['ensayo']}», con VPP {peor['vpp']:.3f} (IC {peor['vpp_inf']:.3f} a {peor['vpp_sup']:.3f}) y una "
-        f"prevalencia corregida de {peor['prevalencia_corregida']:.3f}, y el más fiable «{mejor['ensayo']}» "
-        f"({mejor['vpp']:.3f}).\n\n"
-        "La diferencia entre ensayos no viene solo de la especificidad: un ensayo con prevalencia baja da muchos falsos "
-        "positivos en proporción aunque su especificidad sea alta, que es exactamente el efecto descrito en la sección 8."
+        f"Si ponderamos por el número de positivos el VPP estimado del laboratorio es **{g:.3f}**: De cada cien "
+        f"resultados no conformes unos {100 * (1 - g):.0f} serían falsos positivos según los controles. El ensayo menos "
+        f"fiable es \"{peor['ensayo']}\", con VPP {peor['vpp']:.3f} (intervalo de {peor['vpp_inf']:.3f} a "
+        f"{peor['vpp_sup']:.3f}) y una prevalencia corregida de {peor['prevalencia_corregida']:.3f}. El más fiable es "
+        f"\"{mejor['ensayo']}\" ({mejor['vpp']:.3f}).\n\n"
+        "La diferencia entre ensayos no viene solo de la especificidad: Un ensayo con prevalencia baja da muchos falsos "
+        "positivos en proporción aunque su especificidad sea alta, que es justo el efecto de la sección 8."
         + (" En algunos sorteos la tasa observada queda por debajo de la de falsos positivos y la prevalencia corregida se "
-           "recorta a cero (" + ", ".join(f"«{e}»: {100 * f:.0f} % de los sorteos" for e, f in
+           "recorta a cero (" + ", ".join(f'"{e}" en el {100 * f:.0f} % de los sorteos' for e, f in
                                           t.set_index("ensayo")["sorteos_previa_cero"].items() if f > 0.01)
            + "), lo que ensancha el intervalo hacia VPP = 0." if (t["sorteos_previa_cero"] > 0.01).any() else ""),
         "hallazgo",
@@ -924,6 +1029,7 @@ def vpp_por_ensayo(c):
         ("ClfVPPMejor", float(mejor["vpp"]), "VPP del ensayo más fiable", 3),
     ])
     latex.exportar_tabla(vista, "bayes_vpp_ensayo", "VPP por ensayo en el desarrollo", decimales=3)
+    _actualizar_paneles(c)
     return r
 
 
@@ -960,19 +1066,19 @@ def vpp_por_muestra(c):
          "decimales": 3, "puntos": [f"p(x) = {fila['p_x']:.3f}, π(x) = {fila['previa_x']:.3f}",
                                     f"P(falso positivo) = {1 - fila['vpp_x']:.3f}"] + describir(fila)}
         for nombre, fila in (("bajo", bajo), ("alto", alto))
-    ], titulo=f"El mismo positivo de «{ejemplo}» en dos muestras distintas (percentiles 10 y 90 de π(x))"))
+    ], titulo=f"El mismo positivo de \"{ejemplo}\" en dos muestras distintas (percentiles 10 y 90 de π(x))"))
     r.agregar(nota(
-        f"Las dos muestras dieron positivo en el mismo ensayo, con la misma sensibilidad y especificidad, y sin embargo la "
+        f"Las dos muestras dieron positivo en el mismo ensayo (misma sensibilidad y especificidad) y aun así la "
         f"probabilidad de que el positivo sea falso es {1 - bajo['vpp_x']:.3f} en la de riesgo bajo y "
-        f"{1 - alto['vpp_x']:.3f} en la de riesgo alto: la previa que aporta el clasificador cambia la lectura del "
-        "resultado. "
-        + f"Entre los positivos de validación, el VPP(x) va de {pos['vpp_x'].min():.3f} a {pos['vpp_x'].max():.3f} "
-          f"(percentiles 10 y 90: {pos['vpp_x'].quantile(0.1):.3f} y {pos['vpp_x'].quantile(0.9):.3f})"
-        + (f"; en el {100 * c.recorte_cero:.1f} % la previa se recorta a cero (VPP = 0)" if c.recorte_cero > 0 else
-           "; ninguna previa se recorta a cero")
+        f"{1 - alto['vpp_x']:.3f} en la de riesgo alto. O sea que la previa que aporta el clasificador cambia cómo leemos "
+        "el resultado. "
+        + f"Entre los positivos de validación el VPP(x) va de {pos['vpp_x'].min():.3f} a {pos['vpp_x'].max():.3f} "
+          f"(percentiles 10 y 90 de {pos['vpp_x'].quantile(0.1):.3f} y {pos['vpp_x'].quantile(0.9):.3f})"
+        + (f". En el {100 * c.recorte_cero:.1f} % la previa se recorta a cero (VPP = 0)" if c.recorte_cero > 0 else
+           ". Ninguna previa se recorta a cero")
         + (f" y en el {100 * c.recorte_uno:.1f} % a uno." if c.recorte_uno > 0 else " y ninguna a uno.")
-        + " Con un ROC-AUC moderado la previa por muestra separa los casos solo en parte, de forma que el VPP(x) sirve "
-          "para ordenar qué positivos revisar primero, no para descartar un positivo sin reensayo.",
+        + " Con un ROC-AUC moderado la previa por muestra separa los casos solo en parte así que el VPP(x) sirve para "
+          "ordenar qué positivos revisar primero y no para descartar un positivo sin reensayo.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -1019,20 +1125,20 @@ def reensayo(c):
     c.observado_global = obs = float(re["falso_positivo"].mean())
     r.agregar(nota(
         f"Tras dos positivos la posterior queda entre {t['Posterior (+, +)'].min():.3f} y {t['Posterior (+, +)'].max():.3f} "
-        "según el ensayo, de forma que un reensayo positivo prácticamente confirma el resultado; tras un positivo y un "
-        f"negativo baja a entre {t['Posterior (+, −)'].min():.3f} y {t['Posterior (+, −)'].max():.3f}, es decir, un "
+        "según el ensayo, o sea que un reensayo positivo prácticamente confirma el resultado. Tras un positivo y un "
+        f"negativo baja a entre {t['Posterior (+, −)'].min():.3f} y {t['Posterior (+, −)'].max():.3f}. Es decir que un "
         "reensayo negativo hace más probable la falsa alarma pero no la demuestra.\n\n"
-        f"En el desarrollo se reensayaron {c.reensayos_total} positivos y salió conforme el {100 * obs:.1f} %, frente a un "
+        f"En el desarrollo se reensayaron {c.reensayos_total} positivos y salió conforme el {100 * obs:.1f} %, frente al "
         f"{100 * esp:.1f} % que predicen los controles"
-        + (", así que el laboratorio observa más reensayos conformes de los que la especificidad de los controles explica: "
-           "o los positivos reales tienen más falsos de lo que dicen los controles (especificidad efectiva menor que la "
-           "nominal), o los reensayos se piden de preferencia en los positivos dudosos." if obs > esp * 1.15 else
-           ", así que el laboratorio observa menos reensayos conformes de los que predicen los controles, lo que apunta a "
+        + (". O sea que el laboratorio ve más reensayos conformes de los que explica la especificidad de los controles: O "
+           "los positivos reales tienen más falsos de lo que dicen los controles (la especificidad efectiva es menor que "
+           "la nominal) o los reensayos se piden sobre todo en los positivos dudosos." if obs > esp * 1.15 else
+           ". O sea que el laboratorio ve menos reensayos conformes de los que predicen los controles, lo que apunta a "
            "que los reensayos se piden en positivos de por sí más sólidos o a que los controles subestiman la especificidad."
            if obs < esp * 0.85 else
-           ", de forma que los controles y la experiencia del laboratorio son coherentes.")
-        + "\n\nCabe mencionar que «reensayo conforme» no equivale a «falso positivo»: una muestra contaminada puede dar "
-          "negativo en el reensayo (con probabilidad 1 − s, más si la contaminación es baja o no homogénea) y un falso "
+           " así que los controles y la experiencia del laboratorio cuadran.")
+        + "\n\nEso sí, \"reensayo conforme\" no es lo mismo que \"falso positivo\": Una muestra contaminada puede dar "
+          "negativo en el reensayo (con probabilidad 1 − s, más si la contaminación es baja o no está pareja) y un falso "
           "positivo puede repetirse si su causa es sistemática (un lote de medio contaminado), que es justo el caso en que "
           "falla el supuesto de independencia.",
         "hallazgo",
@@ -1057,8 +1163,8 @@ def auditoria(c):
     verdad = carga.leer_verdad()
     c.resumen_auditoria = None
     if verdad is None:
-        r.agregar(nota("No hay verdad oculta (datos reales): la auditoría no aplica y la única referencia es el reensayo, "
-                       "con las limitaciones descritas en la sección anterior.", "simulacion"))
+        r.agregar(nota("No hay verdad oculta (datos reales): La auditoría no aplica y la única referencia es el reensayo, "
+                       "con las limitaciones de la sección anterior.", "simulacion"))
         return r
     verdad_m = verdad["muestras"][["id_muestra", "contaminada_real"]]
     verdad_e = verdad["ensayos"].set_index("ensayo")
@@ -1079,10 +1185,10 @@ def auditoria(c):
             "VPP real": float(del_ensayo.loc[positivos, "contaminada_real"].mean()),
         })
     t = pd.DataFrame(filas)
-    t["Dentro del IC"] = ((t["VPP real"] >= t["vpp_inf"]) & (t["VPP real"] <= t["vpp_sup"])).map({True: "sí", False: "no"})
+    t["Dentro del IC"] = ((t["VPP real"] >= t["vpp_inf"]) & (t["VPP real"] <= t["vpp_sup"])).map({True: "Sí", False: "No"})
     real_global = float(auditadas.loc[auditadas[c.objetivo] == 1, "contaminada_real"].mean())
     vista = t.drop(columns=["vpp_inf", "vpp_sup"]).rename(columns={"ensayo": "Ensayo"})
-    r.agregar(tabla_html(vista, "Auditoría: estimado con controles frente a la verdad de la simulación (desarrollo)",
+    r.agregar(tabla_html(vista, "Auditoría: Estimado con controles frente a la verdad de la simulación (desarrollo)",
                          decimales=3))
     r.figura(graficos_clf.figura_vpp_ensayo(t.rename(columns={"VPP estimado": "vpp", "VPP real": "vpp_real"}),
                                             columna_real="vpp_real",
@@ -1101,24 +1207,24 @@ def auditoria(c):
     fp_real = float(1 - c.reensayadas.merge(verdad_m, on="id_muestra")["contaminada_real"].mean())
     sesgo = (t["Espec. estimada"] - t["Espec. efectiva real"]).mean()
     peor = t.sort_values("VPP real").iloc[0]
-    dentro = int((t["Dentro del IC"] == "sí").sum())
+    dentro = int((t["Dentro del IC"] == "Sí").sum())
     r.agregar(nota(
         f"El VPP real del desarrollo es **{real_global:.3f}** frente a {c.vpp_global:.3f} estimado con los controles"
-        + (f". La especificidad de los controles supera en promedio a la efectiva en {sesgo:.4f}: en la simulación las "
-           "muestras se contaminan también durante su manipulación, algo que el control estéril no sufre, y como la "
-           "prevalencia es baja esa pequeña diferencia de especificidad se traduce en un VPP sobreestimado."
+        + (f". La especificidad de los controles supera en promedio a la efectiva en {sesgo:.4f} porque en la simulación "
+           "las muestras también se contaminan al manipularlas, algo que el control estéril no sufre. Como la prevalencia "
+           "es baja esa diferencia pequeña de especificidad termina en un VPP sobreestimado."
            if sesgo > 0.002 and c.vpp_global > real_global else ".")
-        + f" El ensayo con menor VPP real es «{peor['ensayo']}» ({peor['VPP real']:.3f}, estimado "
-          f"{peor['VPP estimado']:.3f}), y el VPP real cae dentro del intervalo estimado en {dentro} de los {len(t)} "
+        + f" El ensayo con menor VPP real es \"{peor['ensayo']}\" ({peor['VPP real']:.3f}, estimado "
+          f"{peor['VPP estimado']:.3f}) y el VPP real cae dentro del intervalo estimado en {dentro} de los {len(t)} "
           "ensayos.\n\n"
-        + f"Entre los positivos de validación, el VPP(x) separa contaminadas de falsas alarmas con un ROC-AUC de "
-          f"{auc_x:.3f} (el VPP por ensayo, {auc_e:.3f}) y su Brier es {brier_x:.4f} frente a {brier_e:.4f} del VPP por "
-          "ensayo"
-        + (", de forma que la previa por muestra sí aporta información sobre cuáles positivos son reales."
+        + f"Entre los positivos de validación el VPP(x) separa contaminadas de falsas alarmas con un ROC-AUC de "
+          f"{auc_x:.3f} (el del VPP por ensayo es {auc_e:.3f}) y su Brier es {brier_x:.4f} frente a {brier_e:.4f} del "
+          "VPP por ensayo"
+        + (", o sea que la previa por muestra sí aporta información sobre cuáles positivos son reales."
            if brier_x < brier_e else
-           ", de forma que la previa por muestra no mejora la probabilidad del VPP por ensayo en estos datos.")
-        + f"\n\nEntre los positivos reensayados, la fracción realmente no contaminada es {fp_real:.3f}, frente a un "
-          f"{c.observado_global:.3f} de reensayos conformes: la diferencia es el error del propio reensayo.",
+           ", o sea que en estos datos la previa por muestra no mejora la probabilidad del VPP por ensayo.")
+        + f"\n\nEntre los positivos reensayados la fracción que de verdad no estaba contaminada es {fp_real:.3f}, frente a "
+          f"un {c.observado_global:.3f} de reensayos conformes. La diferencia es el error del propio reensayo.",
         "simulacion", titulo="Lo que dice la verdad oculta",
     ))
     c.resumen_auditoria = {
@@ -1165,10 +1271,10 @@ def regla_reensayo(c):
         c.tasa_alto = float(con_razon.loc[~bajo, "falso_positivo"].mean())
         c.captura = float(con_razon.loc[bajo, "falso_positivo"].sum() / con_razon["falso_positivo"].sum())
         texto = (
-            f"Cuando el recuento supera al límite por poco (log10(recuento / límite) ≤ {borde:.2f}, es decir, menos de "
-            f"{10 ** borde:.2f} veces el límite), el {100 * c.tasa_bajo:.0f} % de los reensayos sale conforme, frente al "
-            f"{100 * c.tasa_alto:.0f} % cuando lo supera por más. La regla que se desprende es simple: reensayar antes de "
-            f"informar todo no conforme cuantitativo con recuento por debajo de {10 ** borde:.2f} veces el límite; ese "
+            f"Cuando el recuento pasa el límite por poco (log10(recuento / límite) ≤ {borde:.2f}, o sea menos de "
+            f"{10 ** borde:.2f} veces el límite) sale conforme el {100 * c.tasa_bajo:.0f} % de los reensayos, frente al "
+            f"{100 * c.tasa_alto:.0f} % cuando lo pasa por más. La regla que sale de ahí es simple: Reensayar antes de "
+            f"informar todo no conforme cuantitativo con recuento por debajo de {10 ** borde:.2f} veces el límite. Ese "
             f"grupo es el {100 * bajo.mean():.0f} % de los reensayados con recuento y concentra el {100 * c.captura:.0f} % "
             "de los reensayos conformes.")
         latex.registrar_varias([
@@ -1181,20 +1287,19 @@ def regla_reensayo(c):
         ])
     else:
         c.borde, c.tasa_bajo, c.tasa_alto, c.captura = None, np.nan, np.nan, np.nan
-        texto = (f"Ningún tramo de la razón alcanza una fracción de reensayos conformes de {UMBRAL_DUDA:.0%}, de forma "
-                 "que la razón ordena el riesgo pero no define por sí sola un grupo donde el falso positivo sea lo más "
-                 "probable.")
+        texto = (f"Ningún tramo de la razón llega a una fracción de reensayos conformes de {UMBRAL_DUDA:.0%} así que la "
+                 "razón ordena el riesgo pero no define por sí sola un grupo donde el falso positivo sea lo más probable.")
     r.agregar(nota(
         texto + f" En los ensayos sin recuento (presencia o ausencia, {len(sin_razon)} reensayados) la fracción de "
-                f"reensayos conformes es {sin_razon['falso_positivo'].mean():.3f}, y para ellos la referencia es el VPP de "
-                "su ensayo. La interpretación es física: un recuento apenas por encima del límite es compatible con una "
-                "contaminación puntual durante el análisis, mientras que un recuento muy alto difícilmente aparece por un "
+                f"reensayos conformes es {sin_razon['falso_positivo'].mean():.3f} y para ellos la referencia es el VPP de "
+                "su ensayo. La explicación es física: Un recuento apenas por encima del límite puede venir de una "
+                "contaminación puntual durante el análisis, mientras que un recuento muy alto difícilmente sale de un "
                 "error de manipulación.",
         "hallazgo", titulo="Regla para el reensayo",
     ))
     r.agregar(aviso_origen(
-        "Los datos son **simulados**: las cifras muestran que el procedimiento funciona de punta a punta, pero el VPP real "
-        "del laboratorio dependerá de sus controles y de su exportación, que se procesarán con el mismo código."))
+        "Los datos son **simulados**: Las cifras muestran que el procedimiento funciona de punta a punta pero el VPP real "
+        "del laboratorio va a depender de sus controles y de su exportación, que se procesarían con el mismo código."))
     latex.registrar_varias([
         ("ClfSinRazonReensayados", len(sin_razon), "reensayados de ensayos sin recuento"),
         ("ClfSinRazonConformes", float(sin_razon["falso_positivo"].mean()), "fracción conforme en ensayos sin recuento", 3),
@@ -1236,8 +1341,7 @@ def _guardar_artefacto(c):
         "costo_validacion": {"estimado": c.ic_costo[0], "inferior": c.ic_costo[1], "superior": c.ic_costo[2]},
         "didactica": c.tabla_didactica.to_dict("records"),
         "sobremuestreo": c.tabla_sobre.to_dict("records"),
-        "taguchi": taguchi.taguchi_para_artefacto(c.factores, COLUMNAS_L16, c.respuesta, c.niveles_optimo, c.sn_predicha,
-                                                  c.conf, c.coincide, c.segundos_l16, c.resumen_completo),
+        "taguchi": c.taguchi,
         "rejilla": {m: {"hiper": taguchi.hiper_de(b), "auc_bloques": float(c.tablas_rejilla[m].iloc[0]["media"]),
                         "segundos": c.segundos_rejilla[m]} for m, b in c.busquedas.items()},
         "bayes": {

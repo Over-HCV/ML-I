@@ -8,7 +8,10 @@ umbral de alerta, red neuronal, Bayes, K-means, KNN y árbol podado. Cada
 `proyecto.etapas.presentacion.iniciar()` (arreglos pequeños del desarrollo,
 nunca de la prueba) y devuelve un contenedor de widgets: controles arriba y
 la figura, con el estilo editorial del proyecto, debajo. Cada panel marca el
-valor que el proyecto eligió (congelado) junto al valor actual.
+valor que el proyecto eligió (congelado) junto al valor actual. La excepción
+es `panel_taguchi(taguchi, congelada)`, que no reajusta nada: recibe la
+sección `taguchi` del artefacto de una etapa con L16 (04 o 05) y la
+configuración congelada, y lo usan los notebooks de esas etapas.
 
 Sin núcleo (notebook guardado y abierto sin ejecutar), la celda conserva la
 figura del estado inicial como imagen estática: se publica aparte, con un
@@ -46,7 +49,7 @@ MAXIMO_ALFAS_ARBOL = 24         # pasos del deslizador de poda
 GRUPOS = range(2, 9)
 MUESTRAS_ICONOS = 1000          # cuadritos del diagrama de Bayes (40 × 25)
 NOMBRES_PESOS = {"uniform": "uniforme", "distance": "por distancia"}
-TEXTO_SIN_NUCLEO = "Panel interactivo: ejecute la celda con el núcleo en marcha para mover los controles."
+TEXTO_SIN_NUCLEO = "Panel interactivo: Ejecute la celda con el núcleo en marcha para mover los controles."
 
 _ESTILO = f"""<style>
 .pf-int {{background:{PAPEL};border-top:2px solid {TINTA};padding:10px 6px 4px;max-width:980px;color:{TINTA}}}
@@ -90,7 +93,7 @@ class Panel(w.VBox):
         self.tiempos, self.errores = [], []
         self._pausa = False
         self._estatica = None
-        cabecera = w.HTML(f'{_ESTILO}<div class="pf-int-rotulo">{rotulo} · interactivo</div>'
+        cabecera = w.HTML(f'{_ESTILO}<div class="pf-int-rotulo">{rotulo} (interactivo)</div>'
                           f'<div class="pf-int-titulo">{titulo}</div><div class="pf-int-nota">{explicacion}</div>')
         fila = w.HBox(list(controles.values()), layout=w.Layout(flex_flow="row wrap", align_items="center"))
         super().__init__([cabecera, fila, self.salida])
@@ -127,7 +130,7 @@ class Panel(w.VBox):
     def redibujar(self):
         try:
             png = self._calcular()
-        except Exception as error:  # noqa: BLE001 — el panel informa el error en vez de romper la celda
+        except Exception as error:  # noqa: BLE001 (el panel informa el error en vez de romper la celda)
             self.errores.append(f"{type(error).__name__}: {error}")
             with self.salida:
                 clear_output(wait=True)
@@ -167,7 +170,7 @@ def _marca_elegida(ax, x, texto, color=TENUE):
 
 
 def _pct(valor, decimales=1):
-    return "—" if np.isnan(valor) else f"{100 * valor:.{decimales}f} %"
+    return "" if np.isnan(valor) else f"{100 * valor:.{decimales}f} %"
 
 
 def _cuadro_cifras(ax, lineas, x=0.98, y=0.96, ha="right"):
@@ -183,12 +186,12 @@ def _submuestras(d):
 
 def _texto_submuestra(d):
     return (f"Se reentrena en vivo con una submuestra fija de <b>{len(d.sub_y_ent)}</b> filas de entrenamiento y se "
-            f"mide en <b>{len(d.sub_y_val)}</b> de validación (semilla del proyecto): las cifras son de esa "
-            "submuestra, no las del modelo congelado.")
+            f"mide en <b>{len(d.sub_y_val)}</b> de validación (semilla del proyecto): Las cifras son de esa "
+            "submuestra y no las del modelo congelado.")
 
 
 # ----------------------------------------------------------------------
-# 1 · Umbral de decisión
+# 1. Umbral de decisión
 # ----------------------------------------------------------------------
 def _conteos(proba, y, umbrales):
     """VN, FP, FN, VP para cada umbral (alerta si proba ≥ t), sin recorrer filas."""
@@ -221,7 +224,7 @@ def _matriz(ax, vn, fp, fn, vp):
 def panel_umbral(d):
     """Deslizador del umbral t sobre las probabilidades de validación del
     clasificador elegido (sin reajustar): matriz de confusión, precisión,
-    recall, alertas por semana y costo `COSTO_FP·FP + COSTO_FN·FN`, con la
+    recall, alertas por semana y costo `COSTO_FP FP + COSTO_FN FN`, con la
     curva de costo, el umbral actual y el elegido en la etapa 05. La razón
     FN/FP se puede cambiar para ver cómo se mueve el umbral óptimo."""
     datos = d.interactivo
@@ -253,11 +256,11 @@ def panel_umbral(d):
             a2.axvline(optimo, color=TINTAS["costo"], ls="--", lw=1, alpha=0.7)
         a2.set_xlabel("umbral t")
         a2.set_ylabel("costo en validación")
-        a2.set_title(f"Costo = {COSTO_FP}·FP + {costo_fn:g}·FN · óptimo t = {optimo:.3f}", fontsize=12)
+        a2.set_title(f"Costo = {COSTO_FP} FP + {costo_fn:g} FN, óptimo t = {optimo:.3f}", fontsize=12)
         a2.set_xlim(0, 0.62)
         fig.tight_layout(rect=(0, 0.1, 1, 1))
-        cifras = (f"precisión {_pct(precision)}   ·   recall {_pct(recall)}   ·   {(vp + fp) / semanas:.1f} alertas por "
-                  f"semana   ·   costo {costo:.0f}")
+        cifras = (f"precisión {_pct(precision)},   recall {_pct(recall)},   {(vp + fp) / semanas:.1f} alertas por "
+                  f"semana,   costo {costo:.0f}")
         fig.text(0.5, 0.02, cifras, ha="center", va="bottom", fontsize=11, fontfamily=familia("cifras"), color=TINTA,
                  bbox={"boxstyle": "square,pad=0.5", "fc": PAPEL, "ec": FILETE, "lw": 0.6})
         return fig
@@ -268,16 +271,16 @@ def panel_umbral(d):
         "razon": w.Dropdown(options=[(f"{r} : 1", r) for r in razones], value=int(razon_elegida),
                             description="Costo FN / costo FP", **_estilo_control("230px")),
     }
-    explicacion = (f"Se alerta cuando la probabilidad supera <b>t</b>. La etapa 05 eligió t = <b>{elegido:.3f}</b> "
-                   f"minimizando el costo con una no conforme perdida <b>{razon_elegida:g}</b> veces más cara que una "
-                   "falsa alarma (línea punteada). Mueva t para ver qué se gana y qué se pierde; cambie la razón de "
-                   "costos para ver dónde quedaría el óptimo (línea discontinua). Probabilidades de validación del "
-                   "modelo elegido, sin reajustar.")
+    explicacion = (f"Se alerta cuando la probabilidad pasa <b>t</b>. En la etapa 05 elegimos t = <b>{elegido:.3f}</b> "
+                   f"porque minimiza el costo cuando perder una no conforme cuesta <b>{razon_elegida:g}</b> veces más que "
+                   "una falsa alarma (línea punteada). Al mover t se ve qué se gana y qué se pierde. Al cambiar la razón "
+                   "de costos se ve dónde quedaría el óptimo (línea discontinua). Son las probabilidades de validación "
+                   "del modelo elegido, sin reajustar.")
     return Panel("Clasificación", "Umbral de alerta: precisión, recall y costo", explicacion, controles, dibujar)
 
 
 # ----------------------------------------------------------------------
-# 2 · Red neuronal
+# 2. Red neuronal
 # ----------------------------------------------------------------------
 def panel_red(d):
     """Capas ocultas y regularización α de un `MLPClassifier` reentrenado en
@@ -323,7 +326,7 @@ def panel_red(d):
         a1b.spines["right"].set_visible(True)
         mejor = int(np.argmax(auc)) + 1
         a1b.plot([mejor], [auc[mejor - 1]], "o", color=TINTAS["previa"], ms=5)
-        a1.set_title(f"Mejor época {mejor}: la red sigue bajando su pérdida", fontsize=11.5)
+        a1.set_title(f"Mejor época {mejor}: La red sigue bajando su pérdida", fontsize=11.5)
         nombres = ["Logística (referencia)", f"Red elegida {elegida[0]}, α={elegida[1]:g}", f"Red actual {ocultas}, α={alfa:g}"]
         valores = [referencia, auc_elegida, auc[-1]]
         colores = [COLORES["gris"], TINTAS["pesos"], TINTAS["previa"]]
@@ -349,15 +352,15 @@ def panel_red(d):
         "alfa": w.SelectionSlider(options=[(f"{a:g}", a) for a in opciones_alfa], value=elegida[1],
                                   description="Regularización α", continuous_update=False, **_estilo_control()),
     }
-    explicacion = (f"La pasada didáctica usó una capa oculta de <b>{elegida[0][0]}</b> unidades y α = "
-                   f"<b>{elegida[1]:g}</b>, comparada por ROC-AUC con la regresión logística. Aquí la red entrena "
-                   f"<b>{epocas}</b> épocas sin parada temprana, para que se vea el sobreajuste: más unidades o menos α "
-                   f"bajan la pérdida de entrenamiento sin mejorar la validación. {_texto_submuestra(d)}")
+    explicacion = (f"En la pasada didáctica la red tiene una capa oculta de <b>{elegida[0][0]}</b> unidades y α = "
+                   f"<b>{elegida[1]:g}</b>. Aquí entrena <b>{epocas}</b> épocas sin parada temprana para que se vea el "
+                   "sobreajuste: Más unidades o menos α bajan la pérdida de entrenamiento sin mejorar la validación. "
+                   f"{_texto_submuestra(d)}")
     return Panel("Red neuronal", "Tamaño de la capa oculta y regularización", explicacion, controles, dibujar)
 
 
 # ----------------------------------------------------------------------
-# 3 · Bayes
+# 3. Bayes
 # ----------------------------------------------------------------------
 def _iconos(ax, vp, fp, fn, total=MUESTRAS_ICONOS, columnas=40):
     """Diagrama de 1000 cuadritos: verdaderos positivos, falsos positivos, falsos negativos y el resto."""
@@ -398,7 +401,7 @@ def panel_bayes(d):
         a1.text(0, 0.12, f"{ensayo} en la etapa 05:\np = {_pct(ref['prevalencia_corregida'])}, VPP = {_pct(ref['vpp'])}",
                 fontsize=8.5, color=TENUE, va="top", wrap=True)
         texto_coloreado(a2, [("De 1000 muestras: ", None), (f"{vp} verdaderos positivos", TINTAS["sensibilidad"]),
-                             (" · ", None), (f"{fp} falsos positivos", TINTAS["falsos"]), (" · ", None),
+                             (", ", None), (f"{fp} falsos positivos", TINTAS["falsos"]), (" y ", None),
                              (f"{fn} sin detectar", "#5E9A72")], ubicacion="lower left", tamano=9.5,
                         bbox_to_anchor=(0, 1.0), bbox_transform=a2.transAxes)
         _iconos(a2, vp, fp, fn)
@@ -419,9 +422,9 @@ def panel_bayes(d):
         "e": control_deslizador(w.FloatSlider, value=primero["especificidad"], min=0.8, max=1.0, step=0.001,
                                 readout_format=".3f", description="Especificidad E"),
     }
-    explicacion = ("Elija un ensayo para cargar la sensibilidad y la especificidad que la etapa 05 estimó con sus "
-                   "controles, y la previa corregida de su desarrollo. Luego mueva la previa: con una contaminación "
-                   "rara, incluso un ensayo muy específico produce más falsos positivos que verdaderos.")
+    explicacion = ("Al elegir un ensayo se cargan la sensibilidad y la especificidad que estimamos con sus controles en "
+                   "la etapa 05 y la previa corregida de su desarrollo. Después se puede mover la previa: Con una "
+                   "contaminación rara hasta un ensayo muy específico puede dar más falsos positivos que verdaderos.")
     panel = Panel("Bayes", "¿Qué tan probable es que un positivo sea falso?", explicacion, controles, dibujar)
 
     def cargar(cambio):
@@ -437,7 +440,7 @@ def panel_bayes(d):
 
 
 # ----------------------------------------------------------------------
-# 4 · K-means
+# 4. K-means
 # ----------------------------------------------------------------------
 def panel_kmeans(d):
     """k = 2…8 sobre la misma muestra de perfiles de la animación: nube en
@@ -471,7 +474,7 @@ def panel_kmeans(d):
                    edgecolor=TINTA, linewidth=1.1, zorder=5)
         a1.set_xlabel("componente principal 1")
         a1.set_ylabel("componente principal 2")
-        a1.set_title(f"k = {k}: silueta {silueta:.3f} ({pasos} iteraciones)", fontsize=11.5)
+        a1.set_title(f"k = {k}: Silueta {silueta:.3f} ({pasos} iteraciones)", fontsize=11.5)
         ks = list(GRUPOS)
         a2.plot(ks, [siluetas[i] for i in ks], "o-", color=TINTAS["previa"], ms=4, label=f"muestra ({len(X)} filas)")
         if completa:
@@ -488,16 +491,16 @@ def panel_kmeans(d):
 
     controles = {"k": w.IntSlider(value=elegido, min=min(GRUPOS), max=max(GRUPOS), step=1, description="Grupos k",
                                   continuous_update=False, **_estilo_control())}
-    explicacion = (f"La etapa 06 eligió <b>k = {elegido}</b> perfiles de muestra. Cambie k: el mismo K-means paso a "
-                   f"paso de la animación se rehace sobre la misma muestra de {len(X)} perfiles y la curva muestra la "
-                   "silueta (cohesión frente a separación) de cada k. La curva de la muestra parte de una sola "
-                   "inicialización y es más ruidosa que la de la matriz completa (etapa 06), con la que se eligió k. "
-                   "Siluetas bajas en todo el rango indican grupos poco nítidos.")
+    explicacion = (f"En la etapa 06 elegimos <b>k = {elegido}</b> perfiles de muestra. Al cambiar k se rehace el mismo "
+                   f"K-means paso a paso de la animación sobre la misma muestra de {len(X)} perfiles y la curva muestra "
+                   "la silueta de cada k (cohesión frente a separación). La curva de la muestra parte de una sola "
+                   "inicialización así que es más ruidosa que la de la matriz completa de la etapa 06, que es con la que "
+                   "elegimos k. Si la silueta es baja en todo el rango los grupos son poco nítidos.")
     return Panel("Agrupamiento", "Número de grupos de K-means", explicacion, controles, dibujar)
 
 
 # ----------------------------------------------------------------------
-# 5 · KNN
+# 5. KNN
 # ----------------------------------------------------------------------
 def _proba_vecinos(distancias, indices, y, k, pesos):
     """P(clase 1) de KNN con los k primeros vecinos ya buscados (igual que `predict_proba`)."""
@@ -561,15 +564,75 @@ def panel_knn(d):
                                  description="Ponderación", style={"description_width": "initial",
                                                                   "button_width": "110px"}),
     }
-    explicacion = ("Con <b>k = 1</b> cada fila de entrenamiento es su propio vecino: el ROC-AUC de entrenamiento es "
+    explicacion = ("Con <b>k = 1</b> cada fila de entrenamiento es su propio vecino: El ROC-AUC de entrenamiento es "
                    "perfecto y el de validación cae (sobreajuste). Con k muy grande el modelo promedia demasiado y "
                    f"pierde detalle (subajuste). {_texto_submuestra(d)}")
     return Panel("Clasificación", "KNN: número de vecinos", explicacion, controles, dibujar)
 
 
 # ----------------------------------------------------------------------
-# 6 · Árbol de decisión
+# 6. Árbol de decisión
 # ----------------------------------------------------------------------
+def _dibujar_arbol(ax, arbol, nombres, profundidad=3):
+    """Dibuja los primeros niveles de un `DecisionTreeClassifier` en el estilo de la casa:
+    cada nodo es una regla "variable ≤ umbral" con el % de filas y una barra de la proporción
+    de no conformes; las ramas más profundas se resumen como "… k hojas"."""
+    t = arbol.tree_
+    total = t.weighted_n_node_samples[0]
+    tasa_global = t.value[0][0][1] / t.value[0][0].sum()
+    posiciones, aristas, hoja = {}, [], [0]
+
+    def hojas_debajo(nodo):
+        if t.children_left[nodo] == -1:
+            return 1
+        return hojas_debajo(t.children_left[nodo]) + hojas_debajo(t.children_right[nodo])
+
+    def ubicar(nodo, nivel):
+        es_hoja = t.children_left[nodo] == -1
+        if es_hoja or nivel == profundidad:
+            posiciones[nodo] = (hoja[0], nivel, es_hoja)
+            hoja[0] += 1
+            return
+        for hijo, rotulo in ((t.children_left[nodo], "sí"), (t.children_right[nodo], "no")):
+            ubicar(hijo, nivel + 1)
+            aristas.append((nodo, hijo, rotulo))
+        x = (posiciones[t.children_left[nodo]][0] + posiciones[t.children_right[nodo]][0]) / 2
+        posiciones[nodo] = (x, nivel, False)
+
+    ubicar(0, 0)
+    ancho_x = max(hoja[0] - 1, 1)
+    ax.set_xlim(-0.6, ancho_x + 0.6)
+    ax.set_ylim(profundidad + 0.75, -0.55)
+    ax.axis("off")
+    for padre, hijo, rotulo in aristas:
+        x0, y0, _ = posiciones[padre]
+        x1, y1, _ = posiciones[hijo]
+        ax.plot([x0, x0, x1, x1], [y0 + 0.50, y0 + 0.62, y0 + 0.62, y1 - 0.30], color=FILETE, lw=0.9, zorder=1)
+        ax.text(x0 + 0.5 * (x1 - x0), y0 + 0.60, rotulo, ha="center", va="bottom", fontsize=7.5, color=TENUE,
+                style="italic", bbox=dict(facecolor=PAPEL, edgecolor="none", pad=0.6))
+    for nodo, (x, nivel, es_hoja) in posiciones.items():
+        valores = t.value[nodo][0]
+        tasa = valores[1] / valores.sum()
+        filas = t.weighted_n_node_samples[nodo] / total
+        recortado = (not es_hoja) and t.children_left[nodo] != -1 and nivel == profundidad
+        if t.children_left[nodo] != -1 and not recortado:
+            variable = nombres[t.feature[nodo]].replace("_", " ")
+            ax.text(x, nivel - 0.06, f"{variable} ≤ {t.threshold[nodo]:.2f}", ha="center", va="bottom",
+                    fontsize=8.3, color=TINTA, fontweight="bold")
+        elif recortado:
+            ax.text(x, nivel - 0.06, f"… {hojas_debajo(nodo)} hojas", ha="center", va="bottom",
+                    fontsize=8, color=TENUE, style="italic")
+        else:
+            ax.text(x, nivel - 0.06, "hoja", ha="center", va="bottom", fontsize=8, color=TENUE)
+        color = TINTAS["falsos"] if tasa > tasa_global else TINTAS["conformes"]
+        ancho = 0.30
+        ax.add_patch(plt.Rectangle((x - ancho, nivel + 0.02), 2 * ancho, 0.08, color=FILETE, lw=0, zorder=2))
+        ax.add_patch(plt.Rectangle((x - ancho, nivel + 0.02), 2 * ancho * min(tasa / 0.5, 1), 0.08, color=color,
+                                   lw=0, zorder=3))
+        ax.text(x, nivel + 0.15, f"{100 * filas:.1f} % de filas\n{100 * tasa:.1f} % no conformes", ha="center",
+                va="top", fontsize=7.2, color=TENUE, linespacing=1.25)
+
+
 def panel_arbol(d):
     """`ccp_alpha` recorre el camino de poda por costo-complejidad del árbol
     crecido sobre la submuestra: número de hojas y ROC-AUC de entrenamiento y
@@ -603,8 +666,8 @@ def panel_arbol(d):
     def dibujar(alfa):
         arbol, hojas, auc_ent, auc_val = ajustar(alfa)
         configurar_estilo()
-        fig = plt.figure(figsize=(ANCHO, 7.4))
-        rejilla = fig.add_gridspec(2, 1, height_ratios=[1, 1.9], hspace=0.42)
+        fig = plt.figure(figsize=(ANCHO, 9.6))
+        rejilla = fig.add_gridspec(2, 1, height_ratios=[1, 2.9], hspace=0.30)
         a1 = fig.add_subplot(rejilla[0])
         a1.plot(eje_x, tabla[:, 1], "o-", color=TENUE, ms=3, lw=1.2, label="ROC-AUC entrenamiento")
         a1.plot(eje_x, tabla[:, 2], "o-", color=TINTAS["previa"], ms=4, label="ROC-AUC validación")
@@ -622,10 +685,9 @@ def panel_arbol(d):
         a1.set_title(f"ccp_alpha = {alfa:.2g}: {hojas} hojas, ROC-AUC validación {auc_val:.3f} "
                      f"(entrenamiento {auc_ent:.3f})", fontsize=11.5)
         a2 = fig.add_subplot(rejilla[1])
-        plot_tree(arbol, max_depth=3, feature_names=nombres, label="root", filled=False, impurity=False,
-                  proportion=True, precision=2, fontsize=6, ax=a2)
-        a2.set_title("Tres primeros niveles del árbol podado: % de filas y proporción [conforme, no conforme]",
-                     fontsize=10.5)
+        _dibujar_arbol(a2, arbol, nombres, profundidad=3)
+        a2.set_title("Tres primeros niveles del árbol podado. Barra: % de no conformes (rojo si supera la tasa "
+                     "global). Umbrales en escala estandarizada", fontsize=10)
         tipografia(fig)
         a1b.tick_params(axis="y", labelfontfamily=familia("cifras"))
         return fig
@@ -634,7 +696,84 @@ def panel_arbol(d):
                                            description="Poda ccp_alpha", continuous_update=False,
                                            **_estilo_control("420px"))}
     explicacion = (f"Sin poda (α = 0) el árbol crece hasta hojas de <b>{hiper['min_samples_leaf']}</b> filas y "
-                   "memoriza el entrenamiento; al subir α se cortan las ramas que menos reducen la impureza por hoja "
-                   "que agregan, hasta quedar en la raíz. La rejilla de la etapa 05 eligió α con validación cruzada "
-                   f"(línea punteada). {_texto_submuestra(d)}")
+                   "memoriza el entrenamiento. Al subir α se cortan primero las ramas que menos reducen la impureza por "
+                   "cada hoja que agregan, hasta que solo queda la raíz. La rejilla de la etapa 05 eligió α con "
+                   f"validación cruzada (línea punteada). {_texto_submuestra(d)}")
     return Panel("Clasificación", "Árbol de decisión: poda por costo-complejidad", explicacion, controles, dibujar)
+
+
+# ----------------------------------------------------------------------
+# Taguchi: modelo aditivo frente a lo observado
+# ----------------------------------------------------------------------
+def _contribuciones(taguchi, niveles):
+    """S/N que predice el modelo aditivo para `niveles` y lo que aporta cada factor (nivel − media)."""
+    media = taguchi["media_sn"]
+    aportes = {f: taguchi["efectos"][f][nivel] - media for f, nivel in niveles.items()}
+    return media + sum(aportes.values()), aportes
+
+
+def _corrida_igual(taguchi, niveles):
+    return next((c for c in taguchi["corridas"] if all(c[f] == v for f, v in niveles.items())), None)
+
+
+def panel_taguchi(taguchi, congelada=None, rotulo="Regresión", etapa="04"):
+    """Un selector por factor del L16. Con cada combinación muestra lo que aporta cada nivel según el modelo
+    aditivo (barras) y la S/N predicha frente a la observada en la corrida del L16 que tenga esa misma
+    combinación (si existe) y frente a la corrida de confirmación del óptimo. No reajusta nada: todo sale de la
+    sección `taguchi` del artefacto de la etapa (`efectos`, `media_sn`, `corridas`). `congelada` es la
+    configuración que se congeló (niveles ya legibles), que se marca y es el estado inicial."""
+    factores = taguchi["factores"]
+    optimo = taguchi["optimo"]
+    congelada = {f: congelada.get(f, optimo[f]) for f in factores} if congelada else dict(optimo)
+    todas = [c["sn"] for c in taguchi["corridas"]]
+
+    def dibujar(**niveles):
+        predicha, aportes = _contribuciones(taguchi, niveles)
+        corrida = _corrida_igual(taguchi, niveles)
+        fig, (a1, a2) = _figura(4.3, 2, gridspec_kw={"width_ratios": [1.15, 1], "wspace": 0.55})
+        nombres = list(aportes)[::-1]
+        valores = [aportes[f] for f in nombres]
+        a1.barh(nombres, valores, color=[TINTAS["sensibilidad"] if v >= 0 else TINTAS["falsos"] for v in valores],
+                height=0.55)
+        a1.axvline(0, color=TINTA, lw=0.8)
+        for i, (f, v) in enumerate(zip(nombres, valores)):
+            marca = "" if niveles[f] == congelada[f] else f" (congelado: {congelada[f]})"
+            a1.annotate(f"{niveles[f]}{marca}", (v, i), xytext=(4 if v >= 0 else -4, 0), textcoords="offset points",
+                        ha="left" if v >= 0 else "right", va="center", fontsize=8.5, color=TENUE)
+        limite = max(0.5, 1.6 * max(abs(v) for v in valores))
+        a1.set_xlim(-limite, limite)
+        a1.set_xlabel("aporte del nivel a la S/N (dB)")
+        a1.set_title("Qué suma cada factor sobre la media"
+                     + ("\n(la configuración congelada)" if niveles == congelada else ""), fontsize=11)
+        a2.scatter(todas, np.zeros(len(todas)), marker="|", s=260, color=FILETE, zorder=1)
+        filas = [("predicha", predicha, TINTAS["previa"])]
+        if corrida is not None:
+            filas.append((f"corrida {corrida['corrida']} del L16", corrida["sn"], TINTAS["conformes"]))
+        filas.append(("confirmación del óptimo", taguchi["sn_observada"], TINTAS["costo"]))
+        for j, (texto, valor, color) in enumerate(filas, start=1):
+            a2.plot([valor], [j], "o", ms=9, color=color, zorder=3)
+            a2.annotate(f"{texto}: {valor:.2f} dB", (valor, j), xytext=(0, 9), textcoords="offset points",
+                        ha="center", fontsize=8.5, color=color)
+        a2.axvspan(taguchi["sn_observada"] - taguchi["tolerancia"], taguchi["sn_observada"] + taguchi["tolerancia"],
+                   color=TINTAS["costo"], alpha=0.10, lw=0)
+        a2.set_yticks([0], ["16 corridas"])
+        a2.set_ylim(-0.6, len(filas) + 0.9)
+        margen = 0.4 + taguchi["tolerancia"]
+        a2.set_xlim(min(todas + [predicha]) - margen, max(todas + [predicha, taguchi["sn_observada"]]) + margen)
+        a2.set_xlabel("S/N (dB, más es mejor)")
+        a2.grid(axis="y", visible=False)
+        estado = ("Esta combinación está en el L16" if corrida is not None else
+                  "Esta combinación no está en el L16: Solo hay predicción")
+        a2.set_title(estado, fontsize=11)
+        return fig
+
+    controles = {f: w.Dropdown(options=list(niveles), value=congelada[f], description=f, **_estilo_control("230px"))
+                 for f, niveles in factores.items()}
+    explicacion = (f"El modelo aditivo de Taguchi predice la S/N de cualquier combinación como la media de las 16 "
+                   f"corridas (<b>{taguchi['media_sn']:.2f} dB</b>) más lo que aporta el nivel elegido de cada factor. "
+                   "Cambie los niveles y compare la predicción con lo observado: Si la combinación está entre las 16 "
+                   "corridas aparece su S/N medida y la franja muestra la tolerancia de la corrida de confirmación "
+                   f"(±{taguchi['tolerancia']:.2f} dB). El estado inicial es la configuración que congelamos en la "
+                   f"etapa {etapa}.")
+    return Panel(rotulo, "Taguchi: lo que predice el modelo aditivo frente a lo observado", explicacion, controles,
+                 dibujar)

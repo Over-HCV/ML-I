@@ -9,8 +9,9 @@ import os
 SEMILLA = 42
 
 TITULO_PROYECTO = "Analítica predictiva sobre la base de muestras de un laboratorio de microbiología"
-ROTULO_PROYECTO = "Aprendizaje Automático de Máquina I · Proyecto final"
-AUTORES = "Tania Fernanda Mora Cubillos · Daniel Arias Mutis · Over Haider Castrillón Valencia"
+ROTULO_PROYECTO = "Aprendizaje Automático de Máquina I, proyecto final"
+LISTA_AUTORES = ["Tania Fernanda Mora Cubillos", "Over Haider Castrillón Valencia", "Daniel Arias Mutis"]
+AUTORES = ", ".join(LISTA_AUTORES[:-1]) + " y " + LISTA_AUTORES[-1]
 
 # Origen de los datos: "simulacion" genera la base con `datos/simulacion.py`;
 # "real" lee la exportación del laboratorio descrita en

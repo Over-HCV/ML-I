@@ -66,7 +66,7 @@ NOMBRES_REFERENCIA = {
     "Dummy (media)": "Dummy (media)",
     "Dummy (proporción)": "Dummy (proporción)",
 }
-TEMAS_CURSO = ["Preprocesamiento", "KNN", "Regresión lineal", "Regresión logística · ROC · umbral",
+TEMAS_CURSO = ["Preprocesamiento", "KNN", "Regresión lineal", "Regresión logística, ROC y umbral",
                "Árboles con poda", "Validación cruzada y rejilla", "Perceptrón multicapa", "K-means", "DBSCAN"]
 
 
@@ -90,12 +90,12 @@ def _macros():
     for ruta in sorted(rutas.DIR_ARTEFACTOS.glob("macros_*.json")):
         for nombre, entrada in json.loads(ruta.read_text(encoding="utf-8"))["macros"].items():
             cifras[nombre] = (str(entrada["valor"]).replace("\\_", "_").replace("$-$", "-")
-                              .replace("$\\cdot$", "·").replace("\\%", "%"))
+                              .replace("$\\cdot$", ",").replace("\\%", "%"))
     return cifras
 
 
 def pct(valor, decimales=1):
-    """Proporción como porcentaje, con espacio duro para que «%» no quede solo en otra línea."""
+    """Proporción como porcentaje, con espacio duro para que "%" no quede solo en otra línea."""
     return f"{100 * valor:.{decimales}f} %".replace("-", "−")
 
 
@@ -172,7 +172,7 @@ def _datos_umbral(c):
     return arreglos, meta
 
 
-def _datos_red(c):
+def datos_red(c):
     """Perceptrón de la pasada didáctica: un ajuste con parada temprana (sus curvas) y otro época por época
     con `partial_fit` (pérdida, ROC-AUC de validación y distribución de probabilidades en cada época)."""
     from sklearn.base import clone
@@ -212,14 +212,14 @@ def _datos_red(c):
     return arreglos, meta
 
 
-def _datos_interactivo(c):
+def submuestras_paneles(c):
     """Submuestras fijas (con semilla) de entrenamiento y validación, ya transformadas por un
     preprocesamiento ajustado solo con entrenamiento, para los paneles que reentrenan en vivo (red, KNN y
-    árbol), y los valores congelados que cada panel marca como «elegido». Se guardan en float16: bastan para
-    una demostración y mantienen el paquete pequeño."""
-    from proyecto.modelos import registro, tuberias
+    árbol), y los nombres de sus columnas. Se guardan en float16: Bastan para una demostración y mantienen
+    el paquete pequeño. `c` necesita `numericas`, `categoricas`, `X_ent`, `y_ent`, `X_val` e `y_val`
+    (sirve el contexto de la etapa 05)."""
+    from proyecto.modelos import tuberias
 
-    clf, agr = _artefacto("05_clasificacion"), _artefacto("06_agrupamiento")
     preparar = tuberias.preprocesador(c.numericas, c.categoricas).fit(c.X_ent)
     azar = np.random.default_rng(config.SEMILLA)
     filas_ent = np.sort(azar.choice(len(c.X_ent), min(SUBMUESTRA_ENTRENAMIENTO, len(c.X_ent)), replace=False))
@@ -228,40 +228,65 @@ def _datos_interactivo(c):
                 "sub_y_ent": c.y_ent[filas_ent].astype(np.int8),
                 "sub_X_val": np.asarray(preparar.transform(c.X_val.iloc[filas_val]), dtype=np.float16),
                 "sub_y_val": c.y_val[filas_val].astype(np.int8)}
+    return arreglos, [n.split("__", 1)[-1] for n in preparar.get_feature_names_out()]
+
+
+def meta_paneles(variables, umbral, umbrales, costos, semanas, vpp_por_ensayo, hiper_arbol, kmeans_exploracion=()):
+    """Valores congelados que cada panel marca como "elegido": El umbral y su recorrido, los costos, las
+    semanas de validación, los ensayos con su sensibilidad y especificidad, el KNN y el árbol de partida
+    (con los hiperparámetros de la rejilla, si el árbol pasó a ella) y la exploración de K-means."""
+    from proyecto.modelos import registro
+
     knn = registro.crear_modelo("clasificacion", "knn")
     arbol = registro.crear_modelo("clasificacion", "arbol").get_params()
-    arbol.update(clf.get("rejilla", {}).get("arbol", {}).get("hiper", {}))
+    arbol.update(hiper_arbol or {})
     ensayos = [{k: f[k] for k in ("ensayo", "sensibilidad", "especificidad", "prevalencia_corregida", "vpp")}
-               for f in clf["bayes"]["vpp_por_ensayo"]]
-    meta = {"interactivo": {
-        "variables": [n.split("__", 1)[-1] for n in preparar.get_feature_names_out()],
-        "umbral": clf["umbral"], "umbrales": [u["Umbral"] for u in clf["tabla_umbrales"]], "costos": clf["costos"],
-        "semanas_validacion": clf["semanas_validacion"],
-        "ensayos": ensayos, "knn": {"k": int(knn.n_neighbors), "pesos": knn.weights},
-        "arbol": {"ccp_alpha": float(arbol["ccp_alpha"]), "max_depth": arbol["max_depth"],
-                  "min_samples_leaf": int(arbol["min_samples_leaf"])},
-        "kmeans_exploracion": agr["seleccionado"]["kmeans"]["exploracion"]}}
-    return arreglos, meta
+               for f in vpp_por_ensayo]
+    return {"variables": list(variables), "umbral": umbral, "umbrales": list(umbrales), "costos": costos,
+            "semanas_validacion": semanas, "ensayos": ensayos, "knn": {"k": int(knn.n_neighbors), "pesos": knn.weights},
+            "arbol": {"ccp_alpha": float(arbol["ccp_alpha"]), "max_depth": arbol["max_depth"],
+                      "min_samples_leaf": int(arbol["min_samples_leaf"])},
+            "kmeans_exploracion": list(kmeans_exploracion)}
 
 
-def _datos_kmeans():
-    """Muestra de la matriz de agrupamiento elegida y la proyección en dos componentes de toda la matriz."""
+def _datos_interactivo(c):
+    """Submuestras de los paneles y los valores congelados de las etapas 05 y 06."""
+    clf, agr = _artefacto("05_clasificacion"), _artefacto("06_agrupamiento")
+    arreglos, variables = submuestras_paneles(c)
+    meta = meta_paneles(variables, clf["umbral"], [u["Umbral"] for u in clf["tabla_umbrales"]], clf["costos"],
+                        clf["semanas_validacion"], clf["bayes"]["vpp_por_ensayo"],
+                        clf.get("rejilla", {}).get("arbol", {}).get("hiper", {}),
+                        agr["seleccionado"]["kmeans"]["exploracion"])
+    return arreglos, {"interactivo": meta}
+
+
+def datos_kmeans(matriz, k):
+    """Muestra fija de una matriz de agrupamiento ya preparada (`MUESTRA_AGRUPAMIENTO` filas) y la proyección
+    en dos componentes principales de toda la matriz, para la animación y el panel de K-means."""
     from sklearn.decomposition import PCA
 
-    from proyecto.etapas.agrupamiento import ASIMETRIA_LOG
-    from proyecto.modelos.agrupamiento import preparar_matrices
-    from proyecto.variables.comunes import columnas_de_grupo
-
-    nombre = _artefacto("06_agrupamiento")["seleccionado"]["analisis"]
-    papeles = leer_json(rutas.DIR_MODELADO / f"{nombre}.json")
-    numericas, categoricas = columnas_de_grupo(papeles, "ampliado")
-    matriz, _, _ = preparar_matrices(leer_modelado(nombre), numericas, categoricas, ASIMETRIA_LOG)
     pca = PCA(n_components=2, random_state=config.SEMILLA).fit(matriz)
     filas = np.random.default_rng(config.SEMILLA).choice(len(matriz), min(MUESTRA_AGRUPAMIENTO, len(matriz)),
                                                          replace=False)
     arreglos = {"kmeans_muestra": matriz[np.sort(filas)].astype(np.float32),
                 "kmeans_componentes": pca.components_.astype(np.float32), "kmeans_media": pca.mean_.astype(np.float32)}
-    return arreglos, {"kmeans": {"analisis": nombre, "k": int(_artefacto("06_agrupamiento")["seleccionado"]["kmeans"]["k"])}}
+    return arreglos, {"kmeans": {"k": int(k)}}
+
+
+def _datos_kmeans():
+    """La matriz de agrupamiento elegida en la etapa 06, preparada igual que allí."""
+    from proyecto.etapas.agrupamiento import ASIMETRIA_LOG
+    from proyecto.modelos.agrupamiento import preparar_matrices
+    from proyecto.variables.comunes import columnas_de_grupo
+
+    seleccionado = _artefacto("06_agrupamiento")["seleccionado"]
+    nombre = seleccionado["analisis"]
+    papeles = leer_json(rutas.DIR_MODELADO / f"{nombre}.json")
+    numericas, categoricas = columnas_de_grupo(papeles, "ampliado")
+    matriz, _, _ = preparar_matrices(leer_modelado(nombre), numericas, categoricas, ASIMETRIA_LOG)
+    arreglos, meta = datos_kmeans(matriz, seleccionado["kmeans"]["k"])
+    meta["kmeans"]["analisis"] = nombre
+    return arreglos, meta
 
 
 def _datos_regresion():
@@ -286,7 +311,7 @@ def preparar_datos():
     inicio = time.perf_counter()
     c = _clasificacion_desarrollo()
     arreglos, meta = {}, {}
-    for bloque in (lambda: _datos_umbral(c), lambda: _datos_red(c), lambda: _datos_interactivo(c), _datos_kmeans,
+    for bloque in (lambda: _datos_umbral(c), lambda: datos_red(c), lambda: _datos_interactivo(c), _datos_kmeans,
                    _datos_regresion):
         a, m = bloque()
         arreglos.update(a)
@@ -324,10 +349,10 @@ def iniciar():
 # ----------------------------------------------------------------------
 def diapositiva_portada():
     """1 · Título, curso, autores, fecha y contexto del laboratorio."""
-    autores = [a.strip() for a in config.AUTORES.split("·")]
+    autores = list(config.LISTA_AUTORES)
     contexto = ("Rodam Analisis S.A.S: Laboratorio de microbiología de alimentos en Bogotá.")
     return _diapo(1, config.TITULO_PROYECTO, [fichas(autores), contexto],
-                  rotulo=f"{config.ROTULO_PROYECTO} · {INSTITUCION}",
+                  rotulo=f"{config.ROTULO_PROYECTO}, {INSTITUCION}",
                   subtitulo="Tres preguntas operativas, modelos de clase puestos a prueba",
                   pie=[FECHA_PRESENTACION, INSTITUCION], portada=True, valores={"autores": autores})
 
@@ -358,9 +383,9 @@ def diapositiva_datos():
         hito = {"fecha": f"{i:02d}", "titulo": CON_TILDE.get(momento, momento), "detalle": QUE_PASA.get(momento, ""),
                 "color": "#B7B1A5"}
         if momento == momento_reg:
-            hito.update(color="azul", detalle=f"{hito['detalle']} · **predice la regresión**")
+            hito.update(color="azul", detalle=f"{hito['detalle']}, **predice la regresión**")
         elif momento == momento_clf:
-            hito.update(color="naranja", detalle=f"{hito['detalle']} · **predice la clasificación**")
+            hito.update(color="naranja", detalle=f"{hito['detalle']}, **predice la clasificación**")
         hitos.append(hito)
     linea = linea_tiempo(hitos, titulo="Cada columna declara en qué momento se conoce: un modelo solo usa lo "
                                        "anterior a su momento de predicción")
@@ -438,7 +463,7 @@ def diapositiva_metodo():
         p = partes.get(bloque, {})
         protocolo.append({"marca": f"{p.get('Desde', '')[:7]} → {p.get('Hasta', '')[:7]}",
                           "titulo": "validación" if bloque == "validacion" else bloque,
-                          "detalle": f"{accion} · {p.get('Filas', '—')} muestras", "color": color,
+                          "detalle": f"{accion}, {p.get('Filas', '')} muestras", "color": color,
                           "lleno": bloque == "prueba"})
     rho, iguales = _n("RegRhoCompleto"), int(_n("RegFactoresMismoOptimo"))
     factores = int(_n("RegFactores"))
@@ -474,7 +499,7 @@ def diapositiva_regresion():
                                                        f"±{tolerancia:.0f}"]},
         {"titulo": _m("FinRegModelo"), "valor": modelo["MAE"], "decimales": 1,
          "etiqueta": "error absoluto medio en prueba (muestras/día)",
-         "puntos": [f"RMSE {modelo['RMSE']:.1f} · R² {modelo['R2']:.2f}",
+         "puntos": [f"RMSE {modelo['RMSE']:.1f}, R² {modelo['R2']:.2f}",
                     f"{pct(op['dias_fuera'], 0)} de días fuera de ±{tolerancia:.0f}"]},
     ], elegida=1, sello="Congelado")
     cambio = _n("FinCambioRMSEPct")
@@ -486,7 +511,7 @@ def diapositiva_regresion():
                f"({_m('RegToleranciaOperativaPct')} % de la media). En prueba el RMSE fue "
                f"{abs(cambio):.0f} % {sentido} que en validación.")
     cuerpo = [columnas(barras, duelo, proporciones="1fr 1fr"), nota(lectura, "hallazgo", titulo="Lectura operativa")]
-    return _diapo(6, "¿Cuántas muestras llegarán mañana?", cuerpo, rotulo="Pregunta 1 · regresión de la carga diaria",
+    return _diapo(6, "¿Cuántas muestras llegarán mañana?", cuerpo, rotulo="Pregunta 1: Regresión de la carga diaria",
                   subtitulo=f"Se predice en el momento de {CON_TILDE.get(_m('RegMomento'), _m('RegMomento'))}, con la agenda ya conocida",
                   valores={"mae_prueba": modelo["MAE"], "mae_referencia": referencia["MAE"]})
 
@@ -503,7 +528,7 @@ def diapositiva_clasificacion():
     costos = clf["costos"]
     curva = linea_svg([u["Umbral"] for u in umbrales], {"Costo en validación": ([u["Costo"] for u in umbrales],
                                                                                  "naranja")},
-                      titulo=f"Costo = {costos['falso_positivo']}·FP + {costos['falso_negativo']}·FN según el umbral",
+                      titulo=f"Costo = {costos['falso_positivo']} FP + {costos['falso_negativo']} FN según el umbral",
                       marca=umbral, rotulo_marca=f"umbral {umbral:.3f}", etiqueta_x="umbral de alerta",
                       formato_y="{:.0f}", alto=165)
     m = final["metricas"]
@@ -527,8 +552,8 @@ def diapositiva_clasificacion():
     if m["Recall"] < val["Recall"]:
         lectura += " En prueba se detectan menos no conformes que en validación."
     cuerpo = [columnas([barras, curva], [matriz, cifras], proporciones="1fr 1fr"), nota(lectura, "hallazgo")]
-    return _diapo(7, "¿Qué muestras son de riesgo?", cuerpo, rotulo="Pregunta 2 · clasificación de la no conformidad",
-                  subtitulo=(f"{_m('ClfModeloFinal')} al recibir la muestra · perder una no conforme cuesta "
+    return _diapo(7, "¿Qué muestras son de riesgo?", cuerpo, rotulo="Pregunta 2: Clasificación de la no conformidad",
+                  subtitulo=(f"{_m('ClfModeloFinal')} al recibir la muestra. Perder una no conforme cuesta "
                              f"{costos['falso_negativo'] // costos['falso_positivo']} veces una falsa alarma"),
                   valores={"umbral": umbral, "alertas_semana": final["alertas_por_semana"]})
 
@@ -550,7 +575,7 @@ def diapositiva_red():
     capas = " → ".join(str(x) for x in [mlp["n_entradas"], *mlp["ocultas"], 1])
     cifras = tarjetas([
         {"titulo": "Neuronas ocultas", "valor": sum(mlp["ocultas"]), "color": "morado",
-         "detalle": f"{capas} · activación {mlp['activacion']}"},
+         "detalle": f"{capas}, activación {mlp['activacion']}"},
         {"titulo": "Épocas", "valor": mlp["epocas"], "color": "rojo",
          "detalle": f"la mejor fue la {mlp['mejor_epoca']}; parada temprana"},
         {"titulo": "Regularización (alpha)", "valor": mlp["alpha"], "decimales": 3, "color": "gris",
@@ -565,7 +590,7 @@ def diapositiva_red():
         lectura = (f"La red ({red['ROC-AUC']:.3f}) ordena mejor que la logística ({log['ROC-AUC']:.3f}): hay algo de no "
                    f"linealidad o de interacción que la capa oculta aprovecha, a cambio de {mlp['parametros']} parámetros.")
     cuerpo = [columnas(duelo, cifras, proporciones="1.1fr 1fr"), nota(lectura, "hallazgo", titulo="Por qué")]
-    return _diapo(8, "Redes neuronales: del perceptrón al MLP", cuerpo, rotulo="Tema del curso · perceptrón multicapa",
+    return _diapo(8, "Redes neuronales: Del perceptrón al MLP", cuerpo, rotulo="Tema del curso: Perceptrón multicapa",
                   subtitulo="La misma pregunta de riesgo, con una capa oculta entre las variables y la probabilidad",
                   valores={"auc_red": red["ROC-AUC"], "auc_logistica": log["ROC-AUC"]})
 
@@ -593,7 +618,7 @@ def diapositiva_bayes():
              f"encima del borde.")
     cuerpo = [columnas(barras, mismo, proporciones="1fr 1.1fr"), nota(regla, "hallazgo")]
     return _diapo(9, "¿Qué tan probable es que un positivo sea falso?", cuerpo,
-                  rotulo="Pregunta 3 · Bayes y falsos positivos",
+                  rotulo="Pregunta 3: Bayes y falsos positivos",
                   subtitulo=(f"En el laboratorio, cerca de 1 de cada {_m('FinUnoDeCadaFalso')} positivos sería falso; "
                              f"{peor} es el ensayo menos fiable"),
                   valores={"vpp_peor": vpp[peor] if peor in vpp else None})
@@ -621,7 +646,7 @@ def diapositiva_agrupamiento():
         honesto = f"Siluetas de {silueta_sel:.2f} y {silueta_comp:.2f}: grupos razonablemente separados."
         tipo = "hallazgo"
     cuerpo = [columnas(tabla, perfiles, proporciones="1.25fr 1fr"), nota(honesto, tipo)]
-    return _diapo(10, "Perfiles y segmentos", cuerpo, rotulo="Complemento · agrupamiento",
+    return _diapo(10, "Perfiles y segmentos", cuerpo, rotulo="Complemento: Agrupamiento",
                   subtitulo=f"{sel['kmeans']['k']} perfiles de muestra y {comp['kmeans']['k']} segmentos de clientes",
                   valores={"silueta_perfiles": silueta_sel, "silueta_segmentos": silueta_comp})
 

@@ -73,7 +73,7 @@ def _paleta_reducida(coincidencia):
 def como_html(anim, fps):
     """Animación → HTML autocontenido (cuadros en base64 y controles en JavaScript)."""
     # `Animation.save` toma la resolución de `savefig.dpi` (200 en el proyecto): aquí se baja a la de pantalla,
-    # y sin recorte «tight» para que todos los cuadros midan lo mismo.
+    # y sin recorte "tight" para que todos los cuadros midan lo mismo.
     with mpl.rc_context({"savefig.dpi": PPP_ANIMACION, "savefig.bbox": None, "animation.frame_format": "png"}):
         html = anim.to_jshtml(fps=fps, default_mode="once")
     plt.close(anim._fig)
@@ -89,7 +89,7 @@ def video(nombre, ancho=860):
     ruta, portada = carpeta / f"{nombre}.mp4", carpeta / f"{nombre}.png"
     estilo_texto = f"font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:{TENUE}"
     if not ruta.exists():
-        return HTML(f'<p style="{estilo_texto}">Animación «{nombre}» no disponible en esta copia: se renderiza con '
+        return HTML(f'<p style="{estilo_texto}">Animación "{nombre}" no disponible en esta copia: Se renderiza con '
                     '<code>make manim</code> (Manim en un entorno aparte).</p>')
     datos = base64.b64encode(ruta.read_bytes()).decode("ascii")
     cartel = (f' poster="data:image/png;base64,{base64.b64encode(portada.read_bytes()).decode("ascii")}"'
@@ -98,7 +98,7 @@ def video(nombre, ancho=860):
                 f'<video controls muted playsinline preload="metadata"{cartel} style="width:100%;max-width:{ancho}px;'
                 f'display:block;background:{PAPEL};border:1px solid {FILETE};border-radius:6px">'
                 f'<source src="data:video/mp4;base64,{datos}" type="video/mp4"></video>'
-                f'<p style="{estilo_texto};margin:6px 0 0">Animación con Manim · '
+                f'<p style="{estilo_texto};margin:6px 0 0">Animación con Manim: '
                 f'<code>notebooks/manim/escenas.py</code></p></div>')
 
 
@@ -123,14 +123,14 @@ def figura_bloques(fechas, bloques):
     ax.spines["left"].set_visible(False)
     ax.tick_params(axis="y", length=0)
     ax.legend(loc="lower left", ncols=2, bbox_to_anchor=(0, 1.0), handlelength=1.2)
-    ax.set_title("Validación por bloques: se ajusta con el pasado y se valida con lo que sigue", pad=26)
+    ax.set_title("Validación por bloques: Se ajusta con el pasado y se valida con lo que sigue", pad=26)
     ax.set_xlim(right=fechas.max() + np.timedelta64(140, "D"))
     return tipografia(fig)
 
 
 def figura_arquitectura(n_entradas, ocultas, activacion="relu", maximo_dibujadas=10):
     """Diagrama del perceptrón multicapa con las capas que de verdad se usaron
-    (`hidden_layer_sizes`). Las capas grandes se dibujan recortadas con «⋮»."""
+    (`hidden_layer_sizes`). Las capas grandes se dibujan recortadas con "⋮"."""
     capas = [int(n_entradas), *[int(c) for c in ocultas], 1]
     nombres = ["entrada"] + [f"oculta {i + 1}" if len(ocultas) > 1 else "oculta" for i in range(len(ocultas))] + ["salida"]
     fig, ax = _figura(8.6, 3.6)
@@ -174,38 +174,39 @@ def figura_activaciones():
         ax.axvline(0, color=TENUE, lw=0.6)
         ax.plot(z, valores, color=color, lw=2.2)
         ax.set_title(nombre, fontsize=11)
-        ax.set_xlabel("z = w·x + b")
+        ax.set_xlabel("z = wᵀx + b")
     fig.tight_layout()
     return tipografia(fig)
 
 
-def figura_curva_perdida(perdida, puntaje_validacion, paciencia, fraccion_validacion, tasa_mayoritaria=None):
+def figura_curva_perdida(perdida, puntaje_validacion, paciencia, fraccion_validacion, tasa_mayoritaria=None, pie=True):
     """`loss_curve_` (pérdida logarítmica de entrenamiento) y `validation_scores_`
     (exactitud en la fracción apartada) de un `MLPClassifier` con parada temprana.
     Con `tasa_mayoritaria`, dibuja la exactitud de responder siempre la clase
     mayoritaria: con clases desbalanceadas la exactitud queda cerca de ella y no
-    dice cuánto ordena el modelo (para eso, el ROC-AUC de la animación)."""
+    dice cuánto ordena el modelo (para eso, el ROC-AUC de la animación). Con
+    `pie=False` se omite la nota inferior que remite a esa animación (informe)."""
     fig, (a1, a2) = _figura(8.6, 3.0, columnas=2)
     epocas = np.arange(1, len(perdida) + 1)
     a1.plot(epocas, perdida, color=TINTAS["falsos"])
-    a1.set_title("loss_curve_: pérdida de entrenamiento", fontsize=11)
+    a1.set_title("loss_curve_: Pérdida de entrenamiento", fontsize=11)
     a1.set_xlabel("época")
     a2.plot(epocas, puntaje_validacion, color=TINTAS["previa"])
     mejor = int(np.argmax(puntaje_validacion)) + 1
     a2.axvline(mejor, color=TENUE, ls=":", lw=1)
-    a2.text(0.98, 0.04, f"mejor época: {mejor}\nse detiene {paciencia} épocas después", transform=a2.transAxes,
-            ha="right", va="bottom", fontsize=9, color=TENUE)
+    a2.text(0.16, 0.17, f"mejor época: {mejor}\nse detiene {paciencia} épocas después", transform=a2.transAxes,
+            ha="left", va="bottom", fontsize=9, color=TENUE)
     if tasa_mayoritaria is not None:
         a2.axhline(tasa_mayoritaria, color=TINTAS["conformes"], ls="--", lw=1)
-        a2.annotate(f"siempre «conforme»: {tasa_mayoritaria:.3f}", (1, tasa_mayoritaria), xycoords=("axes fraction", "data"),
+        a2.annotate(f'siempre "conforme": {tasa_mayoritaria:.3f}', (1, tasa_mayoritaria), xycoords=("axes fraction", "data"),
                     xytext=(0, 3), textcoords="offset points", ha="right", va="bottom", fontsize=8.5,
                     color=TINTAS["conformes"])
-    a2.set_title(f"validation_scores_: exactitud en el {100 * fraccion_validacion:.0f} % apartado", fontsize=11)
+    a2.set_title(f"validation_scores_: Exactitud en el {100 * fraccion_validacion:.0f} % apartado", fontsize=11)
     a2.set_xlabel("época")
     fig.tight_layout()
-    if tasa_mayoritaria is not None:
+    if tasa_mayoritaria is not None and pie:
         fig.text(0.5, -0.04, "La parada temprana de scikit-learn vigila la exactitud, que aquí apenas supera a la clase "
-                 "mayoritaria; la métrica del proyecto es el ROC-AUC (animación siguiente).", ha="center", va="top",
+                 "mayoritaria. La métrica del proyecto es el ROC-AUC (animación siguiente).", ha="center", va="top",
                  fontsize=9, color=TENUE)
     return tipografia(fig)
 
@@ -235,10 +236,51 @@ def figura_vpp(previas, vpp, ensayos, marcas=None):
 # ----------------------------------------------------------------------
 # Animaciones
 # ----------------------------------------------------------------------
+
+def animacion_bloques(fechas, bloques, fps=1):
+    """La validación cruzada de ventana creciente, bloque por bloque: en cada
+    cuadro aparece un bloque más (ajustar con todo el pasado en azul, validar
+    con el tramo que sigue en naranja) y los anteriores quedan en tenue."""
+    fechas = np.asarray(fechas, dtype="datetime64[D]")
+    fig, ax = _figura(8.6, 0.55 * len(bloques) + 1.5)
+    barras = []
+    for i, (entrenar, validar) in enumerate(bloques):
+        fila = []
+        for indices, color, nombre in ((entrenar, COLORES["azul"], "ajustar"), (validar, COLORES["naranja"], "validar")):
+            desde, hasta = fechas[indices].min(), fechas[indices].max()
+            fila.append(ax.barh(i, (hasta - desde).astype(int), left=desde, height=0.5, color=color,
+                                label=nombre if i == 0 else None)[0])
+        fila.append(ax.text(fechas[validar].max(), i, f"  {len(entrenar)} filas para ajustar, {len(validar)} para validar",
+                            va="center", fontsize=9, fontfamily=familia("cifras"), color=TENUE))
+        barras.append(fila)
+    ax.set_yticks(range(len(bloques)), [f"bloque {i + 1}" for i in range(len(bloques))])
+    ax.invert_yaxis()
+    ax.grid(axis="y", visible=False)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(axis="y", length=0)
+    ax.legend(loc="lower left", ncols=2, bbox_to_anchor=(0, 1.0), handlelength=1.2)
+    ax.set_xlim(right=fechas.max() + np.timedelta64(420, "D"))
+    texto = "Bloque {} de {}: Se ajusta con todo lo anterior y se valida con lo que sigue"
+    titulo = ax.set_title(texto.format(1, len(bloques)), pad=26)
+    tipografia(fig)
+    fig.tight_layout()
+
+    def cuadro(i):
+        for j, fila in enumerate(barras):
+            for pieza in fila:
+                pieza.set_visible(j <= i)
+                pieza.set_alpha(1.0 if j == i else 0.35)
+        titulo.set_text(texto.format(i + 1, len(bloques)))
+        return [p for fila in barras for p in fila] + [titulo]
+
+    anim = animation.FuncAnimation(fig, cuadro, frames=len(bloques), blit=False)
+    return como_html(anim, fps)
+
+
 def animacion_umbral(proba, y, umbrales, costo_fp, costo_fn, elegido, fps=4):
     """El umbral recorre las probabilidades de validación: a la izquierda, la
     distribución de cada clase y la línea del umbral; a la derecha, el costo
-    `costo_fp·FP + costo_fn·FN` y los cuatro conteos de la matriz de confusión."""
+    `costo_fp FP + costo_fn FN` y los cuatro conteos de la matriz de confusión."""
     proba, y = np.asarray(proba, dtype=float), np.asarray(y, dtype=int)
     umbrales = np.asarray(umbrales, dtype=float)
     conteos = []
@@ -263,7 +305,7 @@ def animacion_umbral(proba, y, umbrales, costo_fp, costo_fn, elegido, fps=4):
     a2.axvline(elegido, color=TENUE, ls=":", lw=1)
     punto, = a2.plot([], [], "o", color=TINTAS["costo"], ms=7)
     a2.set_xlabel("umbral")
-    a2.set_title(f"Costo = {costo_fp}·FP + {costo_fn}·FN", fontsize=12)
+    a2.set_title(f"Costo = {costo_fp} FP + {costo_fn} FN", fontsize=12)
     texto = a2.text(0.98, 0.95, "", transform=a2.transAxes, ha="right", va="top", fontsize=9.5,
                     fontfamily=familia("cifras"), color=TINTA, linespacing=1.4)
     fig.tight_layout()
@@ -308,7 +350,7 @@ def animacion_red(perdida, auc, histogramas, bordes, fps=5):
     l0, = a2.plot([], [], drawstyle="steps-mid", color=TINTAS["conformes"], lw=1.8, label="conformes")
     l1, = a2.plot([], [], drawstyle="steps-mid", color=TINTAS["falsos"], lw=1.8, label="no conformes")
     a2.legend(loc="upper right", fontsize=8.5)
-    titulo = a2.set_title("Época 1: ¿se separan las clases?", fontsize=12)
+    titulo = a2.set_title("Época 1: ¿Se separan las clases?", fontsize=12)
     fig.tight_layout()
     tipografia(fig)
     a1b.tick_params(axis="y", labelfontfamily=familia("cifras"))
@@ -318,7 +360,7 @@ def animacion_red(perdida, auc, histogramas, bordes, fps=5):
         l_auc.set_data(epocas[: i + 1], auc[: i + 1])
         l0.set_data(centros, histogramas[i, 0])
         l1.set_data(centros, histogramas[i, 1])
-        titulo.set_text(f"Época {i + 1}: ¿se separan las clases?")
+        titulo.set_text(f"Época {i + 1}: ¿Se separan las clases?")
         return l_perdida, l_auc, l0, l1, titulo
 
     anim = animation.FuncAnimation(fig, cuadro, frames=len(epocas), blit=False)
@@ -339,7 +381,7 @@ def animacion_kmeans(puntos, etiquetas, centros, fps=2):
                         linewidth=1.2, zorder=5)
     ax.set_xlabel("componente principal 1")
     ax.set_ylabel("componente principal 2")
-    titulo = ax.set_title("K-means, iteración 0: asignar y promediar")
+    titulo = ax.set_title("K-means, iteración 0: Asignar y promediar")
     fig.tight_layout()
     tipografia(fig)
 
@@ -348,7 +390,7 @@ def animacion_kmeans(puntos, etiquetas, centros, fps=2):
         marcas.set_offsets(centros[i])
         for j, rastro in enumerate(rastros):
             rastro.set_data(centros[: i + 1, j, 0], centros[: i + 1, j, 1])
-        estado = "convergió" if i == len(centros) - 1 else "asignar y promediar"
+        estado = "Convergió" if i == len(centros) - 1 else "Asignar y promediar"
         titulo.set_text(f"K-means, iteración {i}: {estado}")
         return nube, marcas, titulo, *rastros
 

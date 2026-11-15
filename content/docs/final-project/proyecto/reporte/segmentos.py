@@ -49,7 +49,7 @@ SUGERENCIAS = {
     ("hora_recepcion", 1): "incentivar la entrega temprana para no aplazar la siembra",
 }
 
-# Frases para los nombres de grupo cuando «más/menos <variable>» suena forzado.
+# Frases para los nombres de grupo cuando "más/menos <variable>" suena forzado.
 FRASES = {
     ("hora_recepcion", 1): "recepción tardía", ("hora_recepcion", -1): "recepción temprana",
     ("temperatura_transporte_c", 1): "transporte más cálido", ("temperatura_transporte_c", -1): "transporte más frío",
@@ -77,7 +77,7 @@ def frase(columna, z):
 
 
 def formato_ari(valor):
-    """Índice de Rand ajustado con tres decimales y sin «-0.000»."""
+    """Índice de Rand ajustado con tres decimales y sin "-0.000"."""
     return f"{round(float(valor), 3) + 0.0:.3f}"
 
 
@@ -96,10 +96,10 @@ def nombrar_grupos(perfil_z, umbral, variables):
         if destacadas.empty:
             nombre = "Perfil cercano al promedio"
         else:
-            nombre = " · ".join(frase(c, z) for c, z in destacadas.iloc[:variables].items())
+            nombre = " y ".join(frase(c, z) for c, z in destacadas.iloc[:variables].items())
             nombre = nombre[0].upper() + nombre[1:]
         nombres[grupo] = nombre
-        descripciones[grupo] = ("; ".join(f"{etiqueta(c)} {z:+.1f} DE" for c, z in destacadas.items())
+        descripciones[grupo] = (", ".join(f"{etiqueta(c)} {z:+.1f} DE" for c, z in destacadas.items())
                                 or f"ninguna variable a más de {umbral} DE de la media")
         sugerencias[grupo] = [SUGERENCIAS[(c, int(np.sign(z)))] for c, z in destacadas.items()
                               if (c, int(np.sign(z))) in SUGERENCIAS]

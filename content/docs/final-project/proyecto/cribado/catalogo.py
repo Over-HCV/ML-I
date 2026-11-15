@@ -191,15 +191,15 @@ def disponible(ficha, tablas):
     """
     for tabla, columnas in ficha.requiere.items():
         if tabla not in tablas or tablas[tabla] is None or not len(tablas[tabla]):
-            return False, f"falta la tabla «{tabla}»"
+            return False, f"falta la tabla \"{tabla}\""
         datos = tablas[tabla]
         for columna in columnas:
             if columna not in datos.columns:
-                return False, f"falta la columna «{tabla}.{columna}»"
+                return False, f"falta la columna \"{tabla}.{columna}\""
             if not datos[columna].notna().any():
-                return False, f"la columna «{tabla}.{columna}» no tiene datos"
+                return False, f"la columna \"{tabla}.{columna}\" no tiene datos"
             if columna == ficha.objetivo and datos[columna].nunique(dropna=True) < 2:
-                return False, f"la columna «{tabla}.{columna}» toma un solo valor"
+                return False, f"la columna \"{tabla}.{columna}\" toma un solo valor"
     return True, ""
 
 
@@ -234,8 +234,8 @@ def tabla_catalogo(fichas=None):
     """El catálogo en forma de tabla, para mostrarlo."""
     return pd.DataFrame([
         {"Análisis": f.nombre, "Título": f.titulo, "Tipo": f.tipo, "Unidad": f.unidad,
-         "Objetivo": f.objetivo or "—", "Momento": f.momento or "—", "Métrica": f.metrica or "—",
-         "Línea base": f.columna_linea_base or ("—" if f.tipo not in TIPOS_SUPERVISADOS else "Dummy"),
+         "Objetivo": f.objetivo or "", "Momento": f.momento or "", "Métrica": f.metrica or "",
+         "Línea base": f.columna_linea_base or ("" if f.tipo not in TIPOS_SUPERVISADOS else "Dummy"),
          "Decisión que apoya": f.decision, "Valor": f.valor_negocio}
         for f in (CATALOGO if fichas is None else fichas)
     ])

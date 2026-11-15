@@ -207,7 +207,7 @@ def figura_tasa_por_categoria(muestras, columnas=("sector", "matriz", "ensayo"),
         ax.set_xlim(0, tope * 1.05)
         ax.set_title(f"Por {columna}", loc="left", fontsize=9.5)
         _ejes(ax, "x")
-    ejes[-1, 0].set_xlabel(f"{etiqueta} · línea punteada: tasa global ({tasa_global:.1f} %)")
+    ejes[-1, 0].set_xlabel(f"{etiqueta} (la línea punteada es la tasa global, {tasa_global:.1f} %)")
     fig.suptitle("Tasa por categoría con intervalo de 95 %", x=0.01, ha="left", fontsize=11)
     fig.tight_layout()
     return fig

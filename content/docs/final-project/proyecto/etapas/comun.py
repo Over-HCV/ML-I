@@ -98,9 +98,14 @@ def legible(valor):
     return str(valor)
 
 
+def enumerar(partes):
+    """Partes de texto separadas por comas y "y" antes de la última."""
+    partes = [str(p) for p in partes]
+    if len(partes) <= 1:
+        return "".join(partes)
+    return ", ".join(partes[:-1]) + " y " + partes[-1]
+
+
 def lista_nombres(nombres):
-    """Nombres entre comillas latinas, separados por comas y «y»."""
-    nombres = [f"«{n}»" for n in nombres]
-    if len(nombres) <= 1:
-        return "".join(nombres)
-    return ", ".join(nombres[:-1]) + " y " + nombres[-1]
+    """Nombres entre comillas normales, separados por comas y "y"."""
+    return enumerar(f'"{n}"' for n in nombres)

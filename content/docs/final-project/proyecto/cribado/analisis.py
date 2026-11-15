@@ -263,7 +263,7 @@ def cribar(fichas, tablas_modelado, motivos=None):
         fila = {"analisis": ficha.nombre, "titulo": ficha.titulo, "tipo": ficha.tipo,
                 "valor_negocio": ficha.valor_negocio, "motivo": ""}
         if ficha.tipo == "bayes":
-            fila.update({"estado": ESTADO_ANALITICO, "motivo": "cálculo analítico: no se criba"})
+            fila.update({"estado": ESTADO_ANALITICO, "motivo": "cálculo analítico: No se criba"})
         elif ficha.nombre not in tablas_modelado:
             fila.update({"estado": ESTADO_NO_DISPONIBLE,
                          "motivo": motivos.get(ficha.nombre, "no se construyó su tabla de modelado")})

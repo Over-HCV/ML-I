@@ -6,25 +6,25 @@
 \begin{abstract}
 \noindent
 Se aplica aprendizaje automático a la base de muestras de un laboratorio de
-microbiología con el objetivo de responder tres preguntas de su operación,
-cuántas muestras llegarán cada día, cuáles están en riesgo de resultar no
-conformes y qué tan probable es que un resultado positivo sea falso, así como
-una cuarta, descriptiva, sobre qué perfiles de muestras y segmentos de clientes
-existen. Como la exportación real aún no estaba lista, se trabaja con una base
-simulada que reproduce la estructura del laboratorio
-(\ExpMuestrasLimpias{} muestras limpias entre \DatDesde{} y \DatHasta{}), y la
-exportación real se conecta después mediante un archivo de mapeo de columnas,
-sin cambiar el código. Primeramente se criban \CriCandidatos{} análisis con una
-regla fijada de antemano, después se afinan los elegidos con arreglos
-ortogonales L16 de Taguchi y validación por bloques temporales, y finalmente
-se evalúan los modelos congelados una sola vez en el periodo de prueba. En
-prueba, la regresión lineal de la carga diaria obtuvo un RMSE de
-\FinRMSEPrueba{} muestras por día (habilidad de \FinHabilidadPrueba{} frente a
-la mejor referencia ingenua), la regresión logística calibrada para el riesgo
-de no conformidad un ROC-AUC de \FinAUCPrueba{} con unas \FinAlertasSemana{}
-alertas por semana, de las que acierta una fracción de \FinPrecisionPrueba{}, y
-la capa bayesiana anticipó una fracción de reensayos conformes de
-\FinReensayoConformeEsperadoPct{}\,\% frente a \FinReensayoConformeObservadoPct{}\,\%
-observada. Las cifras validan el procedimiento de punta a punta, pero no
-describen todavía la operación real del laboratorio.
+microbiología para responder tres preguntas de su operación (cuántas muestras
+llegarán cada día, cuáles están en riesgo de resultar no conformes y qué tan
+probable es que un resultado no conforme sea falso) y una cuarta, descriptiva,
+sobre qué perfiles de muestras y segmentos de clientes existen. Como la
+exportación real todavía no estaba lista se trabaja con una base simulada que
+reproduce la estructura del laboratorio (\ExpMuestrasLimpias{} muestras
+limpias entre \DatDesde{} y \DatHasta{}) y que se cambia por la real con un
+archivo de mapeo de columnas, sin tocar el código. Primero se criban
+\CriCandidatos{} análisis candidatos con una regla fijada de antemano, luego
+se afinan los elegidos con arreglos ortogonales L16 de Taguchi y validación
+por bloques temporales y finalmente se evalúan los modelos congelados una
+sola vez en el periodo de prueba. En la prueba la regresión lineal de la carga
+diaria tiene un RMSE de \FinRMSEPrueba{} muestras por día y una habilidad de
+\FinHabilidadPrueba{} frente a la mejor referencia ingenua. La regresión
+logística calibrada ordena el riesgo de no conformidad con un ROC-AUC de
+\FinAUCPrueba{} y emite unas \FinAlertasSemana{} alertas por semana, de las
+que acierta una fracción de \FinPrecisionPrueba{}, mientras que la capa
+bayesiana anticipa un \FinReensayoConformeEsperadoPct{}\,\% de reensayos
+conformes frente al \FinReensayoConformeObservadoPct{}\,\% observado. Las
+cifras muestran que el procedimiento funciona de punta a punta pero todavía
+no describen la operación real del laboratorio.
 \end{abstract}

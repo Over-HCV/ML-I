@@ -37,11 +37,21 @@ COLUMNAS_POR_TIPO = {
     "agrupamiento": ["analisis", "valor_negocio", "filas", "hopkins", "mejor_k", "silueta", "elegible",
                      "observacion", "puntaje_seleccion"],
 }
+# Columnas que lleva el informe impreso: sin "Valor", "Habilidad mínima" ni "Elegible" (la observación ya dice por
+# qué un candidato no es elegible) y con rótulos cortos, para que la tabla quepa sin bajar de unos 8 pt.
+COLUMNAS_INFORME = {
+    "regresion": ["analisis", "filas", "mejor_modelo", "habilidad_media", "variable_regla", "proporcion_regla",
+                  "observacion", "puntaje_seleccion"],
+    "clasificacion": ["analisis", "filas", "tasa_positivos", "mejor_modelo", "habilidad_media", "variable_regla",
+                      "proporcion_regla", "observacion", "puntaje_seleccion"],
+}
+ROTULOS_INFORME = {"tasa_positivos": "Positivos", "mejor_modelo": "Modelo", "habilidad_media": "Habilidad",
+                   "variable_regla": "Mejor variable sola", "proporcion_regla": "Regla", "observacion": "Observación"}
 MACRO_TIPO = {"regresion": "Reg", "clasificacion": "Clf", "agrupamiento": "Agr", "bayes": "Bayes"}
 
 
 def iniciar():
-    return abrir(ETAPA, "Muchos candidatos, una prueba uniforme y una regla fija")
+    return abrir(ETAPA, "Muchos candidatos, la misma prueba rápida y una regla fija")
 
 
 def catalogo_y_regla(c):
@@ -69,21 +79,22 @@ def catalogo_y_regla(c):
     r.agregar(pasos([
         ("Tamaño mínimo",
          f"Un candidato supervisado necesita al menos {analisis.MINIMO_FILAS} filas de entrenamiento y, si es de "
-         f"clasificación, al menos {analisis.MINIMO_POSITIVOS} casos positivos; uno de agrupamiento, al menos "
+         f"clasificación, al menos {analisis.MINIMO_POSITIVOS} casos positivos. Uno de agrupamiento necesita al menos "
          f"{analisis.MINIMO_FILAS_AGRUPAMIENTO} filas."),
         ("Ganancia en todos los bloques",
-         f"La habilidad (ganancia sobre la línea base) debe ser mayor que cero en cada uno de los "
-         f"{config.BLOQUES_VALIDACION_CRUZADA} bloques temporales, no solo en promedio."),
-        ("No basta una regla simple",
-         f"Si un árbol que ve una sola variable logra {100 * analisis.UMBRAL_REGLA_SIMPLE:.0f} % o más de la habilidad del "
-         "mejor modelo rápido, el problema se resuelve con una regla y no necesita un modelo."),
+         f"La habilidad tiene que ser mayor que cero en cada uno de los {config.BLOQUES_VALIDACION_CRUZADA} bloques "
+         "temporales y no solo en promedio."),
+        ("Que no baste una regla simple",
+         f"Si un árbol que ve una sola variable logra el {100 * analisis.UMBRAL_REGLA_SIMPLE:.0f} % o más de la "
+         "habilidad del mejor modelo rápido, el problema se resuelve con una regla y no necesita un modelo."),
         ("Tendencia a agruparse",
-         f"Un candidato de agrupamiento debe tener un estadístico de Hopkins mayor que {analisis.UMBRAL_HOPKINS}, "
-         "el valor que corresponde a datos sin estructura de grupos."),
+         f"Un candidato de agrupamiento tiene que tener un estadístico de Hopkins mayor que {analisis.UMBRAL_HOPKINS}, "
+         "que es el valor de unos datos sin grupos."),
         ("Puntaje",
-         "Entre los elegibles de cada tipo gana el de mayor puntaje: habilidad media × valor de negocio / 3 en los "
-         "supervisados y silueta × valor de negocio / 3 en los de agrupamiento (empates: mayor valor, después nombre)."),
-    ], titulo="Regla de selección (constantes leídas de cribado/analisis.py)"))
+         "Entre los elegibles de cada tipo gana el de mayor puntaje, que es la habilidad media (o la silueta, en "
+         "agrupamiento) por el valor de negocio y dividida entre 3. Si empatan gana el de mayor valor y después el "
+         "nombre."),
+    ], titulo="Regla de selección (las constantes salen de cribado/analisis.py)"))
     supervisadas = f[f["Tipo"].isin(catalogo.TIPOS_SUPERVISADOS)]
     r.agregar(tabla_html(supervisadas[["Análisis", "Tipo", "Unidad", "Métrica", "Línea base"]],
                          "Línea base de cada candidato supervisado", decimales=0,
@@ -136,18 +147,18 @@ def tablas_modelado(c):
          "detalle": "faltan columnas en la exportación" if motivos else "todas las columnas requeridas están"},
     ]))
     r.agregar(nota(
-        (f"Las **{n}** tablas superan la auditoría de fuga: ninguna variable se conoce después del momento de la "
+        (f"Las **{n}** tablas superan la auditoría de fuga: Ninguna variable se conoce después del momento de la "
          "predicción y ningún identificador u objetivo entra como variable." if c.n_superadas == n else
-         f"Hay hallazgos de fuga en {lista_nombres(t.loc[t['Hallazgos de fuga'] > 0, 'Análisis'])}, que deben "
-         "corregirse en `proyecto/variables/` antes de seguir.")
+         f"Hay hallazgos de fuga en {lista_nombres(t.loc[t['Hallazgos de fuga'] > 0, 'Análisis'])}, que habría que "
+         "corregir en `proyecto/variables/` antes de seguir.")
         + (f" Los análisis no disponibles son {lista_nombres(motivos)} ({'; '.join(motivos.values())})." if motivos else ""),
         "hallazgo" if c.n_superadas == n else "advertencia",
     ))
     sin_reserva = t.loc[t["Filas de prueba"] == 0, "Análisis"].tolist()
     r.agregar(nota(
-        f"Las tablas de agrupamiento ({lista_nombres(sin_reserva)}) se construyen solo con el periodo de desarrollo, "
-        "porque describen la base tal como se conoce hoy y no predicen nada, de forma que su bloque de prueba queda "
-        "vacío." if sin_reserva else "Todas las tablas tienen filas en el bloque de prueba.",
+        f"Las tablas de agrupamiento ({lista_nombres(sin_reserva)}) las construimos solo con el periodo de desarrollo "
+        "porque describen la base tal como la conocemos hoy y no predicen nada. Por eso su bloque de prueba queda vacío."
+        if sin_reserva else "Todas las tablas tienen filas en el bloque de prueba.",
         "info",
     ))
     latex.registrar_varias([
@@ -179,8 +190,12 @@ def prueba_rapida(c):
             fichas[NOMBRES_TIPO[tipo]] = tabla_html(
                 vista, f"Cribado de {NOMBRES_TIPO[tipo].lower()} (periodo de entrenamiento)", decimales=3,
                 resaltar=(grupo["analisis"] == c.seleccion.get(tipo)).to_numpy(), columnas_resaltadas="Puntaje")
-            latex.exportar_tabla(vista, f"cribado_{tipo}", f"Cribado de {NOMBRES_TIPO[tipo].lower()} (entrenamiento)",
-                                 decimales=3)
+            impresa = vista
+            if tipo in COLUMNAS_INFORME:
+                impresa = grupo[COLUMNAS_INFORME[tipo]].assign(filas=grupo["filas"].astype(int)).rename(
+                    columns={**NOMBRES_COLUMNAS, **ROTULOS_INFORME}).reset_index(drop=True)
+            latex.exportar_tabla(impresa, f"cribado_{tipo}", f"Cribado de {NOMBRES_TIPO[tipo].lower()} (entrenamiento)",
+                                 decimales=3, alineacion={"Observación": r">{\raggedright\arraybackslash}p{1.9cm}"})
     no_cribados = tc[tc["estado"] != analisis.ESTADO_CRIBADO]
     if len(no_cribados):
         fichas["Sin cribar"] = tabla_html(
@@ -189,8 +204,8 @@ def prueba_rapida(c):
             "Análisis que no pasan por la prueba rápida")
     r.agregar(pestanas(fichas, titulo="Resultados de la prueba rápida (la fila resaltada es la elegida)"))
     segundos = float(tc["segundos"].sum())
-    r.agregar(nota(f"La prueba completa de los {len(c.cribados)} candidatos cribados tarda **{segundos:.1f} s**, lo cual "
-                   "confirma que el filtro es barato frente al modelado a fondo que vendrá después."))
+    r.agregar(nota(f"La prueba completa de los {len(c.cribados)} candidatos tardó **{segundos:.1f} s**, o sea que el "
+                   "filtro sale barato frente al modelado a fondo de las etapas siguientes."))
 
     sup = c.supervisados
     r.figura(graficos_cribado.figura_habilidad(tc, analisis.NOTA_REGLA_SIMPLE), "03_habilidad")
@@ -205,10 +220,10 @@ def prueba_rapida(c):
          f"De los {len(sup)} candidatos supervisados, **{len(estables)}** superan a su línea base en todos los bloques "
          "temporales")
         + (f" y {len(sup) - len(estables)} no lo logran en al menos uno." if len(estables) < len(sup) else ".")
-        + f" El candidato con la habilidad más inestable entre bloques es «{variable['analisis']}», cuya habilidad va de "
+        + f" El más inestable entre bloques es \"{variable['analisis']}\", cuya habilidad va de "
           f"{por_bloque.min():.3f} a {por_bloque.max():.3f} según el bloque, "
-        + ("de forma que su media esconde que en algunos periodos apenas aporta." if por_bloque.min() < 0.1 else
-           "de forma que su media resume periodos con ganancias bastante distintas."),
+        + ("así que su media esconde que en algunos periodos apenas aporta." if por_bloque.min() < 0.1 else
+           "así que su media resume periodos con ganancias bastante distintas."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -229,16 +244,16 @@ def regla_simple(c):
     sup = c.supervisados
     r.figura(graficos_cribado.figura_regla_simple(c.tabla_cribado, analisis.UMBRAL_REGLA_SIMPLE), "03_regla_simple")
     por_regla = sup[sup["observacion"] == analisis.NOTA_REGLA_SIMPLE].sort_values("habilidad_media", ascending=False)
-    frases = [f"«{f['analisis']}» (con «{f['variable_regla']}» se logra el {100 * f['proporcion_regla']:.0f} % de la "
-              "habilidad)" for _, f in por_regla.iterrows()]
+    frases = [f"\"{f['analisis']}\" (con \"{f['variable_regla']}\" se logra el {100 * f['proporcion_regla']:.0f} % "
+              "de la habilidad)" for _, f in por_regla.iterrows()]
     supera = por_regla[por_regla["proporcion_regla"] > 1]
     r.agregar(nota(
         (f"La regla simple descarta {len(por_regla)} candidato{'s' if len(por_regla) != 1 else ''}: "
-         + "; ".join(frases) + "."
-         + (f" En {lista_nombres(supera['analisis'])} la variable sola incluso supera al modelo rápido completo, señal "
-            "de que, en un árbol tan poco profundo, las demás variables no añaden información útil." if len(supera) else ""))
+         + (", ".join(frases[:-1]) + " y " + frases[-1] if len(frases) > 1 else frases[0]) + "."
+         + (f" En {lista_nombres(supera['analisis'])} la variable sola incluso le gana al modelo rápido completo, o sea "
+            "que en un árbol tan poco profundo las demás variables no agregan nada útil." if len(supera) else ""))
         if len(por_regla) else
-        f"Ningún candidato alcanza el umbral de {100 * analisis.UMBRAL_REGLA_SIMPLE:.0f} %: en todos, el modelo combina "
+        f"Ningún candidato llega al umbral de {100 * analisis.UMBRAL_REGLA_SIMPLE:.0f} %: En todos el modelo combina "
         "información de varias variables.",
         "hallazgo",
     ))
@@ -247,17 +262,18 @@ def regla_simple(c):
     mas_habil = clasif.sort_values("habilidad_media", ascending=False).iloc[0] if len(clasif) else None
     if mas_habil is not None and not bool(mas_habil["elegible"]):
         r.agregar(nota(
-            f"El caso más llamativo es «{mas_habil['analisis']}», el candidato de clasificación con la mayor habilidad bruta "
-            f"(**{mas_habil['habilidad_media']:.3f}**, un AUC de {(mas_habil['habilidad_media'] + 1) / 2:.3f}), que queda "
-            f"fuera porque {mas_habil['observacion']}: un árbol que solo mira «{mas_habil['variable_regla']}» consigue el "
-            f"{100 * mas_habil['proporcion_regla']:.0f} % de esa habilidad. "
-            + ("La recomendación para esa pregunta es, entonces, una regla operativa sobre esa variable y no un modelo, y la "
-               "pregunta de fondo (qué tan probable es que un no conforme sea falso) se responde de forma analítica con las "
-               "fichas de Bayes de la etapa 05." if mas_habil["observacion"] == analisis.NOTA_REGLA_SIMPLE else
-               "Ese criterio de la regla pesa más que la habilidad bruta."),
+            f"El caso que más nos llamó la atención fue \"{mas_habil['analisis']}\", el candidato de clasificación con la "
+            f"mayor habilidad bruta (**{mas_habil['habilidad_media']:.3f}**, un AUC de "
+            f"{(mas_habil['habilidad_media'] + 1) / 2:.3f}). Quedó fuera porque {mas_habil['observacion']}: Un árbol que "
+            f"solo mira \"{mas_habil['variable_regla']}\" consigue el {100 * mas_habil['proporcion_regla']:.0f} % de esa "
+            "habilidad. "
+            + ("Para esa pregunta recomendaríamos entonces una regla operativa sobre esa variable y no un modelo. La "
+               "pregunta de fondo (qué tan probable es que un no conforme sea falso) la respondemos de forma analítica con "
+               "las fichas de Bayes de la etapa 05." if mas_habil["observacion"] == analisis.NOTA_REGLA_SIMPLE else
+               "En la regla ese criterio pesa más que la habilidad bruta."),
             "hallazgo", titulo="La mayor habilidad no siempre gana"))
     elif mas_habil is not None:
-        r.agregar(nota(f"El candidato de clasificación con más habilidad bruta, «{mas_habil['analisis']}», también es "
+        r.agregar(nota(f"El candidato de clasificación con más habilidad bruta (\"{mas_habil['analisis']}\") también es "
                        "elegible.", "hallazgo"))
     if mas_habil is not None:
         latex.registrar_varias([
@@ -279,12 +295,13 @@ def candidatos_agrupamiento(c):
         sin_tendencia = g[~(g["hopkins"] > analisis.UMBRAL_HOPKINS)]
         r.agregar(nota(
             f"Los {len(g)} candidatos tienen un Hopkins entre {g['hopkins'].min():.2f} y {g['hopkins'].max():.2f}"
-            + (f", todos por encima del umbral de {analisis.UMBRAL_HOPKINS}, de forma que todos muestran alguna tendencia "
-               "a agruparse." if not len(sin_tendencia) else
-               f"; {lista_nombres(sin_tendencia['analisis'])} no supera{'n' if len(sin_tendencia) > 1 else ''} el umbral "
+            + (f", todos por encima del umbral de {analisis.UMBRAL_HOPKINS} así que todos muestran alguna tendencia a "
+               "agruparse." if not len(sin_tendencia) else
+               f". {lista_nombres(sin_tendencia['analisis'])} no supera{'n' if len(sin_tendencia) > 1 else ''} el umbral "
                f"de {analisis.UMBRAL_HOPKINS}.")
-            + f" La mejor silueta es la de «{mejor['analisis']}» ({mejor['silueta']:.3f} con k = {int(mejor['mejor_k'])}), "
-            + ("un valor moderado: hay estructura, pero los grupos se traslapan." if mejor["silueta"] < 0.5 else
+            + f" La mejor silueta es la de \"{mejor['analisis']}\" ({mejor['silueta']:.3f} con k = "
+              f"{int(mejor['mejor_k'])}), "
+            + ("un valor moderado: Hay estructura pero los grupos se traslapan." if mejor["silueta"] < 0.5 else
                "un valor que indica grupos razonablemente separados."),
             "hallazgo",
         ))
@@ -309,7 +326,7 @@ def seleccion(c):
     r.agregar(embudo([
         ("Análisis candidatos", len(tc), f"{n_bayes} analíticos (Bayes) pasan directo a la etapa 05"),
         ("Cribados con su tabla de modelado", len(cr),
-         f"{len(c.motivos)} no disponibles; prueba rápida en el periodo de entrenamiento"),
+         f"{len(c.motivos)} no disponibles, prueba rápida en el periodo de entrenamiento"),
         ("Elegibles según la regla", c.n_elegibles, "mayor puntaje por tipo"),
         ("Elegidos para el modelado a fondo", n_elegidos),
     ], titulo="Embudo de cribado"))
@@ -324,7 +341,7 @@ def seleccion(c):
             opciones.append({
                 "titulo": fila["analisis"], "valor": float(fila["puntaje_seleccion"]), "decimales": 3,
                 "etiqueta": "puntaje", "puntos": [cifra, f"valor de negocio {int(fila['valor_negocio'])}",
-                                                  "elegible" if bool(fila["elegible"]) else f"no elegible: {fila['observacion']}"],
+                                                  "elegible" if bool(fila["elegible"]) else f"no elegible porque {fila['observacion']}"],
             })
         if opciones:
             por_tipo[NOMBRES_TIPO[tipo]] = comparacion(opciones, elegida=sel.get(tipo))
@@ -337,30 +354,30 @@ def seleccion(c):
         valiosa = regresion.sort_values(["valor_negocio", "puntaje_seleccion"], ascending=False).iloc[0]
         if valiosa["analisis"] != sel["regresion"]:
             frases.append(
-                f"En regresión, «{valiosa['analisis']}» tiene el mayor valor de negocio declarado "
-                f"({int(valiosa['valor_negocio'])} frente a {int(ganadora['valor_negocio'])}), pero su habilidad media "
-                f"({valiosa['habilidad_media']:.3f}) es tan inferior a la de «{sel['regresion']}» "
-                f"({ganadora['habilidad_media']:.3f}) que su puntaje ({valiosa['puntaje_seleccion']:.3f}) queda por "
-                f"debajo ({ganadora['puntaje_seleccion']:.3f})"
-                + (f"; además, su habilidad mínima por bloque es apenas {valiosa['habilidad_minima']:.3f}."
+                f"En regresión esperábamos que ganara \"{valiosa['analisis']}\" porque tiene el mayor valor de negocio "
+                f"declarado ({int(valiosa['valor_negocio'])} frente a {int(ganadora['valor_negocio'])}), pero su "
+                f"habilidad media ({valiosa['habilidad_media']:.3f}) queda tan por debajo de la de "
+                f"\"{sel['regresion']}\" ({ganadora['habilidad_media']:.3f}) que su puntaje "
+                f"({valiosa['puntaje_seleccion']:.3f}) también queda por debajo ({ganadora['puntaje_seleccion']:.3f})"
+                + (f". Además su habilidad mínima por bloque es apenas {valiosa['habilidad_minima']:.3f}."
                    if valiosa["habilidad_minima"] < 0.1 else "."))
         else:
-            frases.append(f"En regresión gana «{sel['regresion']}», que además es el de mayor valor de negocio.")
+            frases.append(f"En regresión gana \"{sel['regresion']}\", que además es el de mayor valor de negocio.")
     if sel["clasificacion"] is not None:
         g = cr.set_index("analisis").loc[sel["clasificacion"]]
-        frases.append(f"En clasificación gana «{sel['clasificacion']}» (habilidad {g['habilidad_media']:.3f}, AUC "
+        frases.append(f"En clasificación gana \"{sel['clasificacion']}\" (habilidad {g['habilidad_media']:.3f}, AUC "
                       f"{(g['habilidad_media'] + 1) / 2:.3f}, valor {int(g['valor_negocio'])}).")
     if sel["agrupamiento"] is not None:
         g = cr.set_index("analisis").loc[sel["agrupamiento"]]
-        frases.append(f"En agrupamiento gana «{sel['agrupamiento']}» (silueta {g['silueta']:.3f} × valor "
-                      f"{int(g['valor_negocio'])} / 3 = {g['puntaje_seleccion']:.3f}).")
+        frases.append(f"En agrupamiento gana \"{sel['agrupamiento']}\" (silueta {g['silueta']:.3f} por valor "
+                      f"{int(g['valor_negocio'])} entre 3, un puntaje de {g['puntaje_seleccion']:.3f}).")
     for tipo in TIPOS_CRIBABLES:
         if sel[tipo] is None:
-            frases.append(f"En {NOMBRES_TIPO[tipo].lower()} ningún candidato es elegible, por lo que no se elige ninguno.")
+            frases.append(f"En {NOMBRES_TIPO[tipo].lower()} ningún candidato es elegible así que no elegimos ninguno.")
     r.agregar(nota("\n\n".join(frases), "hallazgo", titulo="Qué decidió la regla"))
     r.agregar(aviso_origen(
-        "Los datos son **simulados**: el resultado del cribado describe la base simulada y muestra que el procedimiento "
-        "funciona, pero con la exportación real del laboratorio la regla, que no cambia, podría elegir otros análisis."))
+        "Los datos son **simulados**: El cribado describe la base simulada y muestra que el procedimiento funciona. Con "
+        "la exportación real la misma regla podría elegir otros análisis."))
     latex.registrar_varias([
         ("CriElegibles", c.n_elegibles, "candidatos elegibles según la regla"),
         ("CriElegidos", n_elegidos, "análisis elegidos para el modelado a fondo"),
@@ -397,19 +414,22 @@ def consecuencias(c):
 
     comp = c.complementario
     r.agregar(pasos([
-        ("04 · Regresión", f"Se modela a fondo «{sel['regresion']}»: {decision(sel['regresion'])}" if sel["regresion"]
-         else "No hay análisis de regresión elegible: la etapa solo documenta el cribado."),
-        ("05 · Clasificación y Bayes",
-         (f"Se modela a fondo «{sel['clasificacion']}»: {decision(sel['clasificacion'])} " if sel["clasificacion"]
+        ("Etapa 04: Regresión",
+         f"Modelamos a fondo \"{sel['regresion']}\" para {decision(sel['regresion'])[:1].lower()}"
+         f"{decision(sel['regresion'])[1:]}" if sel["regresion"]
+         else "No hay análisis de regresión elegible: La etapa solo documenta el cribado."),
+        ("Etapa 05: Clasificación y Bayes",
+         (f"Modelamos a fondo \"{sel['clasificacion']}\" para {decision(sel['clasificacion'])[:1].lower()}"
+          f"{decision(sel['clasificacion'])[1:]} " if sel["clasificacion"]
           else "No hay análisis de clasificación elegible. ")
-         + f"Además se desarrollan los {len(bayes)} análisis bayesianos, que son analíticos y no se criban: "
+         + f"Además desarrollamos los {len(bayes)} análisis bayesianos, que son analíticos y no se criban: "
          + lista_nombres(f.nombre for f in bayes) + "."),
-        ("06 · Agrupamiento",
-         (f"Se modela a fondo «{sel['agrupamiento']}», elegido por la regla. " if sel["agrupamiento"]
+        ("Etapa 06: Agrupamiento",
+         (f"Modelamos a fondo \"{sel['agrupamiento']}\", el que eligió la regla. " if sel["agrupamiento"]
           else "Ningún candidato de agrupamiento es elegible. ")
-         + (f"Como análisis **complementario y fuera de la regla** se incluye «{comp}», el candidato no elegido con mayor "
-            f"valor de negocio declarado ({int(g.set_index('analisis').loc[comp, 'valor_negocio'])}), porque apoya una "
-            f"decisión sobre los clientes: {decision(comp)}" if comp else "")),
+         + (f"Por fuera de la regla agregamos como **complemento** \"{comp}\", que es el candidato no elegido con mayor "
+            f"valor de negocio declarado ({int(g.set_index('analisis').loc[comp, 'valor_negocio'])}). Lo incluimos porque "
+            f"apoya una decisión sobre los clientes: {decision(comp)}" if comp else "")),
     ], titulo="Qué modela cada etapa"))
     latex.registrar("CriAgrComplementario", comp or "ninguno", "análisis de agrupamiento complementario (fuera de la regla)")
     guardar_json({

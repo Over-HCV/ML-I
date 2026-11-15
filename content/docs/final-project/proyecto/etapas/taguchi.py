@@ -149,8 +149,19 @@ def hiper_de(busqueda):
 
 
 def taguchi_para_artefacto(factores, columnas, respuesta, niveles_optimo, sn_predicha, confirmacion, coincide,
-                           segundos_l16, resumen_completo):
-    return {
+                           segundos_l16, resumen_completo, efectos=None, resultados=None):
+    """Resumen del diseño para el artefacto de la etapa. Con `efectos` y `resultados` (las 16 corridas) guarda
+    también la S/N media por nivel y cada corrida, que es lo que necesita el panel de Taguchi
+    (`reporte.interactivo.panel_taguchi`) para predecir cualquier combinación sin volver a correr nada."""
+    extra = {}
+    if efectos is not None:
+        extra["efectos"] = {f: {legible(fila["nivel"]): float(fila["media"]) for _, fila in grupo.iterrows()}
+                            for f, grupo in efectos.groupby("factor", sort=False)}
+    if resultados is not None:
+        extra["media_sn"] = float(np.nanmean(resultados["sn"].to_numpy(dtype=float)))
+        extra["corridas"] = [{**{f: legible(fila[f]) for f in factores}, "corrida": int(i), "sn": float(fila["sn"]),
+                              "media": float(fila["media"])} for i, fila in resultados.iterrows()]
+    return {**extra, 
         "factores": {f: [legible(v) for v in niveles] for f, niveles in factores.items()},
         "columnas": columnas,
         "tabla_respuesta": respuesta.reset_index().assign(

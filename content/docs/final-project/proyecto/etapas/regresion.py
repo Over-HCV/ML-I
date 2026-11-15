@@ -18,7 +18,7 @@ from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_modelo, leer_json, leer_modelado
 from proyecto.cribado import arreglos, catalogo, corridas
 from proyecto.etapas import taguchi
-from proyecto.etapas.comun import Resultado, abrir, cerrar, legible, aviso_origen
+from proyecto.etapas.comun import Resultado, abrir, cerrar, legible, enumerar, aviso_origen
 from proyecto.evaluacion import metricas, validacion
 from proyecto.evaluacion.remuestreo import intervalo_bootstrap
 from proyecto.modelos import registro, tuberias
@@ -69,13 +69,14 @@ def iniciar():
 def planteamiento(c):
     r = Resultado()
     r.agregar(pasos([
-        ("Qué se predice", f"«{c.ficha.titulo}»: el objetivo es `{c.objetivo}`, una fila por {c.papeles['unidad']}."),
-        ("En qué momento", f"Con la información disponible en el momento «{c.papeles['momento']}», es decir, la víspera: "
-                           "solo entran rezagos, medias móviles, el calendario y lo que ya está programado."),
+        ("Qué predecimos", f"{c.ficha.titulo}: El objetivo es `{c.objetivo}`, con una fila por {c.papeles['unidad']}."),
+        ("En qué momento", f"Con lo que se sabe en el momento \"{c.papeles['momento']}\", es decir la víspera: Solo "
+                           "entran rezagos (el valor de días anteriores), medias móviles, el calendario y lo que ya está "
+                           "agendado."),
         ("Qué decisión apoya", f"{c.ficha.decision} De la misma cifra depende cuántas placas, medios de cultivo y "
                                "espacio de incubadora preparar."),
-        ("Contra qué se compara", "Contra las referencias ingenuas guardadas en la tabla ("
-         + ", ".join(f"«{x}»" for x in c.referencias) + ") y contra un `Dummy` que predice la media del entrenamiento."),
+        ("Contra qué lo comparamos", "Contra las referencias ingenuas que ya trae la tabla ("
+         + ", ".join(f'"{x}"' for x in c.referencias) + ") y contra un `Dummy` que predice la media del entrenamiento."),
     ], titulo="Planteamiento"))
     r.agregar(tarjetas([
         {"titulo": "Días de entrenamiento", "valor": len(c.entrenamiento), "decimales": 0,
@@ -121,15 +122,15 @@ def referencias(c):
     peor = str(rr.mean(axis=1).idxmax())
     dummy = rr.loc[NOMBRE_DUMMY].mean()
     r.agregar(nota(
-        f"La mejor referencia ingenua es «{mejor}», con un RMSE medio de **{bloques.mean():.2f}** muestras por día (entre "
-        f"{bloques.min():.2f} y {bloques.max():.2f} según el bloque), y será el punto de comparación de la habilidad en el "
-        "resto de la etapa. "
+        f"La mejor referencia ingenua es \"{mejor}\", con un RMSE medio de **{bloques.mean():.2f}** muestras por día "
+        f"(entre {bloques.min():.2f} y {bloques.max():.2f} según el bloque). Contra ella medimos la habilidad en el resto "
+        "de la etapa. "
         + (f"El `Dummy`, que ignora el pasado reciente, queda en {dummy:.2f}"
-           + (", peor que las reglas ingenuas, lo que confirma que el nivel reciente de la serie ya lleva información."
+           + (", peor que las reglas ingenuas, o sea que el nivel reciente de la serie ya lleva información."
               if dummy > bloques.mean() else
               ", mejor que las reglas ingenuas, señal de que la serie fluctúa alrededor de un nivel casi fijo.")
            if NOMBRE_DUMMY != mejor else "")
-        + (f" La referencia más débil es «{peor}»." if peor not in (mejor, NOMBRE_DUMMY) else ""),
+        + (f" La referencia más débil es \"{peor}\"." if peor not in (mejor, NOMBRE_DUMMY) else ""),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -159,12 +160,12 @@ def recta_simple(c):
     r2 = c.recta.score(c.X_ent, c.y_ent)
     r.figura(graficos.figura_recta_simple(x, c.y_ent, b1, b0, v, c.objetivo), "04_recta_simple")
     r.agregar(nota(
-        f"La variable más correlacionada con el objetivo es «{v}» (r = {corr[v]:.3f}), y la recta ajustada es "
-        f"ŷ = {b0:.2f} + {b1:.3f} · x. La pendiente indica que, dentro del rango observado ({x_min:.1f} a {x_max:.1f}), "
-        f"cada unidad adicional de «{v}» se asocia con {b1:+.3f} muestras en el día que se predice, y la variable sola "
-        f"explica un R² de {r2:.3f} en el entrenamiento."
-        + (f"\n\nEl intercepto ({b0:.2f}) no se interpreta por sí solo, porque corresponde a x = 0 y ese valor queda fuera "
-           "del rango observado; lo que sí tiene respaldo es la predicción entre el percentil 10 y el 90 de x, que va de "
+        f"La variable más correlacionada con el objetivo es \"{v}\" (r = {corr[v]:.3f}) y la recta ajustada es "
+        f"ŷ = {b0:.2f} + {b1:.3f} x. La pendiente dice que dentro del rango observado ({x_min:.1f} a {x_max:.1f}) cada "
+        f"unidad más de \"{v}\" va con {b1:+.3f} muestras en el día que predecimos. Sola, la variable explica un R² de "
+        f"{r2:.3f} en el entrenamiento (el R² es la fracción de la variación del objetivo que el modelo reproduce)."
+        + (f"\n\nEl intercepto ({b0:.2f}) no lo interpretamos solo porque corresponde a x = 0, un valor que queda fuera "
+           "del rango observado. Lo que sí tiene respaldo es la predicción entre el percentil 10 y el 90 de x, que va de "
            f"{b0 + b1 * x_p10:.1f} a {b0 + b1 * x_p90:.1f} muestras." if not x_min <= 0 <= x_max else
            f"\n\nComo x = 0 sí está dentro del rango observado, el intercepto ({b0:.2f}) se lee como la carga esperada en un "
            "día con ese valor de la variable."),
@@ -198,10 +199,10 @@ def poda(c):
     r.agregar(tabla_html(t, "Ruta de poda por costo-complejidad del árbol de regresión", decimales=3,
                          resaltar=(t["ccp_alpha"] == c.alfa).to_numpy(), columnas_resaltadas="RMSE medio"))
     r.agregar(nota(
-        f"Sin poda el árbol tiene {int(t.iloc[0]['Hojas'])} hojas y un RMSE medio de {t.iloc[0]['RMSE medio']:.2f}; el alfa "
+        f"Sin poda el árbol tiene {int(t.iloc[0]['Hojas'])} hojas y un RMSE medio de {t.iloc[0]['RMSE medio']:.2f}. El alfa "
         f"elegido ({c.alfa:.3f}) lo deja en {int(fila['Hojas'])} hojas con RMSE {fila['RMSE medio']:.2f}"
-        + (", de forma que podar mejora el error además de simplificar el árbol." if c.alfa > 0 else
-           ", es decir, en este caso ningún nivel de poda mejora al árbol completo."),
+        + (", o sea que podar mejora el error además de simplificar el árbol." if c.alfa > 0 else
+           ". Es decir que en este caso ningún nivel de poda mejora al árbol completo."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -239,8 +240,8 @@ def didactica(c):
     c.tabla_didactica = t = pd.DataFrame([_fila_resumen(c, n, e, "referencia") for n, e in c.filas_ref.items()]
                                          + [_fila_resumen(c, n, e, "modelo") for n, e in errores.items()])
     mejor = t[t["Tipo"] == "modelo"].sort_values("RMSE").iloc[0]
-    r.agregar(tabla_html(t, f"Pasada didáctica en los {len(c.bloques)} bloques (media y desviación entre bloques; "
-                            f"habilidad frente a «{c.mejor_ref}»)", decimales=3,
+    r.agregar(tabla_html(t, f"Pasada didáctica en los {len(c.bloques)} bloques (media y desviación entre bloques, "
+                            f"habilidad frente a \"{c.mejor_ref}\")", decimales=3,
                          resaltar=(t["Modelo"] == mejor["Modelo"]).to_numpy(), columnas_resaltadas="RMSE"))
     rmse = pd.DataFrame({n: e["RMSE"] for n, e in errores.items()}, index=c.etiquetas_bloque).T
     r.figura(graficos.figura_por_bloque(pd.concat([rmse, c.rmse_referencias.loc[[c.mejor_ref]]]), "RMSE (muestras por día)",
@@ -249,14 +250,18 @@ def didactica(c):
     rmse_mlp, rmse_lineal = por_modelo.loc["Perceptrón multicapa", "RMSE"], por_modelo.loc["Lineal múltiple", "RMSE"]
     positivos = t[(t["Tipo"] == "modelo") & (t["Habilidad mínima"] > 0)]
     r.agregar(nota(
-        f"El mejor modelo de la pasada es «{mejor['Modelo']}», con RMSE medio **{mejor['RMSE']:.2f}** y una habilidad de "
-        f"**{mejor['Habilidad']:.3f}** frente a «{c.mejor_ref}» (mínima por bloque {mejor['Habilidad mínima']:.3f}). "
-        f"{len(positivos)} de los {len(c.didacticos)} modelos superan a la referencia en todos los bloques.\n\n"
-        + (f"El perceptrón ({rmse_mlp:.2f}) no mejora a la regresión lineal múltiple ({rmse_lineal:.2f}), lo cual sugiere "
-           "que, con estas variables, la relación es casi lineal y la red no encuentra estructura adicional que justifique "
+        f"El mejor modelo de la pasada es \"{mejor['Modelo']}\", con RMSE medio **{mejor['RMSE']:.2f}** y una habilidad "
+        f"de **{mejor['Habilidad']:.3f}** frente a \"{c.mejor_ref}\" (la mínima por bloque es "
+        f"{mejor['Habilidad mínima']:.3f}). O sea que elimina cerca del {100 * mejor['Habilidad']:.0f} % del error de la "
+        "referencia. "
+        + (f"Los {len(c.didacticos)} modelos" if len(positivos) == len(c.didacticos) else
+           f"{len(positivos)} de los {len(c.didacticos)} modelos")
+        + " le ganan a la referencia en todos los bloques.\n\n"
+        + (f"El perceptrón ({rmse_mlp:.2f}) no mejora a la regresión lineal múltiple ({rmse_lineal:.2f}), lo que sugiere "
+           "que con estas variables la relación es casi lineal y la red no encuentra estructura adicional que justifique "
            "su costo." if rmse_mlp >= rmse_lineal else
            f"El perceptrón ({rmse_mlp:.2f}) mejora a la regresión lineal múltiple ({rmse_lineal:.2f}) en "
-           f"{100 * (1 - rmse_mlp / rmse_lineal):.1f} %, de forma que hay algo de no linealidad que la red aprovecha."),
+           f"{100 * (1 - rmse_mlp / rmse_lineal):.1f} % así que hay algo de no linealidad que la red aprovecha."),
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -284,10 +289,10 @@ def coeficientes(c):
     corr = c.entrenamiento[c.numericas].corr().abs().where(~np.eye(len(c.numericas), dtype=bool))
     par = corr.stack().idxmax()
     r.agregar(nota(
-        "Los tres coeficientes de mayor tamaño son " + ", ".join(f"«{n}» ({v:+.2f})" for n, v in principales.items())
-        + f". Cabe mencionar que varias variables son casi redundantes (la correlación más alta, entre «{par[0]}» y "
-          f"«{par[1]}», es {corr.loc[par]:.2f}), de forma que el peso se reparte entre ellas de manera inestable y los "
-          "coeficientes individuales describen el modelo ajustado, no un efecto causal de cada variable.",
+        "Los tres coeficientes más grandes son " + enumerar(f'"{n}" ({v:+.2f})' for n, v in principales.items())
+        + f". Eso sí, varias variables son casi redundantes (la correlación más alta, entre \"{par[0]}\" y "
+          f"\"{par[1]}\", es {corr.loc[par]:.2f}) así que el peso se distribuye entre ellas de forma inestable. Los "
+          "coeficientes describen el modelo ajustado y no el efecto causal de cada variable.",
         "hallazgo",
     ))
     latex.registrar_varias([
@@ -316,33 +321,39 @@ def diseno(c):
     arreglo, c.diseno_l16 = taguchi.diseno_l16(c.factores, COLUMNAS_L16)
     ortogonal = arreglos.verificar_ortogonalidad(arreglo)
     r.agregar(pasos([
-        ("modelo (columna A, 4 niveles)", " / ".join(registro.NOMBRES_LEGIBLES[m] for m in c.factores["modelo"]) + "."),
-        ("escalado (c)", "Estandarización o escalado al intervalo [0, 1] de las variables numéricas."),
+        ("modelo (columna A, 4 niveles)", ", ".join(registro.NOMBRES_LEGIBLES[m] for m in c.factores["modelo"][:-1])
+         + " o " + registro.NOMBRES_LEGIBLES[c.factores["modelo"][-1]] + "."),
+        ("escalado (c)", "Estandarizar (restar la media y dividir entre la desviación estándar) o llevar al intervalo "
+                         "[0, 1] las variables numéricas."),
         ("grupo (d)", f"Grupo base ({len(c.papeles['grupos']['base'])} variables) o ampliado ({len(c.columnas_todas)})."),
-        ("objetivo_log (abd)", "Ajustar sobre log(1 + y) y devolver la predicción en la escala original, o no."),
+        ("objetivo_log (abd)", "Ajustar sobre log(1 + y) y devolver la predicción en la escala original, o no hacerlo."),
         ("seleccion (acd)", f"Sin selección o conservar las {c.k_seleccion} variables con mayor estadístico F (la mitad del "
-                            "grupo ampliado; en el grupo base, que tiene menos, se conservan todas)."),
-        ("codificacion (bcd)", "Cómo entran las variables discretas (" + ", ".join(f"«{x}»" for x in c.discretas)
-         + "): como un entero ordenado o como categorías one-hot."),
-    ], titulo=f"Factores del L16 (ortogonalidad verificada: {'sí' if ortogonal else 'no'})"))
-    r.agregar(tabla_html(taguchi.vista_niveles(c.diseno_l16, c.nombres_factor).reset_index(names="Corrida"),
-                         "Diseño L16 con los niveles reales", decimales=0, maximo_filas=16))
+                            "grupo ampliado). En el grupo base, que tiene menos, se conservan todas."),
+        ("codificacion (bcd)", "Cómo entran las variables discretas (" + ", ".join(f'"{x}"' for x in c.discretas)
+         + "): Como un entero ordenado o como categorías one-hot (una columna de ceros y unos por categoría)."),
+    ], titulo=f"Factores del L16 (ortogonalidad verificada: {'Sí' if ortogonal else 'No'})"))
     confusiones = arreglos.confusiones(COLUMNAS_L16)
     vista = taguchi.vista_confusiones(confusiones)
-    r.agregar(tabla_html(vista, "Dónde cae cada interacción de dos factores", decimales=0,
-                         resaltar=(vista["Confundida con"] == "libre").to_numpy()))
+    r.agregar(pestanas({
+        "Diseño con niveles reales": tabla_html(taguchi.vista_niveles(c.diseno_l16, c.nombres_factor)
+                                                .reset_index(names="Corrida"), "Diseño L16 con los niveles reales",
+                                                decimales=0, maximo_filas=16),
+        "Confusiones": tabla_html(vista, "Dónde cae cada interacción de dos factores", decimales=0,
+                                  resaltar=(vista["Confundida con"] == "libre").to_numpy()),
+    }, titulo="El diseño que corrimos"))
     libres = taguchi.interacciones_libres(confusiones)
     mezcladas = confusiones[confusiones["confundida_con"].map(len) > 0]
     frecuencia = pd.Series([f for lista in mezcladas["confundida_con"] for f in lista]).value_counts()
     r.agregar(nota(
-        f"De las {len(confusiones)} interacciones de dos factores, {len(libres)} quedan libres (" + ", ".join(libres)
-        + ") y las demás se mezclan con algún efecto principal; el factor que más interacciones absorbe es "
-          f"«{frecuencia.index[0]}» ({int(frecuencia.iloc[0])}). La asignación protege a propósito la interacción modelo × "
-          "escalado, la única que se espera grande de antemano (el escalado cambia las distancias de KNN y el entrenamiento "
-          "del perceptrón, pero no afecta al árbol ni a la regresión lineal). Las demás interacciones se suponen pequeñas "
-          "frente a los efectos principales, supuesto que se pone a prueba con la corrida de confirmación: si el modelo "
-          "aditivo acierta, las interacciones ignoradas no pesaban.",
-        "info", titulo="Qué se confunde y por qué es aceptable",
+        f"De las {len(confusiones)} interacciones de dos factores {len(libres)} quedan libres ("
+        + ", ".join(x.replace(" × ", " con ") for x in libres)
+        + ") y las demás se mezclan con algún efecto principal. El factor que más interacciones absorbe es "
+          f"\"{frecuencia.index[0]}\" ({int(frecuencia.iloc[0])}). La asignación protege a propósito la interacción "
+          "entre modelo y escalado, la única que esperábamos grande de antemano porque el escalado cambia las distancias "
+          "de KNN y el entrenamiento del perceptrón pero no afecta al árbol ni a la regresión lineal. Las demás "
+          "interacciones las suponemos pequeñas frente a los efectos principales y ese supuesto lo pone a prueba la "
+          "corrida de confirmación: Si el modelo aditivo acierta, las interacciones que ignoramos no pesaban.",
+        "info", titulo="Qué se confunde y por qué lo aceptamos",
     ))
     latex.registrar_varias([
         ("RegFactores", len(c.factores), "factores del L16 de regresión"),
@@ -365,11 +376,12 @@ def corridas_l16(c):
     vista = taguchi.vista_niveles(res[c.nombres_factor + columnas_bloque + ["media", "desv", "sn", "segundos"]],
                                   c.nombres_factor)
     c.mejor_corrida = mejor = res["sn"].idxmax()
-    r.agregar(tabla_html(vista.reset_index(names="Corrida"), "Resultados del L16: RMSE por bloque, media, desviación y "
-                         "S/N (dB)", decimales=2, resaltar=(res.index == mejor), columnas_resaltadas="sn", maximo_filas=16))
+    tabla_corridas = tabla_html(vista.reset_index(names="Corrida"), "Resultados del L16: RMSE por bloque, media, "
+                                "desviación y S/N (dB)", decimales=2, resaltar=(res.index == mejor),
+                                columnas_resaltadas="sn", maximo_filas=16)
     fallidas = res[res["error"] != ""]
     r.agregar(nota(
-        f"Las 16 corridas tardan **{c.segundos_l16:.1f} s** en total"
+        f"Las 16 corridas tardaron **{c.segundos_l16:.1f} s** en total"
         + (f" y {len(fallidas)} fallaron ({'; '.join(fallidas['error'])})." if len(fallidas) else ", sin fallos.")
         + f" La mejor corrida observada es la {mejor} ("
         + ", ".join(f"{f} = {legible(res.loc[mejor, f])}" for f in c.nombres_factor)
@@ -384,7 +396,9 @@ def corridas_l16(c):
     vr = taguchi.respuesta_legible(c.respuesta, c.nombres_factor)
     vr_vista = vr.rename(columns={"mejor_nivel": "Mejor nivel", "media_mejor": "S/N mejor", "peor_nivel": "Peor nivel",
                                   "media_peor": "S/N peor", "delta": "Delta", "rango": "Rango"})
-    r.agregar(tabla_html(vr_vista, "Tabla de respuesta de Taguchi (S/N en dB)", decimales=2, barras="Delta"))
+    r.agregar(pestanas({"Tabla de respuesta": tabla_html(vr_vista, "Tabla de respuesta de Taguchi (S/N en dB)",
+                                                         decimales=2, barras="Delta"),
+                        "Las 16 corridas": tabla_corridas}, titulo="Detalle del L16"))
 
     interaccion = res.pivot_table(index="modelo", columns="escalado", values="sn", aggfunc="mean")
     efecto_escalado = (interaccion["estandar"] - interaccion["minmax"]).abs()
@@ -394,19 +408,19 @@ def corridas_l16(c):
     sn_log = ef.loc[(ef["factor"] == "objetivo_log") & (ef["nivel"] == True), "media"].iloc[0]  # noqa: E712
     sn_sin_log = ef.loc[(ef["factor"] == "objetivo_log") & (ef["nivel"] == False), "media"].iloc[0]  # noqa: E712
     r.agregar(nota(
-        f"El factor más influyente es «{primero['Factor']}» (delta {primero['delta']:.2f} dB, mejor nivel "
-        f"«{primero['mejor_nivel']}»), seguido de «{segundo['Factor']}» ({segundo['delta']:.2f} dB, mejor nivel "
-        f"«{segundo['mejor_nivel']}»). "
-        + (f"Llevar el objetivo a logaritmo {'ayuda' if c.niveles_optimo['objetivo_log'] else 'no ayuda'}: la S/N media es "
+        f"El factor que más pesa es \"{primero['Factor']}\" (delta de {primero['delta']:.2f} dB, mejor nivel "
+        f"\"{primero['mejor_nivel']}\"), seguido de \"{segundo['Factor']}\" ({segundo['delta']:.2f} dB, mejor nivel "
+        f"\"{segundo['mejor_nivel']}\"). "
+        + (f"Llevar el objetivo a logaritmo {'ayuda' if c.niveles_optimo['objetivo_log'] else 'no ayuda'}: La S/N media es "
            f"{sn_log:.2f} dB con logaritmo y {sn_sin_log:.2f} sin él. ")
-        + f"Como la interacción modelo × escalado quedó libre, se puede leer por separado: el cambio de escalado mueve la "
-          f"S/N {efecto_escalado.max():.2f} dB en «{efecto_escalado.idxmax()}» y solo {efecto_escalado.min():.2f} dB en "
-          f"«{efecto_escalado.idxmin()}». "
-        + (("Los factores " if len(indiferentes) > 1 else "El factor ") + ", ".join(
-            f"«{f}» (delta {d:.2f} dB)" for f, d in indiferentes.items())
+        + f"Como la interacción entre modelo y escalado quedó libre podemos leerla por separado: Cambiar el escalado mueve "
+          f"la S/N {efecto_escalado.max():.2f} dB en \"{efecto_escalado.idxmax()}\" y solo {efecto_escalado.min():.2f} dB "
+          f"en \"{efecto_escalado.idxmin()}\". "
+        + (("Los factores " if len(indiferentes) > 1 else "El factor ") + enumerar(
+            f'"{f}" (delta {d:.2f} dB)' for f, d in indiferentes.items())
            + (" son prácticamente indiferentes" if len(indiferentes) > 1 else " es prácticamente indiferente")
-           + " en esta tabla (menos del 10 % del delta mayor), de forma que su nivel óptimo se decide por diferencias que "
-             "no tienen peso práctico." if len(indiferentes) else "")
+           + " en esta tabla (menos del 10 % del delta mayor) así que su nivel óptimo lo deciden diferencias sin peso "
+             "práctico." if len(indiferentes) else "")
         + "\n\nEl óptimo que predice el modelo aditivo es "
         + ", ".join(f"{f} = {legible(v)}" for f, v in c.niveles_optimo.items())
         + f", con S/N predicha de **{c.sn_predicha:.2f} dB**.",
@@ -450,13 +464,13 @@ def confirmacion(c):
         elegida="S/N observada" if obs >= res["sn"].max() else "Mejor corrida del L16", sello="Mayor S/N"))
     r.agregar(nota(
         f"La S/N observada ({obs:.2f} dB) difiere de la predicha en {diferencia:+.2f} dB, "
-        + (f"dentro de la tolerancia de ±{tol:.2f} dB, de forma que el modelo aditivo describe bien el comportamiento de la "
-           "tubería y las interacciones que el L16 dejó confundidas no parecen importantes." if c.coincide else
-           f"fuera de la tolerancia de ±{tol:.2f} dB, lo que indica que alguna interacción confundida pesa y el óptimo "
-           "aditivo debe tomarse con cautela.")
-        + (" Además, la confirmación supera a la mejor de las 16 corridas, así que el diseño encontró una combinación mejor "
-           "que todas las que llegó a probar." if obs > res["sn"].max() else
-           " Con todo, la confirmación no supera a la mejor corrida observada del L16."),
+        + (f"dentro de la tolerancia de ±{tol:.2f} dB. O sea que el modelo aditivo describe bien la tubería y las "
+           "interacciones que el L16 dejó confundidas no parecen importar." if c.coincide else
+           f"fuera de la tolerancia de ±{tol:.2f} dB, lo que indica que alguna interacción confundida pesa y que el óptimo "
+           "aditivo hay que tomarlo con cautela.")
+        + (" Además la confirmación le gana a la mejor de las 16 corridas así que el diseño encontró una combinación "
+           "mejor que todas las que llegó a probar." if obs > res["sn"].max() else
+           " Con todo, la confirmación no le gana a la mejor corrida observada del L16."),
         "hallazgo" if c.coincide else "advertencia", titulo="Predicho frente a observado",
     ))
     latex.registrar_varias([
@@ -482,14 +496,14 @@ def confirmacion(c):
                    "deltas": respuesta_completo["delta"].to_dict()})
         rho, s_comp, iguales = rc["correlacion_rangos"], rc["segundos"], rc["factores_mismo_optimo"]
         r.agregar(nota(
-            f"El factorial completo tarda {s_comp:.1f} s frente a {c.segundos_l16:.1f} s del L16 (un ahorro de "
-            f"{s_comp - c.segundos_l16:.1f} s, el {100 * (1 - c.segundos_l16 / s_comp):.0f} %). La correlación de rangos de "
-            f"Spearman entre los deltas de ambos diseños es **{rho:.2f}**"
-            + (", así que el L16 ordena la influencia de los factores casi igual que el diseño completo" if rho >= 0.8 else
-               ", de forma que el L16 ordena la influencia de los factores de manera solo parcialmente parecida al diseño "
-               "completo")
-            + f", y coincide en el mejor nivel de {len(iguales)} de los {len(c.nombres_factor)} factores. La combinación de "
-              f"confirmación queda en el puesto {puesto} de las {rc['corridas']} combinaciones (la mejor tiene S/N "
+            f"Para comprobar el atajo corrimos también el factorial completo, que tardó {s_comp:.1f} s frente a "
+            f"{c.segundos_l16:.1f} s del L16 (el {100 * (1 - c.segundos_l16 / s_comp):.0f} % menos). La correlación de "
+            f"rangos de Spearman entre los deltas de los dos diseños es **{rho:.2f}**"
+            + (f" así que con solo 16 corridas ordenamos los factores casi igual que con las {rc['corridas']}"
+               if rho >= 0.8 else
+               " así que el L16 ordena los factores de forma solo parcialmente parecida al diseño completo")
+            + f", y los dos coinciden en el mejor nivel de {len(iguales)} de los {len(c.nombres_factor)} factores. La "
+              f"combinación de confirmación queda en el puesto {puesto} de las {rc['corridas']} (la mejor tiene S/N "
               f"{mejor_completo['sn']:.2f} dB frente a {obs:.2f}).",
             "hallazgo",
         ))
@@ -502,9 +516,9 @@ def confirmacion(c):
         ])
     else:
         r.agregar(nota(
-            f"Con {c.segundos_l16:.1f} s para el L16, el factorial completo tardaría unos {rc['segundos_estimados']:.0f} s, "
-            f"por encima del límite de {taguchi.LIMITE_SEGUNDOS_COMPLETO:.0f} s fijado para esta etapa, de forma que no se "
-            "ejecuta y la comparación queda para cuando haya más tiempo de cómputo.",
+            f"Con {c.segundos_l16:.1f} s para el L16 el factorial completo tardaría unos {rc['segundos_estimados']:.0f} s, "
+            f"por encima del límite de {taguchi.LIMITE_SEGUNDOS_COMPLETO:.0f} s que fijamos para esta etapa. Por eso no lo "
+            "corrimos y la comparación queda pendiente.",
             "limite",
         ))
     latex.registrar("RegCompletoEjecutado", rc["ejecutado"], "se ejecutó el factorial completo")
@@ -524,10 +538,10 @@ def afinamiento(c):
             f"Mejores combinaciones de la rejilla ({len(t)} en total, {c.segundos_rejilla[m]:.1f} s)", decimales=4)
         for m, t in c.tablas_rejilla.items()}, titulo="Búsqueda en rejilla sobre los bloques temporales"))
     r.agregar(nota(
-        f"La configuración base sale de la {origen}: "
-        + ", ".join(f"{f} = {legible(v)}" for f, v in c.configuracion.items() if f != "modelo") + ". "
+        f"La configuración de partida sale de la {origen} ("
+        + ", ".join(f"{f} = {legible(v)}" for f, v in c.configuracion.items() if f != "modelo") + "). "
         + " ".join(
-            f"En «{registro.NOMBRES_LEGIBLES[m]}» la rejilla elige "
+            f"En \"{registro.NOMBRES_LEGIBLES[m]}\" la rejilla elige "
             + (", ".join(f"{k} = {legible(v)}" for k, v in taguchi.hiper_de(b).items())
                or "la única configuración (no tiene hiperparámetros)")
             + f", con RMSE medio de {c.tablas_rejilla[m].iloc[0]['media']:.2f} en los bloques."
@@ -572,23 +586,25 @@ def evaluacion_validacion(c):
         t.loc[fila, "RMSE sup."] = c.intervalos[m]["rmse"][2]
         t.loc[fila, "Habilidad inf."] = c.intervalos[m]["habilidad"][1]
         t.loc[fila, "Habilidad sup."] = c.intervalos[m]["habilidad"][2]
-    r.agregar(tabla_html(t, f"Bloque de validación ({len(c.y_val)} días; habilidad frente a «{c.mejor_ref}», intervalos "
-                            "bootstrap al 95 %)", decimales=3,
+    r.agregar(tabla_html(t, f"Bloque de validación ({len(c.y_val)} días, habilidad frente a \"{c.mejor_ref}\" e "
+                            "intervalos bootstrap al 95 %)", decimales=3,
                          resaltar=(t["Predictor"] == registro.NOMBRES_LEGIBLES[final]).to_numpy(),
                          columnas_resaltadas="RMSE"))
     h, inf_h, sup_h = c.intervalos[final]["habilidad"]
     otro = next(m for m in c.pred_val if m != final)
     r.agregar(nota(
-        f"Según la regla, el candidato final es «{registro.NOMBRES_LEGIBLES[final]}», con RMSE de validación "
-        f"**{c.rmse_val[final]:.2f}** frente a {c.rmse_val[otro]:.2f} de «{registro.NOMBRES_LEGIBLES[otro]}»"
-        + (" (la diferencia cae dentro del 1 % y se prefiere el más sencillo)." if final != menor else ".")
-        + f" Su habilidad frente a «{c.mejor_ref}» es **{h:.3f}**, con un intervalo bootstrap de {inf_h:.3f} a {sup_h:.3f}"
-        + (", que excluye el cero: la mejora sobre la referencia no se explica por el azar de qué días cayeron en la "
+        f"Según la regla el candidato final es \"{registro.NOMBRES_LEGIBLES[final]}\", con RMSE de validación "
+        f"**{c.rmse_val[final]:.2f}** frente a {c.rmse_val[otro]:.2f} de \"{registro.NOMBRES_LEGIBLES[otro]}\""
+        + (f" (la diferencia cae dentro del {100 * TOLERANCIA_EMPATE:.0f} % y preferimos el más sencillo)."
+           if final != menor else ".")
+        + f" Su habilidad frente a \"{c.mejor_ref}\" es **{h:.3f}**, con un intervalo bootstrap de {inf_h:.3f} a "
+          f"{sup_h:.3f}"
+        + (", que no incluye el cero: La mejora sobre la referencia no se explica por el azar de qué días cayeron en la "
            "validación." if inf_h > 0 else
-           ", que incluye el cero: con solo estos días de validación no se puede descartar que el modelo no mejore a la "
+           ", que incluye el cero: Con solo estos días de validación no podemos descartar que el modelo no mejore a la "
            "referencia.")
-        + " El intervalo remuestrea días sueltos e ignora la dependencia entre días consecutivos, por lo que es algo más "
-          "estrecho de lo que sería con un remuestreo por bloques.",
+        + " Eso sí, el intervalo remuestrea días sueltos e ignora que los días seguidos se parecen así que es algo más "
+          "estrecho de lo que daría un remuestreo por bloques.",
         "hallazgo" if inf_h > 0 else "advertencia",
     ))
     fila_final = t.set_index("Predictor").loc[registro.NOMBRES_LEGIBLES[final]]
@@ -624,13 +640,14 @@ def diagnostico(c):
     mitad = len(residuo) // 2
     corr = float(np.corrcoef(pred, np.abs(residuo))[0, 1])
     r.agregar(nota(
-        f"El residuo medio en validación es {residuo.mean():+.2f} muestras por día "
+        f"El residuo medio (lo observado menos lo predicho) en validación es {residuo.mean():+.2f} muestras por día "
         + ("(el modelo tiende a quedarse corto)" if residuo.mean() > 0 else "(el modelo tiende a pasarse)")
         + f", con {residuo[:mitad].mean():+.2f} en la primera mitad del periodo y {residuo[mitad:].mean():+.2f} en la "
           "segunda. "
-        + (f"El tamaño del error crece con el valor predicho (correlación {corr:.2f} entre la predicción y el error "
-           "absoluto), lo esperable en un conteo: los días de más carga son también los más variables." if corr > 0.2 else
-           f"El tamaño del error apenas depende del valor predicho (correlación {corr:.2f}), de forma que la dispersión es "
+        + (f"El tamaño del error crece con el valor predicho (correlación de {corr:.2f} entre la predicción y el error "
+           "absoluto), que es lo esperable en un conteo: Los días de más carga son también los más variables."
+           if corr > 0.2 else
+           f"El tamaño del error casi no depende del valor predicho (correlación de {corr:.2f}) así que la dispersión es "
            "parecida en días de poca y de mucha carga."),
         "hallazgo",
     ))
@@ -656,13 +673,16 @@ def congelar(c):
         {"titulo": "Modelo congelado", "valor": c.rmse_val[c.final], "decimales": 2, "prefijo": "RMSE ",
          "detalle": registro.NOMBRES_LEGIBLES[c.final]},
         {"titulo": "Habilidad en validación", "valor": h, "decimales": 3, "color": "verde",
-         "detalle": f"IC 95 %: {inf_h:.3f} a {sup_h:.3f}"},
+         "detalle": f"intervalo al 95 % de {inf_h:.3f} a {sup_h:.3f}"},
         {"titulo": "Variables que ve el modelo", "valor": len(c.variables_finales), "decimales": 0, "color": "morado",
          "detalle": f"grupo {cfg['grupo']}, selección {legible(cfg['seleccion'])}"},
         {"titulo": "Filas del reajuste", "valor": len(c.desarrollo), "decimales": 0, "color": "naranja",
          "detalle": "entrenamiento + validación"},
     ]))
     hiper = taguchi.hiper_de(c.busquedas[c.final])
+    c.taguchi = taguchi.taguchi_para_artefacto(c.factores, COLUMNAS_L16, c.respuesta, c.niveles_optimo, c.sn_predicha,
+                                               c.conf, c.coincide, c.segundos_l16, c.resumen_completo,
+                                               efectos=c.efectos, resultados=c.resultados_l16)
     latex.registrar_varias([
         ("RegVariablesModelo", len(c.variables_finales), "variables que ve el modelo congelado (tras codificar)"),
         ("RegFilasReajuste", len(c.desarrollo), "filas del reajuste final (entrenamiento + validación)"),
@@ -688,24 +708,24 @@ def operacion(c):
          "sufijo": " %", "puntos": [f"error absoluto medio {mae_ref:.1f} muestras"]},
         {"titulo": nombre, "valor": 100 * fuera_final, "decimales": 1, "sufijo": " %",
          "etiqueta": "% de días fuera de tolerancia", "puntos": [f"error absoluto medio {mae_final:.1f} muestras"]},
-    ], titulo=f"Días con error mayor que {tolerancia:.1f} muestras (20 % de la media diaria)",
+    ], titulo=f"Días con error mayor que {tolerancia:.1f} muestras ({100 * FRACCION_TOLERANCIA:.0f} % de la media diaria)",
         elegida=nombre if fuera_final <= fuera_ref else c.mejor_ref, sello="Menos días fuera"))
     r.agregar(nota(
-        f"En validación el laboratorio recibió en promedio {media:.1f} muestras por día hábil, y el modelo se equivoca en "
+        f"En validación el laboratorio recibió en promedio {media:.1f} muestras por día hábil y el modelo se equivoca en "
         f"{mae_final:.1f} muestras en un día típico (el {100 * mae_final / media:.0f} % de la media), frente a "
-        f"{mae_ref:.1f} de «{c.mejor_ref}». "
-        + (f"El error supera la tolerancia de {tolerancia:.1f} muestras en el {100 * fuera_final:.0f} % de los días, contra "
-           f"el {100 * fuera_ref:.0f} % de la referencia, de forma que el modelo reduce los días mal planificados pero no los "
-           "elimina: sirve para fijar la dotación base del día siguiente, con un margen que cubra la variación diaria."
+        f"{mae_ref:.1f} de \"{c.mejor_ref}\". "
+        + (f"El error pasa la tolerancia de {tolerancia:.1f} muestras en el {100 * fuera_final:.0f} % de los días, contra "
+           f"el {100 * fuera_ref:.0f} % de la referencia. O sea que el modelo reduce los días mal planificados pero no los "
+           "elimina: Serviría para fijar la dotación base del día siguiente, con un margen que cubra la variación diaria."
            if fuera_final < fuera_ref else
-           f"El error supera la tolerancia de {tolerancia:.1f} muestras en el {100 * fuera_final:.0f} % de los días, sin "
-           f"mejorar al {100 * fuera_ref:.0f} % de la referencia, de forma que en la práctica la ganancia en RMSE no se "
-           "traduce en menos días mal planificados."),
+           f"El error pasa la tolerancia de {tolerancia:.1f} muestras en el {100 * fuera_final:.0f} % de los días sin "
+           f"mejorar el {100 * fuera_ref:.0f} % de la referencia así que en la práctica la ganancia en RMSE no se traduce "
+           "en menos días mal planificados."),
         "hallazgo",
     ))
     r.agregar(aviso_origen(
-        "Los datos son **simulados**: las cifras muestran que el procedimiento funciona de punta a punta, pero la habilidad "
-        "real dependerá de la exportación del laboratorio, que se procesará con el mismo código."))
+        "Los datos son **simulados**: Las cifras muestran que el procedimiento funciona de punta a punta, pero la "
+        "habilidad real dependerá de la exportación del laboratorio, que se procesaría con el mismo código."))
     latex.registrar_varias([
         ("RegMediaValidacion", media, "muestras por día hábil en promedio (validación)", 1),
         ("RegToleranciaOperativa", tolerancia, "tolerancia práctica en muestras por día", 1),
@@ -734,8 +754,7 @@ def operacion(c):
         "intervalos": {m: {k: list(v) for k, v in d.items()} for m, d in c.intervalos.items()},
         "referencias_bloques": c.rmse_referencias.to_dict("index"),
         "didactica": c.tabla_didactica.to_dict("records"),
-        "taguchi": taguchi.taguchi_para_artefacto(c.factores, COLUMNAS_L16, c.respuesta, c.niveles_optimo, c.sn_predicha,
-                                                  c.conf, c.coincide, c.segundos_l16, c.resumen_completo),
+        "taguchi": c.taguchi,
         "rejilla": {m: {"hiper": taguchi.hiper_de(b), "rmse_bloques": float(c.tablas_rejilla[m].iloc[0]["media"]),
                         "segundos": c.segundos_rejilla[m]} for m, b in c.busquedas.items()},
         "operacion": c.operacion,

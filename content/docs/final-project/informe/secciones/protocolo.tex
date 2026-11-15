@@ -17,7 +17,7 @@
 % --- Datos y partición por fechas ------------------------------------------
 \node[caja, fill=gray!10, text width=15.2cm] (datos) at (0,0)
     {\textbf{Datos:}\enspace \ExpMuestrasLimpias{} muestras limpias recibidas entre \DatDesde{} y \DatHasta{}\\[1pt]
-     {\scriptsize\color{gray!70!black}partición por fecha de recepción, sin mezclar: cortes en \DatCorteValidacion{} y \DatCortePrueba{}}};
+     {\scriptsize\color{gray!70!black}partición por fecha de recepción, sin mezclar: Cortes en \DatCorteValidacion{} y \DatCortePrueba{}}};
 
 \node[caja, fill=classblue!14, draw=classblue, text width=4.2cm] (tr) at (-5.3,-2.2)
     {\textbf{Entrenamiento}\\ antes de \DatCorteValidacion{}\\ \ExpFilasEntrenamiento{} muestras, \RegDiasEntrenamiento{} días};
@@ -32,9 +32,9 @@
 \node[paso, below=0.75cm of tr] (ajuste)
     {\textbf{Ajustar y explorar}\\ cribado, L16 de Taguchi y rejilla, con validación cruzada temporal};
 \node[paso, below=0.75cm of val] (decidir)
-    {\textbf{Decidir y congelar}\\ modelo, calibración y umbral por costo; reajuste con entrenamiento + validación};
+    {\textbf{Decidir y congelar}\\ modelo, calibración y umbral por costo; Reajuste con entrenamiento + validación};
 \node[paso, below=0.75cm of te] (evaluar)
-    {\textbf{Evaluar una sola vez}\\ etapa 07: métricas con intervalos bootstrap, sin cambiar nada};
+    {\textbf{Evaluar una sola vez}\\ Etapa 07: Métricas con intervalos bootstrap, sin cambiar nada};
 
 \draw[flecha, classblue] (tr) -- (ajuste);
 \draw[flecha, classgreen] (val) -- (decidir);
@@ -60,12 +60,11 @@
   \node[font=\scriptsize, anchor=west] at (4.6,-0.9) {\textcolor{classgreen!70!black}{valida}};
 \end{scope}
 \end{tikzpicture}
-\caption{Protocolo temporal del proyecto. Cada bloque de fechas cumple un único
-papel: con entrenamiento se ajusta y se exploran configuraciones mediante
-validación cruzada de ventana creciente (abajo a la izquierda: cada pliegue
-entrena con el pasado y valida con el tramo siguiente, nunca al revés); con
-validación se decide y se congela, y los modelos congelados se reajustan con
-entrenamiento más validación; la prueba se abre una sola vez, en la etapa~07,
-que deja cada lectura registrada.}
+\caption{Protocolo temporal del proyecto, donde cada bloque de fechas cumple
+un solo papel: Con entrenamiento ajustamos y exploramos configuraciones con
+validación cruzada de ventana creciente (abajo a la izquierda, donde cada
+pliegue entrena con el pasado y valida con el tramo siguiente). Con
+validación decidimos y congelamos. La prueba se abre una sola vez en la
+etapa~07, que deja registrada cada lectura.}
 \label{fig:protocolo}
 \end{figure}
