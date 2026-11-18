@@ -136,7 +136,7 @@
 % \CriMinimoPositivos          = 100          positivos mínimos de un clasificador
 % \CriNoDisponibles            = 0            análisis no disponibles por columnas faltantes
 % \CriProfundidadArbol         = 4            profundidad del árbol rápido del cribado
-% \CriSegundosPrueba           = 10.5         segundos de la prueba rápida completa
+% \CriSegundosPrueba           = 15.6         segundos de la prueba rápida completa
 % \CriSeleccionAgr             = perfiles\_muestra análisis de agrupamiento elegido por la regla
 % \CriSeleccionAgrPuntaje      = 0.144        puntaje del agrupamiento elegido
 % \CriSeleccionAgrSilueta      = 0.433        silueta del agrupamiento elegido
@@ -245,8 +245,8 @@
 % \RegSNMejorCorrida              = $-$22.63     S/N (dB) de la mejor corrida
 % \RegSNObservada                 = $-$22.78     S/N (dB) observada en la corrida de confirmación
 % \RegSNPredicha                  = $-$22.76     S/N (dB) predicha para el óptimo aditivo
-% \RegSegundosCompleto            = 7.8          segundos del factorial completo
-% \RegSegundosLSixteen            = 1.0          segundos de las 16 corridas del L16
+% \RegSegundosCompleto            = 11.7         segundos del factorial completo
+% \RegSegundosLSixteen            = 1.6          segundos de las 16 corridas del L16
 % \RegToleranciaEmpatePct         = 1            tolerancia de empate (%) de la regla de elección
 % \RegToleranciaOperativa         = 10.8         tolerancia práctica en muestras por día
 % \RegToleranciaOperativaPct      = 20           tolerancia práctica (% de la media diaria)
@@ -395,8 +395,8 @@
 % \ClfSNModeloPeor                  = $-$4.302     S/N media (dB) del peor modelo en el L16
 % \ClfSNObservada                   = $-$3.117     S/N (dB) observada en la corrida de confirmación
 % \ClfSNPredicha                    = $-$2.798     S/N (dB) predicha para el óptimo aditivo
-% \ClfSegundosCompletoEstimados     = 209          segundos estimados del factorial completo
-% \ClfSegundosLSixteen              = 26.1         segundos de las 16 corridas del L16
+% \ClfSegundosCompletoEstimados     = 321          segundos estimados del factorial completo
+% \ClfSegundosLSixteen              = 40.2         segundos de las 16 corridas del L16
 % \ClfSemanasValidacion             = 27           semanas del periodo de validación
 % \ClfSensMax                       = 0.966        sensibilidad máxima entre ensayos
 % \ClfSensMin                       = 0.897        sensibilidad mínima entre ensayos
@@ -625,4 +625,78 @@
 % tabla_final_regresion.tex (3 filas): Regresión en la prueba (modelo y referencias)
 % tabla_final_regresion_validacion.tex (4 filas): Validación frente a prueba, regresión
 % tabla_final_resumen.tex (8 filas): Resumen final: validación (o desarrollo) frente a prueba
+%
+% ===== 08_datos_reales: 65 macros =====
+% \RealCampanaMuestrasMediana    = 14           muestras por campaña (mediana)
+% \RealCampanaUnDiaPct           = 69           campañas de un solo día (%)
+% \RealCampanas                  = 385          campañas de muestreo en planta
+% \RealClientes                  = 82           clientes con muestras en el desarrollo
+% \RealClientesDispersion        = 28           clientes con lotes suficientes (todos los tipos)
+% \RealClientesPlanta            = 8            clientes con lotes de planta suficientes
+% \RealClientesProducto          = 22           clientes con lotes de producto suficientes
+% \RealCompuestoPlanta           = 59.98        índice compuesto en planta
+% \RealCompuestoProducto         = 6.00         índice compuesto en producto
+% \RealDesde                     = 2024-06-04   primer ingreso del desarrollo
+% \RealDispLotesPlanta           = 1.20         índice de lotes de planta
+% \RealDispLotesProducto         = 0.73         índice de lotes de producto
+% \RealDispLotesTodos            = 0.90         mediana del índice de lotes por semana
+% \RealDispMuestrasMax           = 407          máximo índice de muestras por semana
+% \RealDispMuestrasPlanta        = 71.16        índice de muestras de planta
+% \RealDispMuestrasProducto      = 4.25         índice de muestras de producto
+% \RealDispMuestrasTodos         = 7.23         mediana del índice de muestras por semana
+% \RealFilas                     = 120114       filas de desarrollo de la exportación real
+% \RealHasta                     = 2025-12-19   último ingreso del desarrollo
+% \RealLoteDeltaGeoPlanta        = 448          AIC de la geométrica sobre el mejor (planta)
+% \RealLoteDeltaGeoProducto      = 5.4          AIC de la geométrica sobre el mejor (producto)
+% \RealLoteMaxPlanta             = 675          lote de planta más grande
+% \RealLoteMaxProducto           = 60           lote de producto más grande
+% \RealLoteMediaPlanta           = 18.7         tamaño medio de los lotes de planta
+% \RealLoteMediaProducto         = 4.1          tamaño medio de los lotes de producto
+% \RealLoteMedianaPlanta         = 6            tamaño mediano de los lotes de planta
+% \RealLoteMedianaProducto       = 3            tamaño mediano de los lotes de producto
+% \RealLoteMejorPlanta           = 1 + binomial negativa mejor modelo del tamaño de lote en planta
+% \RealLoteMejorProducto         = 1 + binomial negativa mejor modelo del tamaño de lote en producto
+% \RealLoteRPlanta               = 0.39         r de la binomial negativa en planta
+% \RealLoteRProducto             = 0.88         r de la binomial negativa en producto
+% \RealLotes                     = 2543         lotes de desarrollo (cliente, día y tipo)
+% \RealLotesPlanta               = 762          lotes de planta
+% \RealLotesProducto             = 1781         lotes de producto
+% \RealMinimoLotes               = 20           lotes mínimos de un cliente para medir su dispersión
+% \RealMuestras                  = 21549        muestras de desarrollo de la exportación real
+% \RealNivel                     = 0.05         nivel de la prueba de dispersión
+% \RealNoConformePct             = 3.7          no conformidad de las muestras de desarrollo (%)
+% \RealPlantaPct                 = 66.2         muestras de muestreo en planta (%)
+% \RealRiesgoAPArbol             = 0.072        precisión media del árbol de decisión
+% \RealRiesgoAPBase              = 0.041        precisión media de la línea base
+% \RealRiesgoAPHistoria          = 0.105        precisión media de la tasa histórica
+% \RealRiesgoAPLogistica         = 0.103        precisión media de la regresión logística
+% \RealRiesgoAUCArbol            = 0.692        ROC-AUC del árbol de decisión
+% \RealRiesgoAUCHistoria         = 0.673        ROC-AUC de la tasa histórica del cliente
+% \RealRiesgoAUCLogistica        = 0.678        ROC-AUC de la regresión logística
+% \RealRiesgoEntrenamiento       = 15628        muestras de entrenamiento del clasificador real
+% \RealRiesgoPrevalenciaPct      = 4.1          no conformidad en validación (%)
+% \RealRiesgoValidacion          = 5823         muestras de validación del clasificador real
+% \RealSegClientes               = 46           clientes en el agrupamiento real
+% \RealSegK                      = 4            número de segmentos de clientes reales
+% \RealSegMayor                  = Más muestras por semana y más dispersión semanal segmento real con más muestras
+% \RealSegMayorMuestrasPct       = 56.3         sus muestras (%)
+% \RealSegMinimoMuestras         = 20           muestras mínimas para entrar al agrupamiento
+% \RealSegNombreCuatro           = Más muestras por semana y más dispersión semanal nombre del segmento real 4
+% \RealSegNombreDos              = Más muestreo en planta y más tamaño de lote nombre del segmento real 2
+% \RealSegNombreTres             = Menos muestreo en planta y menos lotes por semana nombre del segmento real 3
+% \RealSegNombreUno              = Más semanas con envío y más lotes por semana nombre del segmento real 1
+% \RealSegSilueta                = 0.374        silueta de los segmentos reales
+% \RealSimIndiceAlto             = 3.7          índice de muestras de la simulación con el lote medio mayor
+% \RealSimIndiceBajo             = 2.2          índice de muestras de la simulación con el lote medio menor
+% \RealSobreLotesPlantaPct       = 25           clientes con lotes sobredispersos en planta (%)
+% \RealSobreLotesProductoPct     = 5            clientes con lotes sobredispersos en producto (%)
+% \RealSobreMuestrasPlantaPct    = 100          clientes con muestras sobredispersas en planta (%)
+% \RealSobreMuestrasProductoPct  = 95           clientes con muestras sobredispersas en producto (%)
+% --- tablas de 08_datos_reales ---
+% tabla_real_dispersion.tex (2 filas): Índice de dispersión semanal por cliente y tipo de lote
+% tabla_real_particiones.tex (2 filas): Muestras de desarrollo por partición
+% tabla_real_riesgo.tex (4 filas): Clasificador de riesgo al ingreso en validación
+% tabla_real_segmentos.tex (4 filas): Segmentos de clientes reales
+% tabla_real_simulacion.tex (4 filas): Mecanismo de llegada en la simulación y en la exportación real
+% tabla_real_tamano_lote.tex (6 filas): Modelos del tamaño de lote por tipo
 %

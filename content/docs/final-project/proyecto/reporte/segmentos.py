@@ -23,6 +23,8 @@ ETIQUETAS = {
     "proporcion_tardia": "entregas tardías", "temperatura_media": "temperatura de llegada",
     "regularidad_cv": "irregularidad de envíos", "concentracion_estacional": "estacionalidad",
     "antiguedad_dias": "antigüedad",
+    "muestras_semana_media": "muestras por semana", "dispersion_semanal": "dispersión semanal",
+    "proporcion_semanas_activas": "semanas con envío", "lotes_semana": "lotes por semana",
 }
 
 # Lectura operativa: qué podría hacer el laboratorio distinto con un grupo que

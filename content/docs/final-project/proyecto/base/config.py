@@ -43,6 +43,7 @@ ETAPAS = [
     "05_clasificacion_bayes",
     "06_agrupamiento",
     "07_evaluacion_final",
+    "08_datos_reales",
 ]
 ETAPA_PRUEBA = "07_evaluacion_final"
 
@@ -54,6 +55,7 @@ TITULOS_ETAPAS = {
     "05_clasificacion_bayes": "Clasificación y Bayes",
     "06_agrupamiento": "Agrupamiento",
     "07_evaluacion_final": "Evaluación final",
+    "08_datos_reales": "Datos reales",
 }
 
 # Relación de costos de la clasificación: un falso negativo (muestra de riesgo

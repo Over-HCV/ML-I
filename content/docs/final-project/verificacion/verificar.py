@@ -393,7 +393,7 @@ def colores_de_ecuaciones():
 
 # Notebooks de etapa cuyo texto ya sigue la guía de redacción (la lista crece a medida que se revisan las demás).
 ETAPAS_ESTILO = ["01_datos", "02_exploracion", "03_cribado_analisis", "04_regresion", "05_clasificacion_bayes",
-                 "06_agrupamiento", "07_evaluacion_final", "Presentacion"]
+                 "06_agrupamiento", "07_evaluacion_final", "08_datos_reales", "Presentacion"]
 PROHIBIDOS_ESTILO = {"·": "punto medio", "«": "comilla angular", "»": "comilla angular", "—": "raya",
                      "\\cdot": "\\cdot"}
 

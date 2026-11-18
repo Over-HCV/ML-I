@@ -80,6 +80,31 @@ primero sería comprobarlas con los reales:
           cambios de nivel de la serie.
 \end{enumerate}
 
+\ifdefined\RealMuestras
+\subsection{Lo que nos dijo la exportación real}
+
+Con la base real (Sección~\ref{sec:datos-reales}) pudimos poner a prueba
+una idea de Daniel, que trabaja en el laboratorio: Que las muestras llegan
+como una Poisson. Contadas una por una no lo hacen ya que la varianza
+semanal de cada cliente es \RealDispMuestrasTodos{} veces su media (en la
+mediana). Contadas por lotes sí se acercan, con un índice de
+\RealDispLotesTodos{}. O sea que la llegada es una Poisson compuesta: Los
+lotes llegan al azar y cada lote trae un número de muestras que en el
+muestreo en planta tiene una cola muy larga (mediana de
+\RealLoteMedianaPlanta{} y máximo de \RealLoteMaxPlanta{}). Eso nos dejó
+tranquilos con la estructura de la simulación pero también nos mostró su
+punto débil porque con uno más una Poisson el tamaño de los lotes no
+alcanza a dispersarse como en la realidad.
+
+Los clientes se dividen en \RealSegK{} segmentos de volumen y el más grande
+(\RealSegMayor{}) concentra el \RealSegMayorMuestrasPct{}\,\% de las
+muestras. El clasificador de no conformidad con datos reales tiene algo de
+señal (ROC-AUC de \RealRiesgoAUCLogistica{} en validación) pero casi toda
+viene de la historia de cada cliente, que sola llega a
+\RealRiesgoAUCHistoria{}. Por eso no esperaríamos con datos reales las
+habilidades que vimos en la simulación.
+\fi
+
 \subsection{Trabajo futuro con la exportación real}
 
 El siguiente paso sería conectar la exportación real
