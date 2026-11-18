@@ -1,6 +1,6 @@
 # Datos (generados o traídos a mano) y resultados intermedios: se reconstruyen.
-datos/
-artefactos/
+/datos/
+/artefactos/
 
 # Cachés
 __pycache__/
@@ -21,3 +21,6 @@ informe/*.bbl
 informe/*.blg
 informe/*.synctex.gz
 informe/secciones/*.aux
+
+# Material confidencial de Daniel (exportación real y su notebook de referencia)
+/notebooks/src/idea/
