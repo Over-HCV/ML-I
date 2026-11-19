@@ -45,17 +45,75 @@ la impureza ponderada es $\frac{4}{12}\cdot0+\frac{8}{12}\cdot\frac38=\frac14$.}
 
 Se selecciona la \textbf{división $B$}, con mayor reducción de impureza
 ($0.25>0.2222$), aun cuando $A$ parece más ``simétrica'', porque $B$
-aísla un grupo completamente puro de $4$ observaciones de clase $0$. Se
+aísla un grupo completamente puro de $4$ observaciones de clase $0$
+(Figura~\ref{fig:ej5-arboles}). Se
 pondera por el tamaño de los hijos porque la impureza que se quiere
 reducir es la del conjunto de observaciones, no la de los nodos como
 entidades, de forma que un hijo que contiene $8$ de las $12$
 observaciones debe pesar el doble que uno que contiene $4$; sin pesos,
-$B$ se calificaría con $(0+0.375)/2=0.1875$, premiando en exceso la
+$B$ se calificaría con $(0+0.375)/2=0.1875$ (es decir, una reducción de
+$0.3125$ en lugar de $0.25$), premiando en exceso la
 pureza de un hijo pequeño, y en el extremo cualquier división que
 aislara una única observación (hijo con $G=0$) parecería excelente sin
 haber mejorado casi nada la clasificación del resto (el promedio
 ponderado es, además, la impureza esperada de una observación tomada al
 azar del nodo tras la división).
+
+\begin{figure}[H]
+\centering
+\newcommand{\ejcNodoGini}[6]{% #1 nombre, #2 x, #3 y, #4 n0, #5 n1, #6 texto de G
+    \node[draw=gray!60, rounded corners=2pt, fill=white,
+          minimum width=2.3cm, minimum height=1.45cm, inner sep=0pt]
+          (#1) at (#2,#3) {};
+    \node[font=\small, anchor=north] at ($(#1.north)+(0,-0.06)$) {$(#4,#5)$};
+    \node[font=\footnotesize, anchor=north] at ($(#1.north)+(0,-0.48)$) {$G=#6$};
+    \pgfmathsetmacro{\ejcFr}{1.9*#4/(#4+#5)}
+    \fill[classblue] ($(#1.south west)+(0.2,0.15)$) rectangle ++(\ejcFr,0.22);
+    \fill[classred] ($(#1.south west)+(0.2,0.15)+(\ejcFr,0)$)
+        rectangle ($(#1.south west)+(2.1,0.37)$);
+}
+\begin{tikzpicture}[arista/.style={-{Stealth[length=2mm]}, gray!70!black}]
+% --- División A ---
+\node[font=\small\bfseries] at (0,1.25) {División $A$};
+\ejcNodoGini{PA}{0}{0}{6}{6}{0.5}
+\ejcNodoGini{LA}{-1.55}{-2.3}{5}{1}{5/18}
+\ejcNodoGini{RA}{1.55}{-2.3}{1}{5}{5/18}
+\draw[arista] (PA.south) -- (LA.north)
+    node[midway, above left, inner sep=1.5pt, font=\footnotesize] {$6/12$};
+\draw[arista] (PA.south) -- (RA.north)
+    node[midway, above right, inner sep=1.5pt, font=\footnotesize] {$6/12$};
+\node[font=\small] at (0,-3.65)
+    {$\Delta G=\tfrac12-\tfrac{5}{18}=\tfrac29\approx0.2222$};
+% --- División B ---
+\node[font=\small\bfseries, text=classgreen!70!black] at (7.2,1.25)
+    {División $B$ (elegida)};
+\ejcNodoGini{PB}{7.2}{0}{6}{6}{0.5}
+\ejcNodoGini{LB}{5.65}{-2.3}{4}{0}{0}
+\ejcNodoGini{RB}{8.75}{-2.3}{2}{6}{3/8}
+\draw[arista] (PB.south) -- (LB.north)
+    node[midway, above left, inner sep=1.5pt, font=\footnotesize] {$4/12$};
+\draw[arista] (PB.south) -- (RB.north)
+    node[midway, above right, inner sep=1.5pt, font=\footnotesize] {$8/12$};
+\node[font=\small, draw=classgreen, thick, rounded corners=2pt,
+      inner sep=3pt] at (7.2,-3.65)
+    {$\Delta G=\tfrac12-\tfrac14=\mathbf{0.25}$};
+\draw[classgreen, thick, dashed, rounded corners=4pt]
+    (4.15,1.65) rectangle (10.25,-4.15);
+% --- Leyenda ---
+\fill[classblue] (2.35,-4.75) rectangle ++(0.3,0.2);
+\node[font=\footnotesize, anchor=west] at (2.7,-4.65) {clase $0$};
+\fill[classred] (4.25,-4.75) rectangle ++(0.3,0.2);
+\node[font=\footnotesize, anchor=west] at (4.6,-4.65) {clase $1$};
+\end{tikzpicture}
+\caption{Divisiones candidatas $A$ y $B$ del nodo $(6,6)$, donde cada
+barra muestra la proporción de clase $0$ (azul) y de clase $1$ (rojo)
+en el nodo y cada arista el peso $n_h/n$ del hijo; aunque $A$ produce
+dos hijos simétricos y moderadamente impuros, $B$ aísla un hijo puro
+que concentra un tercio de las observaciones, de modo que logra la
+mayor reducción ponderada ($0.25$ frente a $0.2222$) y es la división
+que se elige.}
+\label{fig:ej5-arboles}
+\end{figure}
 
 \item \textbf{Clases y probabilidades en las hojas.}
 En la división $B$, la hoja izquierda $(4,0)$ tiene clase mayoritaria
@@ -91,7 +149,7 @@ hoja derecha, se predice $\hat y(7)=\mathbf{9}$.
     width=0.66\textwidth, height=5.6cm,
     xmin=0, xmax=8.5, ymin=0, ymax=14,
     xlabel={$x$}, ylabel={$y$},
-    legend pos=north west, legend cell align=left,
+    legend pos=south east, legend cell align=left,
     legend style={font=\small}, tick label style={font=\small},
 ]
 \addplot[only marks, mark=*, mark size=2.4pt, color=classblue]
@@ -137,7 +195,8 @@ por unidad de $x$).
 \begin{itemize}
     \item \texttt{max\_depth}: Limita el número de preguntas sucesivas
     desde la raíz hasta una hoja, de forma que restringe el número máximo
-    de hojas ($2^{\text{profundidad}}$) y la complejidad de la partición
+    de hojas (a lo sumo $2^{\text{profundidad}}$, pues cada nivel de un
+árbol binario a lo sumo duplica las hojas) y la complejidad de la partición
     del espacio, impidiendo que el árbol siga dividiendo hasta aislar
     observaciones individuales.
     \item \texttt{min\_samples\_leaf}: Exige que cada hoja conserve al

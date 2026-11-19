@@ -1,0 +1,36 @@
+% =====================================================================
+% apendice.tex
+% Responsabilidad única: registrar el entorno de ejecución (versiones y
+% semilla), como pide el protocolo del taller. Las versiones son macros
+% que escribe el notebook al ejecutarse.
+% =====================================================================
+\section{Entorno de ejecución}
+\label{sec:entorno}
+
+Los resultados de la Parte II se obtuvieron con el entorno de la
+Tabla~\ref{tab:entorno}, registrado por el propio notebook al ejecutarse.
+Dado que los modelos usados (regresiones por mínimos cuadrados, logística
+con \texttt{lbfgs} y árboles con \texttt{random\_state} fijo) son
+deterministas una vez fijada la partición, una reejecución con estas
+versiones reproduce exactamente las mismas cifras, mientras que con otras
+versiones de scikit-learn podrían aparecer diferencias en los últimos
+decimales.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{ll}
+\toprule
+Componente & Versión / valor \\
+\midrule
+Python        & \VerPython \\
+NumPy         & \VerNumpy \\
+pandas        & \VerPandas \\
+Matplotlib    & \VerMatplotlib \\
+scikit-learn  & \VerSklearn \\
+Semilla (\texttt{random\_state} y bootstrap) & \Semilla \\
+\bottomrule
+\end{tabular}
+\caption{Entorno de ejecución de la Parte II.}
+\label{tab:entorno}
+\end{table}

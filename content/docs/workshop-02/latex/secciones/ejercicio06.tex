@@ -3,24 +3,114 @@
 % Responsabilidad única: explorar el caso diabetes en entrenamiento, ajustar la regresión simple
 % con \texttt{bmi} (NumPy y scikit-learn), compararla con el predictor
 % constante y analizar residuos de validación.
+% Las cifras provienen de generado/resultados.tex y generado/tabla_*.tex.
 % =====================================================================
 \subsection{Ejercicio 6 --- Caso A: regresión lineal simple y modelo de referencia}
+% Holgura extra para párrafos con nombres largos en \texttt (rige en 6-10).
+\setlength{\emergencystretch}{2.5em}
 
 \begin{enumerate}
 
 \item \textbf{Exploración en entrenamiento.}
-% TODO
+Los diez predictores son numéricos (\texttt{float64}) y no presentan
+valores faltantes en entrenamiento, al igual que la variable objetivo
+(Tabla~\ref{tab:ex6-exploracion}), por lo que no se requiere imputación. Al
+cargarse con \texttt{scaled=False} las variables quedan en unidades
+originales con rangos muy distintos (por ejemplo \texttt{s1} en cientos y
+\texttt{s5}, el logaritmo de los triglicéridos, en unidades), y \texttt{sex}
+es binaria codificada como 1 y 2; la variable objetivo es una medida
+cuantitativa de progresión cuya unidad no documenta scikit-learn, por lo que
+se habla de unidades de la escala del \emph{target}.
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex6_exploracion}
+\caption{Faltantes y rangos de los predictores y de la variable objetivo (entrenamiento).}
+\label{tab:ex6-exploracion}
+\end{table}
+
+En la Figura~\ref{fig:ex6-bmi} se
+aprecia una tendencia creciente con amplia dispersión vertical (correlación
+de Pearson de $\CorrBmiTarget$), de forma que una recta es una aproximación
+razonable para la tendencia promedio aunque dejará buena parte de la
+variabilidad sin explicar, y la nube parece abrirse levemente para valores
+altos de \texttt{bmi}. No se eliminó ninguna observación, pues los puntos
+alejados son plausibles y nada indica errores de registro.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{figuras/ex6_bmi_target.png}
+    \caption{\texttt{bmi} frente a la progresión de la diabetes (entrenamiento).}
+    \label{fig:ex6-bmi}
+\end{figure}
 
 \item \textbf{Implementación con NumPy vs.\ \texttt{LinearRegression}.}
-% TODO
+Con las expresiones del Ejercicio~1 aplicadas a \texttt{bmi} se obtuvo
+$\hat\beta_0 = \SimpleBetaCero$ y $\hat\beta_1 = \SimpleBetaUno$, los mismos
+coeficientes que reporta \texttt{LinearRegression}, y la diferencia absoluta
+máxima entre las predicciones de validación de ambas implementaciones fue de
+$\SimpleDifMax$, es decir, error de redondeo de punto flotante, por lo que
+\texttt{np.allclose} devuelve \texttt{True}; esto confirma que con un solo
+predictor scikit-learn resuelve exactamente el mismo problema de mínimos
+cuadrados, solo que mediante una factorización numérica en lugar de las sumas
+explícitas.
 
 \item \textbf{Comparación con \texttt{DummyRegressor}.}
-% TODO
+
+\begin{table}[H]
+\centering
+\small
+\input{generado/tabla_ex6_comparacion}
+\caption{Predictor constante frente a regresión simple (entrenamiento y validación).}
+\label{tab:ex6-comparacion}
+\end{table}
+
+La regresión simple mejora las tres métricas frente al predictor constante en
+ambas particiones (Tabla~\ref{tab:ex6-comparacion}), en validación el RMSE
+baja de $\RegDummyRMSEVal$ a $\RegSimpleRMSEVal$ y el MAE de
+$\RegDummyMAEVal$ a $\RegSimpleMAEVal$, mientras que $R^2$ pasa de
+$\RegDummyRdosVal$ a $\RegSimpleRdosVal$, de modo que \texttt{bmi} por sí
+solo explica cerca de un tercio de la variabilidad en validación. El $R^2$
+negativo de la constante no es un error, la media se estima con entrenamiento
+y el $R^2$ de validación se mide contra la media de validación, por lo que
+cualquier desfase entre ambas lo vuelve ligeramente negativo; en este caso
+ninguna métrica empeora con la regresión simple. Cabe mencionar que los dos
+modelos (incluida la constante) tienen menor error en validación que en
+entrenamiento, lo que apunta a una partición de validación algo más
+favorable y no a un fenómeno propio del modelo.
 
 \item \textbf{Residuos de validación.}
-% TODO
+Los residuos (Figura~\ref{fig:ex6-res}) se distribuyen alrededor de cero sin
+una curvatura marcada, pero su dispersión crece con el valor predicho
+(desviación estándar de $\ResStdBaja$ en la mitad de predicciones bajas
+frente a $\ResStdAlta$ en la mitad alta), lo que sugiere heterocedasticidad,
+y hay errores grandes en ambos sentidos (entre $\ResMin$ y $\ResMax$). Esto
+implica que el RMSE resume un error que en realidad es menor para pacientes
+con \texttt{bmi} bajo y mayor para \texttt{bmi} alto, que los errores
+estándar clásicos de mínimos cuadrados (que suponen varianza constante) no
+serían confiables para inferencia, y que la gran dispersión residual indica
+que faltan predictores, lo cual motiva el modelo múltiple del Ejercicio~7.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{figuras/ex6_residuos.png}
+    \caption{Residuos frente a valores predichos de la regresión simple (validación).}
+    \label{fig:ex6-res}
+\end{figure}
 
 \item \textbf{Interpretación de coeficientes y causalidad.}
-% TODO
+El intercepto ($\SimpleBetaCero$) es la predicción para \texttt{bmi} igual
+a cero, valor fuera del rango observado (Tabla~\ref{tab:ex6-exploracion}), por lo que
+solo ubica la recta y no tiene lectura práctica, mientras que la pendiente
+($\SimpleBetaUno$) indica que cada kg/m$^2$ adicional de \texttt{bmi} se
+asocia, en promedio, con $\SimpleBetaUno$ unidades más de progresión
+predicha. Esta asociación no identifica el efecto de intervenir sobre
+\texttt{bmi}, pues los datos son observacionales y \texttt{bmi} se relaciona
+con otros factores (presión arterial, lípidos, edad) que también influyen en
+la progresión, de modo que la pendiente mezcla el efecto propio de
+\texttt{bmi} con el de esas variables; de hecho, en el modelo múltiple del
+Ejercicio~7 la pendiente equivalente baja a unas $\BmiPorUnidad$ unidades por
+kg/m$^2$.
 
 \end{enumerate}

@@ -87,7 +87,14 @@ pendiente $-0.5=-\beta_1/\beta_2$ y su orientación quedan iguales, así
 como \textbf{las probabilidades no cambian en absoluto}: $p(x)$ depende
 solo de $\beta$, de modo que el umbral es una decisión posterior sobre
 cómo convertir probabilidades en clases, no una propiedad del modelo
-ajustado.
+ajustado. La Figura~\ref{fig:ej3-fronteras} muestra este desplazamiento
+en el plano $(x_1,x_2)$, mientras que la Figura~\ref{fig:ej3-sigmoide}
+lo muestra sobre la escala del puntaje: la curva $p=\sigma(z)$ es la
+misma para todos los umbrales y cada máquina conserva su posición sobre
+ella, de forma que cambiar $t$ solo mueve el corte vertical
+$z=\log\frac{t}{1-t}$ que separa las predicciones (por ejemplo, $B$
+queda justo sobre el corte de $t=0.5$, mientras que $C$ es la única
+máquina a la derecha del corte de $t=0.8$).
 
 \begin{figure}[H]
 \centering
@@ -113,6 +120,45 @@ ajustado.
 \end{tikzpicture}
 \caption{Fronteras de decisión $p=t$ en el plano $(x_1,x_2)$: rectas
 paralelas de pendiente $-0.5$; por encima de cada recta se predice falla.}
+\label{fig:ej3-fronteras}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.66\textwidth, height=6cm,
+    xmin=-5, xmax=5, ymin=0, ymax=1.05,
+    xlabel={$z=-3+0.6x_1+1.2x_2$}, ylabel={$p=\sigma(z)$},
+    ytick={0,0.2,0.5,0.8,1},
+    xtick={-4,-2,0,2,4},
+    legend pos=south east, legend cell align=left,
+    legend style={font=\small}, tick label style={font=\small},
+]
+\addplot[domain=-5:5, samples=200, very thick, color=black] {1/(1+exp(-x))};
+\addlegendentry{$\sigma(z)$}
+\addplot[thick, dotted, color=classgreen]
+    coordinates {(-5,0.2) (-1.3863,0.2) (-1.3863,0)};
+\addlegendentry{$t=0.2$}
+\addplot[thick, color=classblue]
+    coordinates {(-5,0.5) (0,0.5) (0,0)};
+\addlegendentry{$t=0.5$}
+\addplot[thick, dashed, color=classred]
+    coordinates {(-5,0.8) (1.3863,0.8) (1.3863,0)};
+\addlegendentry{$t=0.8$}
+\addplot[only marks, mark=*, mark size=2.4pt, color=black,
+         nodes near coords, point meta=explicit symbolic,
+         every node near coord/.append style={font=\small, anchor=south east}]
+    coordinates {(-0.6,0.3543)[$A$] (0,0.5)[$B$] (1.8,0.8581)[$C$]};
+\end{axis}
+\end{tikzpicture}
+\caption{Sigmoide $p=\sigma(z)$ con los umbrales $t=0.2$, $0.5$ y $0.8$:
+cada línea horizontal $p=t$ corta la curva en $z=\log\frac{t}{1-t}$
+($-1.3863$, $0$ y $1.3863$), y se predice falla a la derecha de ese
+corte. Las máquinas $A$, $B$ y $C$ ocupan el mismo punto de la curva
+para cualquier umbral, de modo que $t$ solo cambia el corte en $z$ y no
+las probabilidades.}
+\label{fig:ej3-sigmoide}
 \end{figure}
 
 \item \textbf{Umbral de costo mínimo.}
@@ -132,8 +178,12 @@ cuatro veces más que un falso positivo, el umbral óptimo baja de $0.5$
 a $0.2$, y aplicándolo, $A$ ($p=0.3543$), $B$ ($p=0.5$) y $C$
 ($p=0.8581$) superan $0.2$, por lo cual \textbf{las tres máquinas se
 clasifican como falla}, incluida $A$, que con $t=0.5$ no se marcaba
-(su frontera aparece punteada en la figura anterior,
-$x_2\approx1.3448-0.5x_1$).
+(su frontera aparece punteada en la Figura~\ref{fig:ej3-fronteras},
+$x_2\approx1.3448-0.5x_1$, y en la Figura~\ref{fig:ej3-sigmoide}
+corresponde al corte $z\ge\log 0.25\approx-1.3863$, que deja a las tres
+máquinas a su derecha). Este mismo resultado se contrasta con datos reales
+en la Parte II, donde para el costo $L=FP+5FN$ predice $t^*=1/6$ y se pone
+a prueba el supuesto de calibración (Ejercicio~9c).
 
 \item \textbf{Mínimos cuadrados vs.\ sigmoide en $[0,1]$.}
 Un modelo $\hat y=\beta_0+\beta^\top x$ es una función afín no acotada:

@@ -34,14 +34,36 @@
 \section{Componente práctico-computacional}
 \label{sec:practico}
 
-% TODO(rama práctica): párrafo de datos (load_diabetes con scaled=False,
-% load_breast_cancer recodificado 1 = maligno) y protocolo 60/20/20 con
-% random_state=42; tamaños de partición vía macros de generado/resultados.
+\noindent Los ejercicios 6 a 10 se desarrollaron en Python (scikit-learn) sobre
+dos conjuntos reales incluidos en la biblioteca, el caso A
+(\texttt{load\_diabetes} con \texttt{scaled=False}, regresión de la progresión
+de la diabetes a un año) y el caso B (\texttt{load\_breast\_cancer},
+recodificado como 1 = maligno y 0 = benigno). En ambos casos se reservó
+primero el 20\,\% para prueba y luego el 25\,\% del resto para validación,
+con \texttt{random\_state=42} y estratificación en el caso B, lo que dejó
+$\NRegTr/\NRegVal/\NRegTest$ observaciones en el caso A y
+$\NClfTr/\NClfVal/\NClfTest$ en el caso B (entrenamiento, validación y
+prueba). Los modelos se ajustaron solo con entrenamiento, las decisiones
+(hiperparámetros, umbrales y candidatos) se tomaron con validación, y la
+prueba se consultó una única vez en el ejercicio 10 sobre modelos y umbrales
+ya congelados, sin reentrenar con entrenamiento más validación. El notebook
+que se entrega por separado se ejecuta de principio a fin y produce todas
+las figuras, tablas y cifras citadas en esta sección.
+La Figura~\ref{fig:protocolo} resume este protocolo.
+
+\input{secciones/protocolo}
 
 \input{secciones/ejercicio06}
 \input{secciones/ejercicio07}
 \input{secciones/ejercicio08}
 \input{secciones/ejercicio09}
 \input{secciones/ejercicio10}
+
+% ---------------------------------------------------------------------
+% Apéndice — Entorno de ejecución
+% ---------------------------------------------------------------------
+\newpage
+\appendix
+\input{secciones/apendice}
 
 \end{document}

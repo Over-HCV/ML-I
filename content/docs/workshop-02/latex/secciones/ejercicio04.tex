@@ -40,7 +40,8 @@ $\sigma'(z)=\sigma(z)(1-\sigma(z))$,
 \]
 donde los factores $p_i(1-p_i)$ se cancelan limpiamente con los
 denominadores (esa cancelación es precisamente la razón por la que la
-entropía cruzada y la sigmoide combinan tan bien). Como
+entropía cruzada y la sigmoide combinan tan bien, como se resume en la
+figura~\ref{fig:ej4-grafo}). Como
 $\partial z_i/\partial\beta_0=1$ y $\partial z_i/\partial\beta_1=x_i$,
 y $J$ es el promedio de los $\ell_i$,
 \[
@@ -54,6 +55,60 @@ En el punto inicial, $p-y=(0.5,\,0.5,\,-0.5)$, de modo que
     \qquad
     \frac{\partial J}{\partial \beta_1} = \frac{-0.5+0-0.5}{3} = -\frac13 \approx -0.3333 .
 \]
+
+\begin{figure}[H]
+\centering
+\small
+\begin{tikzpicture}[
+    >={Stealth[length=2.2mm]},
+    nodo/.style={draw, rounded corners=2pt, minimum height=8mm,
+                 inner sep=4pt, fill=white},
+    dato/.style={text=gray!70!black},
+    atras/.style={->, thick, classred, dashed},
+]
+    % --- fila superior: cálculo hacia adelante
+    \node[nodo, draw=classblue, fill=classblue!8] (b) at (0,0)
+        {$\boldsymbol\beta=(\beta_0,\beta_1)$};
+    \node[nodo] (z) at (4.4,0) {$z_i=\beta_0+\beta_1x_i$};
+    \node[nodo] (p) at (9.0,0) {$p_i=\sigma(z_i)$};
+    \node[nodo] (l) at (13.3,0) {$\ell_i(p_i,y_i)$};
+    \node[dato] (x) at (4.4,1.25) {$x_i$};
+    \node[dato] (y) at (13.3,1.25) {$y_i$};
+    \draw[->, thick] (b) -- (z);
+    \draw[->, thick] (z) -- (p);
+    \draw[->, thick] (p) -- (l);
+    \draw[->, gray!70!black] (x) -- (z);
+    \draw[->, gray!70!black] (y) -- (l);
+    % --- fila inferior: derivadas acumuladas hacia atrás
+    \node[classred] (gb) at (0,-2.3) {$(p_i-y_i)\,(1,\;x_i)$};
+    \node[draw=classgreen, very thick, fill=classgreen!12, rounded corners=2pt,
+          inner sep=4pt] (gz) at (4.4,-2.3)
+        {$\dfrac{\partial\ell_i}{\partial z_i}=p_i-y_i$};
+    \node[classred] (gp) at (9.0,-2.3)
+        {$\dfrac{\partial\ell_i}{\partial p_i}=\dfrac{p_i-y_i}{p_i(1-p_i)}$};
+    \draw[atras] (l.south) |- (gp.east)
+        node[pos=0.3, left, font=\footnotesize]
+        {$-\Bigl[\dfrac{y_i}{p_i}-\dfrac{1-y_i}{1-p_i}\Bigr]$};
+    \draw[atras] (gp) -- (gz)
+        node[midway, above, font=\footnotesize] {$\times\,\sigma'(z_i)$}
+        node[midway, below, font=\footnotesize] {$=p_i(1-p_i)$};
+    \draw[atras] (gz) -- (gb)
+        node[midway, above, font=\footnotesize] {$\times\,(1,\;x_i)$};
+    \draw[gray!50, densely dotted] (b) -- (gb);
+    \draw[gray!50, densely dotted] (z) -- (gz);
+    \draw[gray!50, densely dotted] (p) -- (gp);
+\end{tikzpicture}
+\caption{Grafo computacional de la pérdida de una observación. Arriba,
+el cálculo hacia adelante desde los parámetros hasta $\ell_i$; abajo
+(rojo), la regla de la cadena aplicada de derecha a izquierda, donde
+cada arista multiplica por la derivada local (en la última,
+$\partial z_i/\partial\beta_0=1$ y $\partial z_i/\partial\beta_1=x_i$). Al pasar de $p_i$ a $z_i$
+el factor $\sigma'(z_i)=p_i(1-p_i)$ cancela exactamente el denominador
+de $\partial\ell_i/\partial p_i$, de forma que queda el residuo
+$p_i-y_i$ (verde), y al promediar $(p_i-y_i)(1,x_i)$ sobre las tres
+observaciones se obtiene el gradiente $\nabla J$ del literal~b.}
+\label{fig:ej4-grafo}
+\end{figure}
 
 \item \textbf{Un paso de descenso de gradiente.}
 Con $\eta=0.5$ y actualización simultánea,
@@ -98,13 +153,13 @@ $\frac{\partial}{\partial\beta_1}\bigl(\lambda\beta_1^2/2\bigr)=\lambda\beta_1$,
 \]
 Evaluando en $(\beta_0,\beta_1)=(-\tfrac1{12},\tfrac16)$ con $\lambda=1$
 y $p\approx(0.4378,\,0.4792,\,0.5208)$:
-\[
+\begin{align*}
     \frac{\partial J_\lambda}{\partial\beta_0}
-    = \frac{0.4378+0.4792-0.4792}{3} \approx 0.1459,
-    \qquad
+    &= \frac{0.4378+0.4792-0.4792}{3} \approx 0.1459,\\
     \frac{\partial J_\lambda}{\partial\beta_1}
-    \approx \underbrace{-0.3057}_{\partial J/\partial\beta_1} + 1\cdot0.1667 \approx -0.1390 ,
-\]
+    &= \underbrace{\frac{-0.4378+0-0.4792}{3}}_{\partial J/\partial\beta_1\,\approx\,-0.3057}
+    + 1\cdot0.1667 \approx -0.1390 ,
+\end{align*}
 de modo que la penalización reduce a menos de la mitad el empuje para
 seguir aumentando $\beta_1$, actuando como una fuerza que lo atrae hacia
 $0$. Sin embargo, en el primer paso no altera nada, porque al partir de
@@ -120,12 +175,25 @@ $C$ penalizan más los coeficientes (modelos más simples, coeficientes
 más cercanos a $0$), y valores grandes de $C$ los penalizan menos,
 acercándose al ajuste sin regularizar. Cualitativamente, $C$ juega un
 papel inverso al de $\lambda$, aunque no conviene suponer que
-$C=1/\lambda$ reproduce exactamente $J_\lambda$, porque la función
-objetivo de scikit-learn escala la pérdida como una \emph{suma} sobre
-las observaciones multiplicada por $C$ (y no como un promedio), además
-de que la constante de la penalización y el tratamiento del intercepto
-dependen del \emph{solver}, de forma que la equivalencia exacta
-dependería de $n$ y de esas convenciones. Por otra parte, la penalización
+$C=1/\lambda$ reproduce exactamente $J_\lambda$, porque, con penalización
+L2, scikit-learn minimiza $\tfrac12\lVert w\rVert^2+C\sum_{i=1}^{n}\ell_i$,
+es decir, escala la pérdida como una \emph{suma} sobre las observaciones
+multiplicada por $C$ (y no como un promedio), de forma que al dividir
+entre $Cn$ se obtiene $\tfrac1n\sum_i\ell_i+\tfrac{1}{2Cn}\lVert w\rVert^2$,
+y la correspondencia exacta con $J_\lambda$ es $C=1/(n\lambda)$ (aquí
+$C=1/3$ y no $C=1$), siempre que el intercepto no se penalice. Este
+último punto depende del \emph{solver}: \texttt{lbfgs},
+\texttt{newton-cg}, \texttt{newton-cholesky}, \texttt{sag} y
+\texttt{saga} dejan el intercepto fuera de $w$, mientras que
+\texttt{liblinear} lo trata como el coeficiente de una columna
+sintética constante (de valor \texttt{intercept\_scaling}) y por lo
+tanto también lo penaliza, de forma que con ese solver ni siquiera
+$C=1/(n\lambda)$ reproduce $J_\lambda$ (con los tres datos del
+ejercicio y $\lambda=1$, el mínimo de $J_\lambda$ es
+$(\beta_0,\beta_1)\approx(-0.7025,\,0.2906)$, que coincide con el de
+\texttt{LogisticRegression(C=1/3)} con \texttt{lbfgs}, mientras que
+$C=1$ da $\beta_1\approx0.7016$ y \texttt{liblinear} con $C=1/3$ da
+$\beta_0\approx-0.134$). Por otra parte, la penalización
 $\beta_j^2$ actúa sobre la magnitud numérica de cada coeficiente, y esa
 magnitud depende de las unidades: si una variable se mide en milímetros
 en lugar de metros, su coeficiente sin penalizar se divide entre $1000$,

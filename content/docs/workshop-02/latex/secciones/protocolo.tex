@@ -1,0 +1,65 @@
+% =====================================================================
+% protocolo.tex
+% Responsabilidad única: mostrar en un diagrama el protocolo experimental
+% de la Parte II (partición 60/20/20, qué se hace con cada partición y en
+% qué punto se congelan las decisiones antes de abrir prueba). Los tamaños
+% de partición son macros generadas por el notebook.
+% =====================================================================
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    every node/.style={font=\small},
+    caja/.style={draw, rounded corners=2pt, align=center, minimum height=1.05cm, inner sep=4pt},
+    paso/.style={draw, rounded corners=2pt, align=center, fill=gray!6, text width=3.2cm,
+                 minimum height=1.7cm, inner sep=4pt},
+    flecha/.style={-{Stealth[length=2.2mm]}, thick},
+]
+% --- Datos y partición -------------------------------------------------
+\node[caja, fill=gray!10, text width=14cm] (datos) at (0,0)
+    {\textbf{Datos:}\enspace caso A: \texttt{load\_diabetes}, 442 obs.\\
+     caso B: \texttt{load\_breast\_cancer}, 569 obs.\ (1 = maligno)\\[1pt]
+     {\scriptsize\color{gray!70!black}\texttt{random\_state=42}, estratificado en B, mismos índices para todos los modelos}};
+
+\node[caja, fill=classblue!14, draw=classblue, text width=3.2cm] (tr) at (-5,-2.3)
+    {\textbf{Entrenamiento}\\ 60\,\% \\ A: $\NRegTr$ \quad B: $\NClfTr$};
+\node[caja, fill=classgreen!16, draw=classgreen, text width=3.2cm] (val) at (0,-2.3)
+    {\textbf{Validación}\\ 20\,\% \\ A: $\NRegVal$ \quad B: $\NClfVal$};
+\node[caja, fill=classred!12, draw=classred, text width=3.2cm] (te) at (5,-2.3)
+    {\textbf{Prueba}\\ 20\,\% \\ A: $\NRegTest$ \quad B: $\NClfTest$};
+
+\foreach \n in {tr, val, te} \draw[flecha, gray] (datos.south -| \n) -- (\n.north);
+
+% --- Qué se hace con cada partición ------------------------------------
+\node[paso, below=0.7cm of tr] (ajuste)
+    {\textbf{Ajustar}\\ escaladores, coeficientes y árboles (Ej.~6--9)};
+\node[paso, below=0.7cm of val] (decidir)
+    {\textbf{Decidir}\\ $C$, profundidad, hojas, umbral $t$ y candidato};
+\node[paso, below=0.7cm of te] (evaluar)
+    {\textbf{Evaluar una sola vez}\\ métricas e IC bootstrap (Ej.~10)};
+
+\draw[flecha, classblue] (tr) -- (ajuste);
+\draw[flecha, classgreen] (val) -- (decidir);
+\draw[flecha, classred] (te) -- (evaluar);
+
+\draw[flecha] (ajuste) -- node[above, font=\scriptsize, align=center] {modelos\\ ajustados} (decidir);
+\draw[flecha] (decidir) -- node[above, pos=0.3, font=\scriptsize, align=center] {candidatos\\ congelados} (evaluar);
+
+% --- Barrera de congelamiento ------------------------------------------
+\coordinate (barrera) at ($(te.west)+(-0.28,0)$);
+\draw[classred, very thick, dashed] ($(barrera)+(0,0.95)$) -- ($(barrera |- evaluar.south)+(0,-0.15)$);
+\node[classred, font=\scriptsize\bfseries, align=center, fill=white, inner sep=1pt]
+    at ($(barrera)+(0,1.25)$) {congelado: sin reentrenar\\ ni cambiar de candidato};
+
+% --- Transformaciones aprendidas solo con entrenamiento -----------------
+\draw[flecha, dashed, gray] (ajuste.south) to[out=-30, in=-150] (decidir.south);
+\draw[flecha, dashed, gray] (ajuste.south) to[out=-35, in=-145] (evaluar.south);
+\node[font=\scriptsize, gray!70!black, align=center] at ($(decidir.south)+(0,-2.05)$)
+    {escaladores aprendidos solo en entrenamiento y \emph{aplicados} a validación y prueba};
+\end{tikzpicture}
+\caption{Protocolo experimental de la Parte II: cada partición cumple un
+único papel (ajustar, decidir o evaluar), los escaladores se aprenden solo
+con entrenamiento, y todas las decisiones (hiperparámetros, umbrales y
+candidatos) quedan congeladas antes de consultar la prueba, que se usa una
+sola vez en el Ejercicio~10.}
+\label{fig:protocolo}
+\end{figure}

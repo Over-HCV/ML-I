@@ -50,9 +50,10 @@ cual equivale a que los valores de $x$ \textbf{no sean todos iguales}
 mientras que si todas las observaciones tienen el mismo $x$ cualquier
 recta que pase por $(\bar x,\bar y)$ produce el mismo error y la
 pendiente queda indeterminada), y como la matriz hessiana de $S$ es
-$2\begin{psmallmatrix} n & \sum x_i\\ \sum x_i & \sum x_i^2\end{psmallmatrix}$,
-con determinante $4nS_{xx}>0$ bajo esa misma condición, el punto crítico
-es efectivamente un mínimo.
+$2\begin{bsmallmatrix} n & \sum x_i\\ \sum x_i & \sum x_i^2\end{bsmallmatrix}$,
+con primer menor $2n>0$ y determinante $4nS_{xx}>0$ bajo esa misma
+condición, es definida positiva, de forma que $S$ es estrictamente convexa
+y el punto crítico es el mínimo global.
 
 \item \textbf{Coeficientes, predicciones y residuos.}
 Con $\bar x=3$ y $\bar y=4$, las desviaciones son
@@ -107,7 +108,7 @@ la lectura de $R^2$: la fracción de la variabilidad de $y$ alrededor de
 su media que el modelo logra explicar). La pendiente
 $\hat\beta_1=0.6$ se interpreta como que, en estos datos, \textbf{cada
 hora adicional de funcionamiento se asocia con un aumento promedio de
-$0.6$ kWh} en el consumo, mientras que el intercepto $2.2$ kWh es el
+$0.6$ kWh} en el consumo (unidades de $\hat\beta_1$: kWh por hora), mientras que el intercepto $2.2$ kWh es el
 consumo predicho para $x=0$, valor que queda fuera del rango observado
 ($1\le x\le5$) y por eso no conviene leerlo como un consumo en reposo
 real.
@@ -131,20 +132,28 @@ cuadrática penaliza cada residuo por su cuadrado, de modo que un residuo
 grande pesa desproporcionadamente y el ajuste prefiere inclinar toda la
 recta antes que dejar un único error enorme (con la recta original, el
 punto $(5,12)$ tendría residuo $6.8$ y aportaría $46.24$ al SSE, mucho
-más que los otros cuatro residuos juntos). Además el punto está en el
+más que los otros cuatro residuos juntos, que suman $2.36$). Tras el
+reajuste, el residuo de ese punto baja de $6.8$ a $2.6$ a costa de
+empeorar los demás, sobre todo el del punto $(4,4)$, que pasa de $-0.6$ a
+$-3.4$, y aun así el SSE sobre los datos modificados cae de $48.6$ a
+$19.2$ (figura~\ref{fig:ej1-cuadrados}). Además el punto está en el
 extremo del rango de $x$, y como $\hat\beta_1=\sum_i(x_i-\bar x)y_i/S_{xx}$,
 el cambio en la pendiente es exactamente
 $(x_5-\bar x)\,\Delta y_5/S_{xx}=2\cdot7/10=1.4$, es decir, la influencia
-de una observación crece con su distancia a $\bar x$ (su
-\emph{apalancamiento}), por lo cual el mismo cambio en $y_3$ (con
+de una observación crece con su distancia a $\bar x$, que es lo que
+mide su \emph{apalancamiento} $h_i=1/n+(x_i-\bar x)^2/S_{xx}$ (aquí
+$h_5=0.6$ frente a $h_3=0.2$), por lo cual el mismo cambio en $y_3$ (con
 $x_3=\bar x$) no habría alterado la pendiente en absoluto.
 Finalmente, predecir en $x=20$ exigiría cautela adicional porque se
 trata de una \textbf{extrapolación} a cuatro veces el máximo observado:
 nada en los datos garantiza que la relación siga siendo lineal fuera de
 $[1,5]$, y ambos modelos discrepan enormemente allí
-($\hat y(20)=14.2$ frente a $\hat y'(20)=39.4$), de forma que el error
-en la pendiente se amplifica proporcionalmente a la distancia
-$|x-\bar x|$.
+($\hat y(20)=14.2$ frente a $\hat y'(20)=39.4$), pues como cada recta
+pasa por su propio punto de medias, la diferencia entre ambas es
+$\hat y'(x)-\hat y(x)=\Delta\bar y+\Delta\hat\beta_1(x-\bar x)=1.4+1.4(x-3)$,
+de forma que la parte debida al error en la pendiente crece linealmente
+con la distancia $|x-\bar x|$ (la brecha es $5.6$ kWh en $x=6$ y
+$25.2$ kWh en $x=20$).
 
 \end{enumerate}
 
@@ -175,4 +184,39 @@ $|x-\bar x|$.
 \caption{Recta de mínimos cuadrados con los datos originales (azul) y
 tras cambiar solo $y_5$ a $12$ (rojo); los círculos vacíos marcan las
 predicciones en $x=6$ ($5.8$ y $11.4$).}
+\label{fig:ej1-rectas}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.8\textwidth, height=5.8cm,
+    ybar, bar width=11pt, enlarge x limits=0.12,
+    ymin=0, ymax=60, area legend,
+    xtick={1,2,3,4,5},
+    xticklabels={{$(1,2)$},{$(2,4)$},{$(3,5)$},{$(4,4)$},{$(5,12)$}},
+    xlabel={observación $(x_i,y_i)$ con $y_5=12$},
+    ylabel={$e_i^2$ (kWh$^2$)},
+    nodes near coords, every node near coord/.append style={font=\scriptsize,
+        rotate=90, anchor=west, /pgf/number format/fixed,
+        /pgf/number format/fixed zerofill, /pgf/number format/precision=2},
+    legend pos=north west, legend cell align=left,
+    legend style={font=\small}, tick label style={font=\small},
+]
+\addplot[fill=classblue!70, draw=classblue]
+    coordinates {(1,0.64) (2,0.36) (3,1.00) (4,0.36) (5,46.24)};
+\addlegendentry{recta original $2.2+0.6x$ (SSE $=48.6$)}
+\addplot[fill=classred!70, draw=classred]
+    coordinates {(1,0.36) (2,0.36) (3,0.16) (4,11.56) (5,6.76)};
+\addlegendentry{recta reajustada $-0.6+2x$ (SSE $=19.2$)}
+\end{axis}
+\end{tikzpicture}
+\caption{Contribución de cada observación al SSE de los datos modificados
+($y_5=12$), evaluada con la recta original y con la reajustada; bajo la
+recta original el punto $(5,12)$ concentra casi todo el error, de modo
+que mínimos cuadrados acepta empeorar los residuos de los demás puntos
+(en especial el de $(4,4)$) a cambio de reducir ese único cuadrado de
+$46.24$ a $6.76$.}
+\label{fig:ej1-cuadrados}
 \end{figure}
