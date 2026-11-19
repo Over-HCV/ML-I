@@ -1,30 +1,28 @@
 % =====================================================================
 % resumen.tex
-% Responsabilidad única: resumir en un párrafo el problema, el método y las
-% cifras principales de la evaluación en prueba (todas son macros).
+% Responsabilidad única: resumen ejecutivo (150 a 250 palabras, como pide
+% el enunciado): problema, datos, modelos, resultado, recomendación y
+% limitación principal. Todas las cifras son macros.
 % =====================================================================
 \begin{abstract}
 \noindent
-Se aplica aprendizaje automático a la base de muestras de un laboratorio de
-microbiología para responder tres preguntas de su operación (cuántas muestras
-llegarán cada día, cuáles están en riesgo de resultar no conformes y qué tan
-probable es que un resultado no conforme sea falso) y una cuarta, descriptiva,
-sobre qué perfiles de muestras y segmentos de clientes existen. Como la
-exportación real todavía no estaba lista se trabaja con una base simulada que
-reproduce la estructura del laboratorio (\ExpMuestrasLimpias{} muestras
-limpias entre \DatDesde{} y \DatHasta{}) y que se cambia por la real con un
-archivo de mapeo de columnas, sin tocar el código. Primero se criban
-\CriCandidatos{} análisis candidatos con una regla fijada de antemano, luego
-se afinan los elegidos con arreglos ortogonales L16 de Taguchi y validación
-por bloques temporales y finalmente se evalúan los modelos congelados una
-sola vez en el periodo de prueba. En la prueba la regresión lineal de la carga
-diaria tiene un RMSE de \FinRMSEPrueba{} muestras por día y una habilidad de
-\FinHabilidadPrueba{} frente a la mejor referencia ingenua. La regresión
-logística calibrada ordena el riesgo de no conformidad con un ROC-AUC de
-\FinAUCPrueba{} y emite unas \FinAlertasSemana{} alertas por semana, de las
-que acierta una fracción de \FinPrecisionPrueba{}, mientras que la capa
-bayesiana anticipa un \FinReensayoConformeEsperadoPct{}\,\% de reensayos
-conformes frente al \FinReensayoConformeObservadoPct{}\,\% observado. Las
-cifras muestran que el procedimiento funciona de punta a punta pero todavía
-no describen la operación real del laboratorio.
+\textbf{Resumen ejecutivo.} Un laboratorio de microbiología necesita saber
+qué muestras van a resultar no conformes para revisarlas primero y cuántas
+muestras van a llegar para programar su trabajo. Como la exportación real
+llegó al final del semestre se construyó primero todo el procedimiento sobre
+una base simulada con la misma estructura (cribado de \CriCandidatos{}
+análisis con una regla fijada de antemano, arreglos L16 de Taguchi,
+validación por bloques temporales y una sola evaluación en prueba). Después
+se aplicó a la exportación real anonimizada (\RealMuestras{} muestras de
+\RealClientes{} clientes en el periodo de desarrollo), donde las muestras no
+llegan como una Poisson pero los lotes sí así que la llegada es una Poisson
+compuesta. Para clasificar la no conformidad al ingreso se compararon una
+referencia, la regla de la tasa histórica del cliente, regresiones logísticas
+y árboles. La logística congelada ordenó el riesgo de 2026 con un ROC-AUC de
+\RealPruebaAUC{} y una PR-AUC de \RealPruebaAP{}, frente a una prevalencia de
+\RealPruebaPrevalencia{}, pero no se distingue de la regla simple
+(\RealPruebaAPRegla{}) y su umbral dejó de pagar en 2026. Se recomienda usar
+la puntuación para ordenar la revisión y no como alarma automática. La
+limitación principal es la deriva de 2026, con menos no conformidad y más
+clientes nuevos, que obliga a recalibrar antes de cualquier uso.
 \end{abstract}

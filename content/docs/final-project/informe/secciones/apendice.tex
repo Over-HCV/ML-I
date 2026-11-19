@@ -11,7 +11,7 @@
 
 Todo el proyecto se reconstruye desde la carpeta raíz con \codigo{uv} y
 Python 3.12. Cada paso aleatorio parte de la semilla \DatSemilla{} así que
-dos ejecuciones dan las mismas cifras. Con \codigo{make notebooks} se ejecutan las siete
+dos ejecuciones dan las mismas cifras. Con \codigo{make notebooks} se ejecutan las ocho
 etapas en orden y se regenera \codigo{informe/generado/} (las macros, el
 índice y las tablas), con \codigo{make colab} los notebooks se copian a una
 carpeta vacía y se ejecutan allí sin el paquete para probar que se valen por
@@ -20,7 +20,7 @@ documento. Por último \codigo{make verificar} corre el guion
 \codigo{verificar.py} de la carpeta \codigo{verificacion/}. Ese guion revisa
 la regla de capas, que el generador sea determinista, la ortogonalidad del
 L16, las fórmulas de Bayes contra un cálculo a mano, que no haya fugas por
-momento, que solo la etapa~07 lea la prueba, que las etapas no tengan cifras
+momento, que solo las etapas~07 y~08 lean la prueba, que las etapas no tengan cifras
 escritas a mano y que no falten macros en el informe.
 
 En Google Colab basta con subir \codigo{notebooks/Proyecto\_Final.ipynb} y
@@ -55,4 +55,35 @@ Capa & Carpeta & Responsabilidad \\
 \caption{Capas del paquete \codigo{proyecto/}: Los guiones de los notebooks
 solo narran y llaman funciones de la capa~8.}
 \label{tab:capas}
+\end{table}
+
+\section{Correspondencia con el enunciado}
+\label{sec:enunciado}
+
+El enunciado del taller final llegó cuando el proyecto ya estaba armado
+alrededor de cuatro preguntas del laboratorio. Lo seguimos donde no cambiaba
+la explicación del proyecto y en la Tabla~\ref{tab:enunciado} dejamos dónde
+está cada apartado y qué hicimos distinto.
+
+\begin{table}[!htbp]
+\centering
+\small
+\begin{tabular}{p{4.2cm}p{10.6cm}}
+\toprule
+Apartado del enunciado & Dónde está \\
+\midrule
+Problema y objetivos & Secciones~\ref{sec:introduccion} y~\ref{sec:metodologia}: Preguntas, decisión que apoya cada una y criterio de éxito (habilidad y costo) fijado antes de los resultados \\
+Datos y exploración & Secciones~\ref{sec:datos}, \ref{sec:exploracion} y~\ref{sec:datos-reales}: Contrato con el momento de cada columna, auditoría de calidad, figuras y diccionario de la base real en \codigo{datos/} \\
+Preparación y diseño & Sección~\ref{sec:protocolo} y Sección~\ref{sec:real-clasificacion}: Partición temporal, tuberías ajustadas solo con entrenamiento y control de fugas \\
+Fundamento y modelos & Secciones~\ref{sec:clasificacion} y~\ref{sec:real-clasificacion}: Referencia, regresión logística y árbol con tres configuraciones cada uno y cálculo ilustrativo \\
+Resultados y evaluación & Secciones~\ref{sec:evaluacion} y~\ref{sec:real-clasificacion}: Modelos congelados y evaluados una sola vez en prueba, matriz de confusión e interpretación \\
+Propuesta y conclusiones & Sección~\ref{sec:conclusiones}: Recomendaciones, limitaciones y trabajo futuro \\
+Referencias y contribuciones & Sección~\ref{sec:contribuciones} y referencias \\
+Un solo tipo de tarea & No lo seguimos: El proyecto responde cuatro preguntas. La clasificación de no conformidad es la que llevamos a la base real \\
+Partición 60/20/20 & Usamos los cortes temporales del proyecto, que dan otras proporciones pero respetan el orden de las fechas en todas las etapas \\
+Informe de 8 a 12 páginas & Es más largo porque cubre las cuatro preguntas y la base real. El resumen ejecutivo y esta tabla sirven de guía \\
+\bottomrule
+\end{tabular}
+\caption{Apartados del enunciado del taller y dónde los cubre el informe.}
+\label{tab:enunciado}
 \end{table}
