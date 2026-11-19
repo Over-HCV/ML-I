@@ -127,7 +127,7 @@
 \newcommand{\CriMinimoPositivos}{100}
 \newcommand{\CriNoDisponibles}{0}
 \newcommand{\CriProfundidadArbol}{4}
-\newcommand{\CriSegundosPrueba}{15.6}
+\newcommand{\CriSegundosPrueba}{9.9}
 \newcommand{\CriSeleccionAgr}{perfiles\_muestra}
 \newcommand{\CriSeleccionAgrPuntaje}{0.144}
 \newcommand{\CriSeleccionAgrSilueta}{0.433}
@@ -230,8 +230,8 @@
 \newcommand{\RegSNMejorCorrida}{$-$22.63}
 \newcommand{\RegSNObservada}{$-$22.78}
 \newcommand{\RegSNPredicha}{$-$22.76}
-\newcommand{\RegSegundosCompleto}{11.7}
-\newcommand{\RegSegundosLSixteen}{1.6}
+\newcommand{\RegSegundosCompleto}{7.3}
+\newcommand{\RegSegundosLSixteen}{0.9}
 \newcommand{\RegToleranciaEmpatePct}{1}
 \newcommand{\RegToleranciaOperativa}{10.8}
 \newcommand{\RegToleranciaOperativaPct}{20}
@@ -371,8 +371,8 @@
 \newcommand{\ClfSNModeloPeor}{$-$4.302}
 \newcommand{\ClfSNObservada}{$-$3.117}
 \newcommand{\ClfSNPredicha}{$-$2.798}
-\newcommand{\ClfSegundosCompletoEstimados}{321}
-\newcommand{\ClfSegundosLSixteen}{40.2}
+\newcommand{\ClfSegundosCompletoEstimados}{206}
+\newcommand{\ClfSegundosLSixteen}{25.8}
 \newcommand{\ClfSemanasValidacion}{27}
 \newcommand{\ClfSensMax}{0.966}
 \newcommand{\ClfSensMin}{0.897}
@@ -567,6 +567,16 @@
 \newcommand{\FinVPPxMedio}{0.794}
 
 % --- 08_datos_reales ---
+\newcommand{\RealArbolGiniAntes}{0.0690}
+\newcommand{\RealArbolGiniDespues}{0.0666}
+\newcommand{\RealArbolGiniReduccion}{0.0023}
+\newcommand{\RealArbolPrimerCorte}{tasa\_cliente > 0.0735105}
+\newcommand{\RealCalcIntercepto}{$-$3.677}
+\newcommand{\RealCalcLogit}{2.047}
+\newcommand{\RealCalcMayor}{tasa\_cliente}
+\newcommand{\RealCalcMayorAporte}{5.442}
+\newcommand{\RealCalcProba}{0.886}
+\newcommand{\RealCalcTerminos}{9}
 \newcommand{\RealCampanaMuestrasMediana}{14}
 \newcommand{\RealCampanaUnDiaPct}{69}
 \newcommand{\RealCampanas}{385}
@@ -576,6 +586,10 @@
 \newcommand{\RealClientesProducto}{22}
 \newcommand{\RealCompuestoPlanta}{59.98}
 \newcommand{\RealCompuestoProducto}{6.00}
+\newcommand{\RealCongeladoHuella}{10900224adf7}
+\newcommand{\RealCongeladoModelo}{Regresión logística (C = 0.01)}
+\newcommand{\RealCostoFN}{5}
+\newcommand{\RealCostoFP}{1}
 \newcommand{\RealDesde}{2024-06-04}
 \newcommand{\RealDispLotesPlanta}{1.20}
 \newcommand{\RealDispLotesProducto}{0.73}
@@ -586,6 +600,9 @@
 \newcommand{\RealDispMuestrasTodos}{7.23}
 \newcommand{\RealFilas}{120114}
 \newcommand{\RealHasta}{2025-12-19}
+\newcommand{\RealHojaFilas}{51}
+\newcommand{\RealHojaFraccion}{0.314}
+\newcommand{\RealHojaVeces}{8.8}
 \newcommand{\RealLoteDeltaGeoPlanta}{448}
 \newcommand{\RealLoteDeltaGeoProducto}{5.4}
 \newcommand{\RealLoteMaxPlanta}{675}
@@ -605,17 +622,65 @@
 \newcommand{\RealMuestras}{21549}
 \newcommand{\RealNivel}{0.05}
 \newcommand{\RealNoConformePct}{3.7}
+\newcommand{\RealOddsBaja}{previas\_lote}
+\newcommand{\RealOddsBajaValor}{0.70}
+\newcommand{\RealOddsSube}{tasa\_cliente}
+\newcommand{\RealOddsSubeValor}{1.76}
 \newcommand{\RealPlantaPct}{66.2}
-\newcommand{\RealRiesgoAPArbol}{0.072}
+\newcommand{\RealPruebaAP}{0.072}
+\newcommand{\RealPruebaAPConocidos}{0.073}
+\newcommand{\RealPruebaAPInf}{0.059}
+\newcommand{\RealPruebaAPNuevos}{0.097}
+\newcommand{\RealPruebaAPRegla}{0.064}
+\newcommand{\RealPruebaAPReglaInf}{0.053}
+\newcommand{\RealPruebaAPReglaSup}{0.081}
+\newcommand{\RealPruebaAPSup}{0.091}
+\newcommand{\RealPruebaAUC}{0.769}
+\newcommand{\RealPruebaAUCInf}{0.743}
+\newcommand{\RealPruebaAUCSup}{0.794}
+\newcommand{\RealPruebaClientes}{72}
+\newcommand{\RealPruebaClientesNuevos}{17}
+\newcommand{\RealPruebaCosto}{1718}
+\newcommand{\RealPruebaCostoNada}{1710}
+\newcommand{\RealPruebaFN}{339}
+\newcommand{\RealPruebaFP}{23}
+\newcommand{\RealPruebaFUno}{0.016}
+\newcommand{\RealPruebaMuestras}{16325}
+\newcommand{\RealPruebaNuevasPct}{29}
+\newcommand{\RealPruebaPositivos}{342}
+\newcommand{\RealPruebaPrecision}{0.115}
+\newcommand{\RealPruebaPrevalencia}{0.021}
+\newcommand{\RealPruebaPrevalenciaPct}{2.1}
+\newcommand{\RealPruebaRecall}{0.009}
+\newcommand{\RealPruebaSinHistoriaPct}{2.2}
+\newcommand{\RealPruebaTN}{15960}
+\newcommand{\RealPruebaTP}{3}
+\newcommand{\RealPruebaVeces}{3.4}
+\newcommand{\RealRiesgoAPArbol}{0.073}
+\newcommand{\RealRiesgoAPArbolProfundoEnt}{0.212}
+\newcommand{\RealRiesgoAPArbolProfundoVal}{0.073}
 \newcommand{\RealRiesgoAPBase}{0.041}
+\newcommand{\RealRiesgoAPElegido}{0.109}
 \newcommand{\RealRiesgoAPHistoria}{0.105}
-\newcommand{\RealRiesgoAPLogistica}{0.103}
-\newcommand{\RealRiesgoAUCArbol}{0.692}
+\newcommand{\RealRiesgoAPLogistica}{0.109}
+\newcommand{\RealRiesgoAPLogisticaEnt}{0.114}
+\newcommand{\RealRiesgoAUCArbol}{0.683}
+\newcommand{\RealRiesgoAUCElegido}{0.689}
 \newcommand{\RealRiesgoAUCHistoria}{0.673}
-\newcommand{\RealRiesgoAUCLogistica}{0.678}
+\newcommand{\RealRiesgoAUCLogistica}{0.689}
+\newcommand{\RealRiesgoArbol}{profundidad 5}
+\newcommand{\RealRiesgoElegido}{Regresión logística (C = 0.01)}
 \newcommand{\RealRiesgoEntrenamiento}{15628}
+\newcommand{\RealRiesgoEntrenamientoPct}{73}
+\newcommand{\RealRiesgoHojaEsperados}{1.8}
+\newcommand{\RealRiesgoLogistica}{C = 0.01}
+\newcommand{\RealRiesgoMinimoHoja}{50}
+\newcommand{\RealRiesgoPrevalenciaEntPct}{3.6}
 \newcommand{\RealRiesgoPrevalenciaPct}{4.1}
+\newcommand{\RealRiesgoSinDictamen}{98}
 \newcommand{\RealRiesgoValidacion}{5823}
+\newcommand{\RealRiesgoValidacionPct}{27}
+\newcommand{\RealRiesgoVariables}{9}
 \newcommand{\RealSegClientes}{46}
 \newcommand{\RealSegK}{4}
 \newcommand{\RealSegMayor}{Más muestras por semana y más dispersión semanal}
@@ -632,4 +697,19 @@
 \newcommand{\RealSobreLotesProductoPct}{5}
 \newcommand{\RealSobreMuestrasPlantaPct}{100}
 \newcommand{\RealSobreMuestrasProductoPct}{95}
+\newcommand{\RealUmbral}{0.61}
+\newcommand{\RealUmbralAlertas}{41}
+\newcommand{\RealUmbralAlertasSemana}{1.6}
+\newcommand{\RealUmbralCosto}{1152}
+\newcommand{\RealUmbralCostoNada}{1195}
+\newcommand{\RealUmbralCostoTodo}{5584}
+\newcommand{\RealUmbralFN}{225}
+\newcommand{\RealUmbralFP}{27}
+\newcommand{\RealUmbralFUno}{0.100}
+\newcommand{\RealUmbralPrecision}{0.341}
+\newcommand{\RealUmbralRecall}{0.059}
+\newcommand{\RealUmbralTN}{5557}
+\newcommand{\RealUmbralTP}{14}
+\newcommand{\RealUmbralTeorico}{0.167}
+\newcommand{\RealValidacionVeces}{2.7}
 

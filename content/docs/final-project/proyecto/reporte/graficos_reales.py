@@ -4,13 +4,16 @@ Responsabilidad única: dibujar las figuras de las llegadas reales a partir
 de tablas ya calculadas: conteos semanales observados frente a una mezcla de
 Poisson (lotes al lado de muestras), distribución del tamaño de lote por
 tipo con los modelos ajustados y la nube media frente a varianza por cliente
-con la recta de Poisson (varianza igual a la media). Cada función recibe
-datos en memoria, no lee archivos y devuelve la figura de matplotlib.
+con la recta de Poisson (varianza igual a la media), y las curvas de
+precisión y recall del clasificador de riesgo con la prevalencia como
+referencia. Cada función recibe datos en memoria, no lee archivos y devuelve
+la figura de matplotlib.
 """
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import average_precision_score, precision_recall_curve
 
-from proyecto.base.config import COLORES
+from proyecto.base.config import COLORES, PALETA
 from proyecto.reporte.graficos_modelado import _ejes
 
 COLOR_MUESTRAS = COLORES["naranja"]
@@ -102,6 +105,28 @@ def figura_dispersion_clientes(muestras, lotes, titulo=None):
     ax.set_ylabel("Varianza semanal del cliente")
     ax.set_title(titulo or "Cada cliente dos veces: Lotes sobre la recta y muestras muy por encima", fontsize=11)
     ax.legend(frameon=False, fontsize=9, loc="upper left")
+    _ejes(ax, rejilla="both")
+    fig.tight_layout()
+    return fig
+
+
+def figura_precision_recall(curvas, prevalencia, titulo="Curvas de precisión y recall"):
+    """Curva de precisión frente a recall de cada candidato (`curvas` es
+    `{nombre: (y, proba)}`, con el PR-AUC en la leyenda) y una línea
+    horizontal en la prevalencia, que es lo que logra ordenar al azar."""
+    fig, ax = plt.subplots(figsize=(6.6, 5.0))
+    for (nombre, (y, proba)), color in zip(curvas.items(), PALETA):
+        precision, recall, _ = precision_recall_curve(y, proba)
+        ax.step(recall, precision, where="post", color=color, linewidth=1.5,
+                label=f"{nombre} (PR-AUC {average_precision_score(y, proba):.3f})")
+    ax.axhline(prevalencia, color=COLORES["gris"], linestyle="--", linewidth=1,
+               label=f"Prevalencia ({prevalencia:.3f})")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1.01)
+    ax.set_xlabel("Recall (no conformes que reciben alerta)")
+    ax.set_ylabel("Precisión (alertas que aciertan)")
+    ax.set_title(titulo)
+    ax.legend(loc="upper right", fontsize=8.5)
     _ejes(ax, rejilla="both")
     fig.tight_layout()
     return fig

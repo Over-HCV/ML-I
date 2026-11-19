@@ -5,8 +5,10 @@ siguiente (tablas, JSON, modelos) y llevar el registro de qué etapa está
 corriendo. Con esto las etapas no comparten variables en memoria: cada una
 carga del disco lo que necesita y guarda lo que produce.
 
-También custodia la partición de prueba: solo la etapa declarada en
-`config.ETAPA_PRUEBA` puede leerla, y cada lectura queda registrada.
+También custodia la partición de prueba: solo las etapas declaradas en
+`config.ETAPA_PRUEBA` pueden leerla, y cada lectura queda registrada (la de
+la simulación con `leer_prueba` y la de la exportación real con
+`registrar_lectura_prueba`, que llama `proyecto.datos.rodam`).
 """
 import json
 import runpy
@@ -154,15 +156,30 @@ def leer_modelado(nombre):
     return leer_tabla(rutas.DIR_MODELADO / f"{nombre}.parquet")
 
 
-def leer_prueba(nombre):
-    """Bloque de prueba de un análisis. Solo se permite en la etapa final."""
+def etapas_de_prueba():
+    """Etapas que pueden leer la prueba (acepta una cadena o una colección)."""
+    return (ETAPA_PRUEBA,) if isinstance(ETAPA_PRUEBA, str) else tuple(ETAPA_PRUEBA)
+
+
+def registrar_lectura_prueba(nombre):
+    """Comprueba que la etapa en curso puede leer la prueba y deja la lectura
+    en `lecturas_prueba.log` (fecha, etapa y nombre). Lanza PermissionError
+    en cualquier otra etapa. La usan `leer_prueba` y la lectura del bloque de
+    prueba de la exportación real."""
     etapa = etapa_actual()
-    if etapa != ETAPA_PRUEBA:
+    if etapa not in etapas_de_prueba():
         raise PermissionError(
-            f"La partición de prueba solo puede leerse en «{ETAPA_PRUEBA}» "
+            f"La partición de prueba solo puede leerse en {', '.join(etapas_de_prueba())} "
             f"(etapa actual: {etapa!r})."
         )
+    rutas.DIR_ETAPAS.mkdir(parents=True, exist_ok=True)
     registro = rutas.DIR_ETAPAS / "lecturas_prueba.log"
     with registro.open("a", encoding="utf-8") as f:
         f.write(f"{datetime.now().isoformat(timespec='seconds')}\t{etapa}\t{nombre}\n")
+
+
+def leer_prueba(nombre):
+    """Bloque de prueba de un análisis. Solo se permite en las etapas de
+    `ETAPA_PRUEBA`."""
+    registrar_lectura_prueba(nombre)
     return leer_tabla(rutas.DIR_PRUEBA / f"{nombre}.parquet")

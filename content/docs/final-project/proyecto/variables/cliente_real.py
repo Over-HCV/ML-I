@@ -1,12 +1,13 @@
 """Capa 3 · Variables de la exportación real por cliente y por muestra.
 
-Responsabilidad única: armar, solo con fechas de desarrollo, las tablas que
-usa la etapa de datos reales: el recorte al desarrollo con su partición
-(entrenamiento y validación), los conteos semanales por cliente recortados a
+Responsabilidad única: armar las tablas que usa la etapa de datos reales: el
+recorte al desarrollo con su partición (entrenamiento y validación; la prueba
+solo con `con_particion`, cuando la etapa ya abrió ese bloque), los conteos semanales por cliente recortados a
 las semanas en que el cliente estuvo activo, la tabla de perfil por cliente
 (volumen, dispersión semanal, lotes, tipo de muestreo, no conformidad) y las
 variables de cada muestra conocidas al ingresarla (sin fugas: la historia del
-cliente solo cuenta resultados ya conocidos ese día).
+cliente solo cuenta resultados ya conocidos y el lote solo las muestras ya
+registradas).
 
 Recibe las tablas de `proyecto.datos.rodam` (muestras con `asignar_lotes` y
 lotes); no lee archivos.
@@ -15,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 from proyecto.datos import rodam
-from proyecto.variables.comunes import es_desarrollo, es_entrenamiento, historial_conocido, tasa_suavizada
+from proyecto.variables.comunes import a_fecha, es_desarrollo, es_entrenamiento, historial_conocido, tasa_suavizada
 
 MINIMO_MUESTRAS = 20        # muestras de desarrollo para que un cliente entre en el perfil
 MINIMO_LOTES = 20           # lotes de un tipo para medir la dispersión semanal de ese tipo
@@ -23,22 +24,30 @@ NO_APLICA = {"N.A.", "N.A", "n.a", "-", "nan", "None", "", "<NA>"}
 
 VARIABLES_CLIENTE = ["muestras_semana_media", "dispersion_semanal", "proporcion_semanas_activas", "lotes_semana",
                      "tamano_lote_medio", "proporcion_planta", "tasa_no_conforme"]
-NUMERICAS_INGRESO = ["n_especificaciones", "tamano_lote", "tasa_cliente", "historia_cliente"]
+NUMERICAS_INGRESO = ["n_especificaciones", "previas_lote", "tasa_cliente", "historia_cliente"]
 CATEGORICAS_INGRESO = ["sector", "origen_muestra", "forma_farmaceutica", "cuadro_complejo", "tipo_lote"]
 
 
 # ----------------------------------------------------------------------
 # Periodo de desarrollo
 # ----------------------------------------------------------------------
-def del_desarrollo(muestras):
-    """Muestras con ingreso anterior al corte de prueba, con la columna
-    `particion` ("entrenamiento" o "validacion") y la forma farmacéutica con
-    sus variantes de "no aplica" unidas en un solo nivel."""
-    muestras = muestras[es_desarrollo(muestras["fecha_ingreso"])].copy()
-    muestras["particion"] = np.where(es_entrenamiento(muestras["fecha_ingreso"]), "entrenamiento", "validacion")
+def con_particion(muestras):
+    """Todas las muestras con la columna `particion` ("entrenamiento",
+    "validacion" o "prueba" según los cortes del proyecto) y la forma
+    farmacéutica con sus variantes de "no aplica" unidas en un solo nivel."""
+    muestras = muestras.copy()
+    fecha = muestras["fecha_ingreso"]
+    muestras["particion"] = np.where(es_entrenamiento(fecha), "entrenamiento",
+                                     np.where(es_desarrollo(fecha), "validacion", "prueba"))
     forma = muestras["forma_farmaceutica"].astype(str).str.strip()
     muestras["forma_farmaceutica"] = np.where(forma.isin(NO_APLICA), "no aplica", forma.str.lower())
     return muestras
+
+
+def del_desarrollo(muestras):
+    """Muestras con ingreso anterior al corte de prueba, con `particion`
+    ("entrenamiento" o "validacion"); ver `con_particion`."""
+    return con_particion(muestras[es_desarrollo(muestras["fecha_ingreso"])])
 
 
 def semanas_de_desarrollo(muestras):
@@ -126,21 +135,42 @@ def indice_compuesto_por_cliente(tabla_lotes):
 # ----------------------------------------------------------------------
 # Variables de cada muestra al ingresar
 # ----------------------------------------------------------------------
-def variables_de_ingreso(muestras, tabla_lotes):
+def previas_en_lote(muestras):
+    """Muestras del mismo lote (cliente, día y tipo) registradas antes que
+    cada una, por `fecha_ingreso`. Las de la misma hora exacta no cuentan
+    como previas. Es lo único del tamaño del lote que se sabe al ingresar
+    una muestra: el total del día solo se conoce al cerrar el día."""
+    llave = [muestras["cliente"], muestras["dia"], muestras["tipo_lote"]]
+    return (muestras.groupby(llave)["fecha_ingreso"].rank(method="min") - 1).astype(float)
+
+
+def variables_de_ingreso(muestras):
     """Una fila por muestra con dictamen y las variables conocidas al
     ingresarla: las de `CATEGORICAS_INGRESO` y `NUMERICAS_INGRESO`.
 
-    `tamano_lote` es el número de muestras de su lote (llegan juntas el mismo
-    día). `historia_cliente` es el número de dictámenes del cliente ya
-    conocidos antes del ingreso (su última lectura anterior al ingreso) y
-    `tasa_cliente` su no conformidad encogida hacia la tasa de
-    entrenamiento. El objetivo es `no_conforme` (0 o 1)."""
-    tabla = muestras.dropna(subset=["no_conforme"]).copy()
+    Sin fugas:
+
+    - `previas_lote` cuenta las muestras del mismo cliente, día y tipo
+      registradas antes que esta (no el lote completo del día).
+    - `historia_cliente` es el número de dictámenes del cliente ya conocidos
+      al ingresar la muestra y `tasa_cliente` su no conformidad encogida
+      hacia la tasa de entrenamiento. Un dictamen se da por conocido en su
+      última lectura y nunca antes de su propio ingreso (hay lecturas con
+      fecha anterior al ingreso por errores de digitación).
+    - `n_especificaciones` y `cuadro_complejo` los fija el cuadro analítico
+      que se asigna al recibir la muestra; `sector`, `origen_muestra`,
+      `forma_farmaceutica` y `tipo_lote` vienen del registro de ingreso.
+
+    Requiere la columna `particion` (`con_particion` o `del_desarrollo`): la
+    tasa de referencia sale solo de entrenamiento. El objetivo es
+    `no_conforme` (0 o 1). Devuelve (tabla, tasa de entrenamiento)."""
+    tabla = muestras.copy()
+    tabla["previas_lote"] = previas_en_lote(tabla)
+    tabla["conocido"] = np.maximum(a_fecha(tabla["ultima_lectura"]), a_fecha(tabla["fecha_ingreso"]))
+    tabla = tabla.dropna(subset=["no_conforme"])
     tabla["no_conforme"] = tabla["no_conforme"].astype(int)
-    tabla = tabla.merge(tabla_lotes[["id_lote", "n_muestras"]].rename(columns={"n_muestras": "tamano_lote"}),
-                        on="id_lote", how="left")
     previa = float(tabla.loc[tabla["particion"] == "entrenamiento", "no_conforme"].mean())
-    historia = historial_conocido(tabla, "cliente", "fecha_ingreso", "ultima_lectura", "no_conforme")
+    historia = historial_conocido(tabla, "cliente", "fecha_ingreso", "conocido", "no_conforme")
     tabla["historia_cliente"] = historia["n"].to_numpy()
     tabla["tasa_cliente"] = tasa_suavizada(historia["suma"], historia["n"], previa)
     tabla["cuadro_complejo"] = tabla["cuadro_complejo"].astype(str)

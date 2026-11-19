@@ -18,9 +18,12 @@ PAQUETE = RAIZ / "proyecto"
 FUENTES = RAIZ / "notebooks" / "src"
 CAPAS = {"base": 0, "datos": 1, "preparacion": 2, "variables": 3, "modelos": 4, "evaluacion": 5, "cribado": 6,
          "reporte": 7, "etapas": 8}
-MODULO_PRUEBA = PAQUETE / "etapas" / "evaluacion_final.py"   # único módulo que puede leer la prueba
+# Únicos módulos que pueden leer la prueba: la 07 la de la simulación y la 08 el bloque de 2026 de la exportación real.
+MODULOS_PRUEBA = {PAQUETE / "etapas" / "evaluacion_final.py", PAQUETE / "etapas" / "datos_reales.py"}
 MAXIMO_LINEAS_CELDA = 8                                        # celdas de código cortas en los guiones
-ETAPA_PRUEBA = "07_evaluacion_final"
+ETAPA_PRUEBA = ("07_evaluacion_final", "08_datos_reales")   # la primera evalúa la simulación
+LECTOR_PRUEBA_REAL = "leer_con_prueba"                        # lectura custodiada de la exportación real
+BLOQUE_PRUEBA_REAL = "exportacion_real_2026"                  # nombre con que queda en el registro
 
 # Números con punto decimal permitidos en las celdas de texto de las etapas: definiciones, ejemplos
 # didácticos con valores hipotéticos y constantes de regla fijadas antes de ver resultados. Ninguno es
@@ -227,19 +230,23 @@ def custodia_prueba():
     lineas = [l.split("\t") for l in registro.read_text(encoding="utf-8").splitlines() if l.strip()]
     assert lineas, "el registro está vacío"
     etapas = {l[1] for l in lineas}
-    assert etapas == {ETAPA_PRUEBA}, f"leyeron la prueba: {sorted(etapas)}"
+    assert etapas <= set(ETAPA_PRUEBA), f"leyeron la prueba: {sorted(etapas - set(ETAPA_PRUEBA))}"
+    assert ETAPA_PRUEBA[0] in etapas, f"la etapa {ETAPA_PRUEBA[0]} no leyó la prueba"
+    ajenas = [l[2] for l in lineas if l[1] == ETAPA_PRUEBA[1] and l[2] != BLOQUE_PRUEBA_REAL]
+    assert not ajenas, f"la etapa {ETAPA_PRUEBA[1]} leyó algo distinto del bloque real: {sorted(set(ajenas))}"
     sospechosos = []
-    candidatos = [g for g in sorted(FUENTES.glob("0*.py")) if g.stem < ETAPA_PRUEBA]
-    candidatos += [m for m in sorted((PAQUETE / "etapas").glob("*.py")) if m != MODULO_PRUEBA]
+    candidatos = [g for g in sorted(FUENTES.glob("0*.py")) if g.stem not in ETAPA_PRUEBA]
+    candidatos += [m for m in sorted((PAQUETE / "etapas").glob("*.py")) if m not in MODULOS_PRUEBA]
     for guion in candidatos:
         # Solo el código: el texto de la etapa 03 puede nombrar la carpeta al explicar que la escribe
         # (con `guardar_modelado`) sin abrirla.
         texto = "\n".join(l for l in guion.read_text(encoding="utf-8").splitlines() if not l.lstrip().startswith("#"))
-        for patron in ("leer_prueba", "datos/prueba", "DIR_PRUEBA", "/ \"prueba\"", "'prueba'"):
+        for patron in ("leer_prueba", "datos/prueba", "DIR_PRUEBA", "/ \"prueba\"", "'prueba'", LECTOR_PRUEBA_REAL):
             if patron in texto:
                 sospechosos.append(f"{guion.name}: {patron}")
     assert not sospechosos, "; ".join(sospechosos)
-    return f"{len(lineas)} lecturas, todas en {ETAPA_PRUEBA}; {len(candidatos)} guiones y módulos sin acceso"
+    por_etapa = ", ".join(f"{e} {sum(l[1] == e for l in lineas)}" for e in ETAPA_PRUEBA)
+    return f"{len(lineas)} lecturas ({por_etapa}); {len(candidatos)} guiones y módulos sin acceso"
 
 
 def supuestos_narrativos():
@@ -311,7 +318,7 @@ def macros_del_informe():
     registros = {r.stem.removeprefix("macros_"): json.loads(r.read_text(encoding="utf-8"))
                  for r in sorted(artefactos.glob("macros_*.json"))}
     faltan = [e for e in ("01_datos", "02_exploracion", "03_cribado_analisis", "04_regresion",
-                          "05_clasificacion_bayes", "06_agrupamiento", ETAPA_PRUEBA) if e not in registros]
+                          "05_clasificacion_bayes", "06_agrupamiento", ETAPA_PRUEBA[0]) if e not in registros]
     assert not faltan, f"etapas sin registro de cifras: {faltan}"
     nombres = [n for r in registros.values() for n in r["macros"]]
     assert len(nombres) == len(set(nombres)), "macros repetidas entre etapas"

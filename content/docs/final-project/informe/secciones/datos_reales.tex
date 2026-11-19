@@ -3,7 +3,8 @@
 % Responsabilidad única: contar qué encontramos al pasar a la exportación
 % real del laboratorio (solo fechas de desarrollo): lotes de Poisson,
 % muestras como Poisson compuesta, tamaño de lote por tipo, segmentos,
-% riesgo al ingreso y distancia con la simulación.
+% distancia con la simulación y el clasificador de no conformidad al ingreso
+% (elegido en validación, congelado y evaluado una vez en la prueba de 2026).
 % Cifras: macros Real*; tablas tabla_real_*; figuras 08_*.
 % Si la exportación no estaba al construir, las macros Real* no existen y
 % la sección se reduce a una nota.
@@ -17,7 +18,8 @@ consiguió la exportación real con los clientes anonimizados. Nos propuso
 clasificar a los clientes por su volumen y a los lotes por su tamaño y nos
 dijo que las llegadas le sonaban a un proceso de Poisson. Solo usamos las
 fechas de desarrollo (del \RealDesde{} al \RealHasta{}) y dejamos por fuera
-todo lo de 2026, que además es donde la base empieza a cambiar. Las
+todo lo de 2026 hasta la evaluación final del clasificador de la
+Sección~\ref{sec:real-clasificacion}, donde lo abrimos una sola vez. Las
 \RealFilas{} filas de la exportación (una por muestra, especificación y
 lectura) se vuelven \RealMuestras{} muestras de \RealClientes{} clientes y
 \RealLotes{} lotes, donde un lote son las muestras que un cliente ingresa el
@@ -93,18 +95,11 @@ menor AIC en los dos.}
 \label{tab:real-tamano}
 \end{table}
 
-\paragraph{Segmentos y riesgo.} Con el procedimiento de la
+\paragraph{Segmentos.} Con el procedimiento de la
 Sección~\ref{sec:agrupamiento} sobre \RealSegClientes{} clientes (al menos
 \RealSegMinimoMuestras{} muestras) la silueta eligió \RealSegK{} segmentos
 (silueta \RealSegSilueta{}). El que más pesa es ``\RealSegMayor'', que trae
-el \RealSegMayorMuestrasPct{}\,\% de las muestras. Para el riesgo de no
-conformidad al ingreso ajustamos en entrenamiento y medimos en validación
-(prevalencia de \RealRiesgoPrevalenciaPct{}\,\%): La regresión logística da
-un ROC-AUC de \RealRiesgoAUCLogistica{} (precisión media
-\RealRiesgoAPLogistica{}) y el árbol \RealRiesgoAUCArbol{}
-(\RealRiesgoAPArbol{}), frente a \RealRiesgoAPBase{} de precisión media de la
-línea base. La tasa histórica del cliente sola ya logra
-\RealRiesgoAUCHistoria{} así que la señal es real pero modesta.
+el \RealSegMayorMuestrasPct{}\,\% de las muestras.
 
 \paragraph{La simulación.} Nuestra simulación ya generaba lotes de Poisson
 con varias muestras cada uno así que la estructura era la correcta. Lo que no
@@ -113,6 +108,147 @@ queda entre \RealSimIndiceBajo{} y \RealSimIndiceAlto{}, lejos de la cola de
 planta. Separar producto y planta y sacar el tamaño de una binomial negativa
 la acercaría. Lo dejamos propuesto porque las secciones anteriores están
 cerradas sobre la simulación actual.
+\subsection{Clasificación de no conformidad con la base real}
+\label{sec:real-clasificacion}
+
+\paragraph{Protocolo y particiones.} Nos preguntamos si con lo que se sabe
+al registrar una muestra se puede anticipar que saldrá no conforme (la clase
+1 es el dictamen ``no cumple''). Si se pudiera, recepción podría priorizar
+esas muestras. Los \RealRiesgoVariables{} predictores existen en ese momento:
+Sector, origen de la muestra, forma farmacéutica, si el cuadro analítico es
+complejo, número de especificaciones (lo fija el cuadro que se asigna al
+recibirla), tipo de lote, muestras del mismo lote ya registradas y la
+historia del cliente. Al revisar la primera versión encontramos una fuga: El
+tamaño del lote contaba todas las muestras del día, que solo se conocen
+cuando el día se cierra. Ahora cuenta solo las muestras del mismo cliente,
+día y tipo registradas antes que esta. La historia del cliente suma solo los
+dictámenes cuya última lectura es anterior al ingreso.
+
+La guía del curso propone como referencia 60, 20 y 20\,\%. Nosotros
+mantuvimos los cortes por fecha de todo el proyecto porque así el modelo
+siempre se mide en un periodo posterior al que vio, como se usaría en
+recepción. Entrenamiento tiene \RealRiesgoEntrenamiento{} muestras con
+dictamen (\RealRiesgoEntrenamientoPct{}\,\% del desarrollo y
+\RealRiesgoPrevalenciaEntPct{}\,\% de no conformes), validación
+\RealRiesgoValidacion{} (\RealRiesgoPrevalenciaPct{}\,\%) y la prueba de 2026
+\RealPruebaMuestras{} (\RealPruebaPrevalenciaPct{}\,\%), como muestra la
+Tabla~\ref{tab:real-particiones-clf}. La imputación, el escalado y la
+codificación viven dentro de una tubería que se ajusta solo con
+entrenamiento.
+
+\begin{table}[!htbp]
+\centering
+\tablacompacta{real_riesgo_particiones}
+\caption{Particiones del clasificador real con su tamaño y composición: La
+prueba de 2026 trae clientes que no aparecen en el desarrollo y la mitad de
+la no conformidad.}
+\label{tab:real-particiones-clf}
+\end{table}
+
+\paragraph{Modelos y elección en validación.} Comparamos la referencia (la
+probabilidad de entrenamiento para todas), una regla simple (la tasa
+histórica de no conformidad del cliente), la regresión logística con
+$C$ de 0.01, 0.1 y 1 y el árbol de decisión con profundidad 3, 5 y 8. En el
+árbol pedimos hojas de al menos \RealRiesgoMinimoHoja{} muestras porque con
+la prevalencia de entrenamiento una hoja así espera
+\RealRiesgoHojaEsperados{} no conformes y con hojas más chicas su fracción
+saldría de cero o un caso. Como la clase 1 es rara la métrica principal es
+el PR-AUC (el área bajo la curva de precisión y recall), que al azar vale la
+prevalencia. Elegimos la configuración de mayor PR-AUC en validación:
+\RealRiesgoElegido{} con \RealRiesgoAPElegido{}, frente a
+\RealRiesgoAPHistoria{} de la regla y \RealRiesgoAPBase{} de la referencia
+(Tabla~\ref{tab:real-configuraciones}). La ventaja sobre la regla es
+pequeña así que casi todo lo que se puede anticipar al ingreso ya está en
+quién manda la muestra. El árbol de profundidad 8 muestra el sobreajuste:
+\RealRiesgoAPArbolProfundoEnt{} de PR-AUC en entrenamiento y
+\RealRiesgoAPArbolProfundoVal{} en validación.
+
+\begin{table}[!htbp]
+\centering
+\tablacompacta{real_configuraciones}
+\caption{Las ocho configuraciones en entrenamiento y en validación, con
+precisión, recall y F1 en el umbral de menor costo en validación de cada
+una: La regresión logística tiene el mayor PR-AUC en validación y el árbol
+profundo se sobreajusta.}
+\label{tab:real-configuraciones}
+\end{table}
+
+Para decidir supusimos, como supuesto académico, que dejar pasar una no
+conforme cuesta \RealCostoFN{} veces lo que una falsa alarma. Con
+probabilidades bien calibradas el umbral óptimo sería
+\RealUmbralTeorico{} pero en validación el de menor costo fue
+\RealUmbral{}. Con él se levantan \RealUmbralAlertas{} alertas y la matriz
+de confusión con etiquetas 0 y 1 queda en \RealUmbralTN{} verdaderos
+negativos, \RealUmbralFP{} falsos positivos, \RealUmbralFN{} falsos
+negativos y \RealUmbralTP{} verdaderos positivos (precisión
+\RealUmbralPrecision{}, recall \RealUmbralRecall{}). El costo baja apenas de
+\RealUmbralCostoNada{} (no alertar nunca) a \RealUmbralCosto{}.
+
+\paragraph{Cálculo ilustrativo e interpretación.} Para la muestra no
+conforme de validación a la que la logística le dio más riesgo sumamos el
+intercepto (\RealCalcIntercepto{}) y los \RealCalcTerminos{} aportes
+$\beta_j x_j$ de sus variables activas (Tabla~\ref{tab:real-calculo}). El
+logit da $z = \RealCalcLogit$ y la sigmoide $p = 1/(1 + e^{-z}) =
+\RealCalcProba$, igual a lo que entrega el modelo. El aporte más grande es el
+de \RealCalcMayor{} (\RealCalcMayorAporte{}). El árbol empieza con el corte
+\RealArbolPrimerCorte{}: El Gini $2p(1-p)$ de la raíz es
+\RealArbolGiniAntes{} y el promedio de los dos hijos, pesado por sus
+muestras, \RealArbolGiniDespues{}. La reducción es chica porque con tan
+pocas no conformes cualquier nodo ya es casi puro. En la logística la
+variable que más sube el riesgo es \RealOddsSube{} (razón de odds
+\RealOddsSubeValor{} por desviación estándar) y la que más lo baja
+\RealOddsBaja{} (\RealOddsBajaValor{}). La hoja de mayor riesgo del árbol
+junta \RealHojaFilas{} muestras de entrenamiento con \RealHojaFraccion{} de
+no conformes, \RealHojaVeces{} veces la tasa general. Todo esto son
+asociaciones dentro del modelo y no efectos causales: Que un cliente o un
+sector tenga más riesgo puede deberse a lo que produce o a cómo lo muestrea
+y el modelo no distingue entre las dos cosas.
+
+\begin{table}[!htbp]
+\centering
+\tablacompacta{real_calculo_logistica}
+\caption{Cálculo ilustrativo de la regresión logística para una muestra de
+validación: Cada aporte es el coeficiente por el valor estandarizado o la
+indicadora.}
+\label{tab:real-calculo}
+\end{table}
+
+\paragraph{Prueba de 2026.} Antes de abrirla guardamos la decisión
+completa: Modelo, predictores, transformaciones, $C$, umbral
+\RealUmbral{} y la huella del modelo (\RealCongeladoHuella{}). La leímos
+una sola vez y la lectura quedó en el mismo registro de custodia de la
+Sección~\ref{sec:evaluacion}. En 2026 la no conformidad bajó a
+\RealPruebaPrevalenciaPct{}\,\% y \RealPruebaClientesNuevos{} de los
+\RealPruebaClientes{} clientes son nuevos (\RealPruebaNuevasPct{}\,\% de las
+muestras). El modelo congelado logra un PR-AUC de \RealPruebaAP{} (intervalo
+bootstrap del 95\,\% de \RealPruebaAPInf{} a \RealPruebaAPSup{}) frente a
+\RealRiesgoAPElegido{} en validación, pero medido en veces la prevalencia
+pasó de \RealValidacionVeces{} a \RealPruebaVeces{} y el ROC-AUC de
+\RealRiesgoAUCElegido{} a \RealPruebaAUC{} (de \RealPruebaAUCInf{} a
+\RealPruebaAUCSup{}). O sea que el orden del riesgo aguantó el cambio
+(Tabla~\ref{tab:real-prueba}). La regla de la tasa histórica queda en
+\RealPruebaAPRegla{} (de \RealPruebaAPReglaInf{} a \RealPruebaAPReglaSup{})
+y como los intervalos se pisan no podemos decir que el modelo le gane. Lo
+que no aguantó fue el umbral: Alerta \RealPruebaTP{} de los
+\RealPruebaPositivos{} no conformes y el costo (\RealPruebaCosto{}) no mejora
+el de no alertar nunca (\RealPruebaCostoNada{}) porque las probabilidades
+quedaron calibradas para el doble de no conformidad.
+
+\begin{table}[!htbp]
+\centering
+\tablacompacta{real_prueba}
+\caption{Prueba de 2026 evaluada una sola vez con lo congelado, con
+intervalos bootstrap del 95\,\%: El modelo ordena mejor que el azar pero no
+se separa de la regla y su umbral ya no sirve.}
+\label{tab:real-prueba}
+\end{table}
+
+\paragraph{Limitaciones.} Los costos son un supuesto y no una cifra del
+laboratorio. Casi toda la señal es la historia del cliente así que con
+clientes nuevos el modelo sabe poco. Las probabilidades no se recalibran con
+el tiempo y por eso el umbral fijo se quedó sin alertas en 2026. Antes de
+usarlo en recepción recalibraríamos con los meses recientes y revisaríamos
+el umbral cada trimestre, siempre con un periodo nuevo para medirlo.
 \else
 Esta versión del informe se construyó sin la exportación real del
 laboratorio (el archivo es confidencial y no viaja con el proyecto) así que

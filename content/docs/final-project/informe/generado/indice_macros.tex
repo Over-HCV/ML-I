@@ -136,7 +136,7 @@
 % \CriMinimoPositivos          = 100          positivos mínimos de un clasificador
 % \CriNoDisponibles            = 0            análisis no disponibles por columnas faltantes
 % \CriProfundidadArbol         = 4            profundidad del árbol rápido del cribado
-% \CriSegundosPrueba           = 15.6         segundos de la prueba rápida completa
+% \CriSegundosPrueba           = 9.9          segundos de la prueba rápida completa
 % \CriSeleccionAgr             = perfiles\_muestra análisis de agrupamiento elegido por la regla
 % \CriSeleccionAgrPuntaje      = 0.144        puntaje del agrupamiento elegido
 % \CriSeleccionAgrSilueta      = 0.433        silueta del agrupamiento elegido
@@ -245,8 +245,8 @@
 % \RegSNMejorCorrida              = $-$22.63     S/N (dB) de la mejor corrida
 % \RegSNObservada                 = $-$22.78     S/N (dB) observada en la corrida de confirmación
 % \RegSNPredicha                  = $-$22.76     S/N (dB) predicha para el óptimo aditivo
-% \RegSegundosCompleto            = 11.7         segundos del factorial completo
-% \RegSegundosLSixteen            = 1.6          segundos de las 16 corridas del L16
+% \RegSegundosCompleto            = 7.3          segundos del factorial completo
+% \RegSegundosLSixteen            = 0.9          segundos de las 16 corridas del L16
 % \RegToleranciaEmpatePct         = 1            tolerancia de empate (%) de la regla de elección
 % \RegToleranciaOperativa         = 10.8         tolerancia práctica en muestras por día
 % \RegToleranciaOperativaPct      = 20           tolerancia práctica (% de la media diaria)
@@ -395,8 +395,8 @@
 % \ClfSNModeloPeor                  = $-$4.302     S/N media (dB) del peor modelo en el L16
 % \ClfSNObservada                   = $-$3.117     S/N (dB) observada en la corrida de confirmación
 % \ClfSNPredicha                    = $-$2.798     S/N (dB) predicha para el óptimo aditivo
-% \ClfSegundosCompletoEstimados     = 321          segundos estimados del factorial completo
-% \ClfSegundosLSixteen              = 40.2         segundos de las 16 corridas del L16
+% \ClfSegundosCompletoEstimados     = 206          segundos estimados del factorial completo
+% \ClfSegundosLSixteen              = 25.8         segundos de las 16 corridas del L16
 % \ClfSemanasValidacion             = 27           semanas del periodo de validación
 % \ClfSensMax                       = 0.966        sensibilidad máxima entre ensayos
 % \ClfSensMin                       = 0.897        sensibilidad mínima entre ensayos
@@ -626,7 +626,17 @@
 % tabla_final_regresion_validacion.tex (4 filas): Validación frente a prueba, regresión
 % tabla_final_resumen.tex (8 filas): Resumen final: validación (o desarrollo) frente a prueba
 %
-% ===== 08_datos_reales: 65 macros =====
+% ===== 08_datos_reales: 145 macros =====
+% \RealArbolGiniAntes            = 0.0690       Gini de la raíz del árbol
+% \RealArbolGiniDespues          = 0.0666       Gini ponderado tras el primer corte
+% \RealArbolGiniReduccion        = 0.0023       reducción del Gini en el primer corte
+% \RealArbolPrimerCorte          = tasa\_cliente > 0.0735105 primer corte del árbol
+% \RealCalcIntercepto            = $-$3.677     intercepto de la logística
+% \RealCalcLogit                 = 2.047        logit de la muestra del cálculo ilustrativo
+% \RealCalcMayor                 = tasa\_cliente variable con el mayor aporte en el cálculo
+% \RealCalcMayorAporte           = 5.442        su aporte al logit
+% \RealCalcProba                 = 0.886        probabilidad de la muestra del cálculo ilustrativo
+% \RealCalcTerminos              = 9            variables activas en el cálculo ilustrativo
 % \RealCampanaMuestrasMediana    = 14           muestras por campaña (mediana)
 % \RealCampanaUnDiaPct           = 69           campañas de un solo día (%)
 % \RealCampanas                  = 385          campañas de muestreo en planta
@@ -636,6 +646,10 @@
 % \RealClientesProducto          = 22           clientes con lotes de producto suficientes
 % \RealCompuestoPlanta           = 59.98        índice compuesto en planta
 % \RealCompuestoProducto         = 6.00         índice compuesto en producto
+% \RealCongeladoHuella           = 10900224adf7 primeros caracteres de la huella del modelo
+% \RealCongeladoModelo           = Regresión logística (C = 0.01) modelo congelado
+% \RealCostoFN                   = 5            costo supuesto de un falso negativo
+% \RealCostoFP                   = 1            costo supuesto de un falso positivo
 % \RealDesde                     = 2024-06-04   primer ingreso del desarrollo
 % \RealDispLotesPlanta           = 1.20         índice de lotes de planta
 % \RealDispLotesProducto         = 0.73         índice de lotes de producto
@@ -646,6 +660,9 @@
 % \RealDispMuestrasTodos         = 7.23         mediana del índice de muestras por semana
 % \RealFilas                     = 120114       filas de desarrollo de la exportación real
 % \RealHasta                     = 2025-12-19   último ingreso del desarrollo
+% \RealHojaFilas                 = 51           muestras en la hoja de mayor riesgo
+% \RealHojaFraccion              = 0.314        fracción de no conformes en esa hoja
+% \RealHojaVeces                 = 8.8          veces la tasa general
 % \RealLoteDeltaGeoPlanta        = 448          AIC de la geométrica sobre el mejor (planta)
 % \RealLoteDeltaGeoProducto      = 5.4          AIC de la geométrica sobre el mejor (producto)
 % \RealLoteMaxPlanta             = 675          lote de planta más grande
@@ -665,17 +682,65 @@
 % \RealMuestras                  = 21549        muestras de desarrollo de la exportación real
 % \RealNivel                     = 0.05         nivel de la prueba de dispersión
 % \RealNoConformePct             = 3.7          no conformidad de las muestras de desarrollo (%)
+% \RealOddsBaja                  = previas\_lote variable que más baja el riesgo
+% \RealOddsBajaValor             = 0.70         su razón de odds
+% \RealOddsSube                  = tasa\_cliente variable que más sube el riesgo
+% \RealOddsSubeValor             = 1.76         su razón de odds
 % \RealPlantaPct                 = 66.2         muestras de muestreo en planta (%)
-% \RealRiesgoAPArbol             = 0.072        precisión media del árbol de decisión
-% \RealRiesgoAPBase              = 0.041        precisión media de la línea base
-% \RealRiesgoAPHistoria          = 0.105        precisión media de la tasa histórica
-% \RealRiesgoAPLogistica         = 0.103        precisión media de la regresión logística
-% \RealRiesgoAUCArbol            = 0.692        ROC-AUC del árbol de decisión
+% \RealPruebaAP                  = 0.072        PR-AUC del modelo en la prueba
+% \RealPruebaAPConocidos         = 0.073        PR-AUC en clientes conocidos
+% \RealPruebaAPInf               = 0.059        límite inferior del PR-AUC en la prueba
+% \RealPruebaAPNuevos            = 0.097        PR-AUC en clientes nuevos
+% \RealPruebaAPRegla             = 0.064        PR-AUC de la regla en la prueba
+% \RealPruebaAPReglaInf          = 0.053        límite inferior del PR-AUC de la regla
+% \RealPruebaAPReglaSup          = 0.081        límite superior del PR-AUC de la regla
+% \RealPruebaAPSup               = 0.091        límite superior del PR-AUC en la prueba
+% \RealPruebaAUC                 = 0.769        ROC-AUC del modelo en la prueba
+% \RealPruebaAUCInf              = 0.743        límite inferior del ROC-AUC en la prueba
+% \RealPruebaAUCSup              = 0.794        límite superior del ROC-AUC en la prueba
+% \RealPruebaClientes            = 72           clientes en la prueba
+% \RealPruebaClientesNuevos      = 17           clientes de la prueba sin desarrollo
+% \RealPruebaCosto               = 1718         costo en la prueba con el umbral fijo
+% \RealPruebaCostoNada           = 1710         costo en la prueba de no alertar nunca
+% \RealPruebaFN                  = 339          falsos negativos en la prueba
+% \RealPruebaFP                  = 23           falsos positivos en la prueba
+% \RealPruebaFUno                = 0.016        F1 en la prueba con el umbral fijo
+% \RealPruebaMuestras            = 16325        muestras con dictamen en la prueba de 2026
+% \RealPruebaNuevasPct           = 29           muestras de prueba de clientes nuevos (%)
+% \RealPruebaPositivos           = 342          no conformes en la prueba
+% \RealPruebaPrecision           = 0.115        precisión en la prueba con el umbral fijo
+% \RealPruebaPrevalencia         = 0.021        prevalencia de la prueba
+% \RealPruebaPrevalenciaPct      = 2.1          no conformidad en la prueba (%)
+% \RealPruebaRecall              = 0.009        recall en la prueba con el umbral fijo
+% \RealPruebaSinHistoriaPct      = 2.2          muestras de prueba sin dictamen previo del cliente (%)
+% \RealPruebaTN                  = 15960        verdaderos negativos en la prueba
+% \RealPruebaTP                  = 3            verdaderos positivos en la prueba
+% \RealPruebaVeces               = 3.4          PR-AUC sobre la prevalencia
+% \RealRiesgoAPArbol             = 0.073        PR-AUC del mejor árbol en validación
+% \RealRiesgoAPArbolProfundoEnt  = 0.212        PR-AUC del árbol más profundo en entrenamiento
+% \RealRiesgoAPArbolProfundoVal  = 0.073        PR-AUC del árbol más profundo en validación
+% \RealRiesgoAPBase              = 0.041        PR-AUC de la referencia en validación
+% \RealRiesgoAPElegido           = 0.109        PR-AUC del elegido en validación
+% \RealRiesgoAPHistoria          = 0.105        PR-AUC de la tasa histórica en validación
+% \RealRiesgoAPLogistica         = 0.109        PR-AUC de la mejor regresión logística
+% \RealRiesgoAPLogisticaEnt      = 0.114        PR-AUC de la mejor logística en entrenamiento
+% \RealRiesgoAUCArbol            = 0.683        ROC-AUC del mejor árbol
+% \RealRiesgoAUCElegido          = 0.689        ROC-AUC del elegido en validación
 % \RealRiesgoAUCHistoria         = 0.673        ROC-AUC de la tasa histórica del cliente
-% \RealRiesgoAUCLogistica        = 0.678        ROC-AUC de la regresión logística
+% \RealRiesgoAUCLogistica        = 0.689        ROC-AUC de la mejor regresión logística
+% \RealRiesgoArbol               = profundidad 5 mejor configuración del árbol
+% \RealRiesgoElegido             = Regresión logística (C = 0.01) configuración elegida por PR-AUC en validación
 % \RealRiesgoEntrenamiento       = 15628        muestras de entrenamiento del clasificador real
+% \RealRiesgoEntrenamientoPct    = 73           entrenamiento sobre el desarrollo (%)
+% \RealRiesgoHojaEsperados       = 1.8          no conformes esperados en una hoja mínima
+% \RealRiesgoLogistica           = C = 0.01     mejor configuración logística
+% \RealRiesgoMinimoHoja          = 50           mínimo de muestras por hoja del árbol
+% \RealRiesgoPrevalenciaEntPct   = 3.6          no conformidad en entrenamiento (%)
 % \RealRiesgoPrevalenciaPct      = 4.1          no conformidad en validación (%)
+% \RealRiesgoSinDictamen         = 98           muestras de desarrollo sin dictamen
 % \RealRiesgoValidacion          = 5823         muestras de validación del clasificador real
+% \RealRiesgoValidacionPct       = 27           validación sobre el desarrollo (%)
+% \RealRiesgoVariables           = 9            variables conocidas al ingreso
 % \RealSegClientes               = 46           clientes en el agrupamiento real
 % \RealSegK                      = 4            número de segmentos de clientes reales
 % \RealSegMayor                  = Más muestras por semana y más dispersión semanal segmento real con más muestras
@@ -692,10 +757,30 @@
 % \RealSobreLotesProductoPct     = 5            clientes con lotes sobredispersos en producto (%)
 % \RealSobreMuestrasPlantaPct    = 100          clientes con muestras sobredispersas en planta (%)
 % \RealSobreMuestrasProductoPct  = 95           clientes con muestras sobredispersas en producto (%)
+% \RealUmbral                    = 0.61         umbral elegido por costo en validación
+% \RealUmbralAlertas             = 41           alertas en validación con el umbral elegido
+% \RealUmbralAlertasSemana       = 1.6          alertas por semana en validación
+% \RealUmbralCosto               = 1152         costo en validación con el umbral elegido
+% \RealUmbralCostoNada           = 1195         costo en validación de no alertar nunca
+% \RealUmbralCostoTodo           = 5584         costo en validación de alertar todas
+% \RealUmbralFN                  = 225          falsos negativos en validación
+% \RealUmbralFP                  = 27           falsos positivos en validación
+% \RealUmbralFUno                = 0.100        F1 en validación con el umbral
+% \RealUmbralPrecision           = 0.341        precisión en validación con el umbral
+% \RealUmbralRecall              = 0.059        recall en validación con el umbral
+% \RealUmbralTN                  = 5557         verdaderos negativos en validación
+% \RealUmbralTP                  = 14           verdaderos positivos en validación
+% \RealUmbralTeorico             = 0.167        umbral teórico por costo
+% \RealValidacionVeces           = 2.7          PR-AUC de validación sobre su prevalencia
 % --- tablas de 08_datos_reales ---
+% tabla_real_calculo_logistica.tex (10 filas): Cálculo ilustrativo de la regresión logística
+% tabla_real_configuraciones.tex (16 filas): Configuraciones del clasificador real en entrenamiento y validación
 % tabla_real_dispersion.tex (2 filas): Índice de dispersión semanal por cliente y tipo de lote
+% tabla_real_odds.tex (8 filas): Variables con mayor peso en la logística real
 % tabla_real_particiones.tex (2 filas): Muestras de desarrollo por partición
-% tabla_real_riesgo.tex (4 filas): Clasificador de riesgo al ingreso en validación
+% tabla_real_prueba.tex (3 filas): Prueba de 2026 con lo congelado
+% tabla_real_reglas_arbol.tex (5 filas): Hojas de mayor riesgo del árbol real
+% tabla_real_riesgo_particiones.tex (3 filas): Particiones del clasificador real
 % tabla_real_segmentos.tex (4 filas): Segmentos de clientes reales
 % tabla_real_simulacion.tex (4 filas): Mecanismo de llegada en la simulación y en la exportación real
 % tabla_real_tamano_lote.tex (6 filas): Modelos del tamaño de lote por tipo

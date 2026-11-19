@@ -263,7 +263,7 @@ def protocolo(c):
         {"fecha": config.FECHA_INICIO, "titulo": "Entrenamiento", "detalle": "ajustar y comparar", "color": "azul"},
         {"fecha": config.CORTE_VALIDACION, "titulo": "Validación", "detalle": "decidir", "color": "naranja"},
         {"fecha": config.CORTE_PRUEBA, "titulo": "Prueba",
-         "detalle": f"se abre solo en la etapa {config.ETAPA_PRUEBA.split('_')[0]}",
+         "detalle": f"se abre solo en la etapa {config.ETAPA_PRUEBA[0].split('_')[0]}",
          "color": "rojo"},
         {"fecha": config.FECHA_FIN, "titulo": "Fin del periodo", "color": "gris"},
     ], titulo="Bloques temporales del protocolo"))

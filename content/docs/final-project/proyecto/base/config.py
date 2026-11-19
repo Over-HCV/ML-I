@@ -34,7 +34,9 @@ CORTE_PRUEBA = "2026-01-01"
 BLOQUES_VALIDACION_CRUZADA = 4
 
 # Orden de las etapas (un notebook por etapa). La partición de prueba solo
-# puede leerse desde ETAPA_PRUEBA.
+# puede leerse desde las etapas de ETAPA_PRUEBA: la 07 abre la prueba de la
+# simulación y la 08 abre una sola vez el bloque de 2026 de la exportación
+# real. La primera de la tupla es la que evalúa la simulación.
 ETAPAS = [
     "01_datos",
     "02_exploracion",
@@ -45,7 +47,7 @@ ETAPAS = [
     "07_evaluacion_final",
     "08_datos_reales",
 ]
-ETAPA_PRUEBA = "07_evaluacion_final"
+ETAPA_PRUEBA = ("07_evaluacion_final", "08_datos_reales")
 
 TITULOS_ETAPAS = {
     "01_datos": "Datos",

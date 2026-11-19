@@ -7,10 +7,11 @@
 # su tamaño. Además nos dijo que las llegadas de muestras le sonaban a un proceso de Poisson. Esta etapa cuenta qué
 # pasó cuando pusimos a prueba esa idea.
 #
-# Dos reglas de entrada. La primera es que solo usamos fechas de desarrollo: Todo lo que ingresó desde el corte de
-# prueba (es decir 2026) se queda por fuera de cada cuenta. Así no gastamos un periodo que nadie ha mirado y además es
-# donde la base empieza a cambiar de comportamiento. La segunda es que el archivo es confidencial y no viaja con el
-# proyecto así que si no está (por ejemplo en Colab) cada sección muestra una nota en vez de cifras.
+# Dos reglas de entrada. La primera es que usamos solo fechas de desarrollo: Todo lo que ingresó desde el corte de
+# prueba (es decir 2026) se queda por fuera de cada cuenta hasta la sección 7, donde lo abrimos una sola vez para
+# evaluar el clasificador ya congelado. Así no gastamos antes de tiempo un periodo que nadie ha mirado. La segunda es
+# que el archivo es confidencial y no viaja con el proyecto así que si no está (por ejemplo en Colab) cada sección
+# muestra una nota en vez de cifras.
 
 # %%
 from proyecto.base.artefactos import iniciar_etapa
@@ -107,15 +108,85 @@ datos_reales.segmentos(c).mostrar()
 # %% [markdown]
 # ## 5. Riesgo de no conformidad al ingreso
 #
-# Para no quedarnos solo en la descripción probamos rápido si la base real deja anticipar qué muestras van a salir no
-# conformes con lo que se sabe al recibirlas: Sector, origen de la muestra, forma farmacéutica, si el cuadro analítico
-# es complejo, número de especificaciones, tipo y tamaño del lote y la historia del cliente. La historia solo cuenta los
-# dictámenes que ya se conocían el día del ingreso para que el modelo no vea el futuro. Ajustamos en entrenamiento y
-# medimos en validación con el ROC-AUC (qué tan bien ordena el riesgo) y la precisión media (qué tan limpia sale la
-# lista de alertas cuando la clase positiva es rara).
+# Para no quedarnos solo en la descripción nos preguntamos si la base real deja anticipar qué muestras van a salir no
+# conformes con lo que se sabe en el momento de recibirlas. Si se pudiera, recepción podría priorizar esas muestras
+# (revisarlas primero o avisarle al cliente). La **clase 1** es la muestra con dictamen "no cumple" y la clase 0 la
+# que cumple.
+#
+# ### 5.1 Protocolo y particiones
+#
+# Antes de comparar modelos fijamos las reglas. Los predictores son los que existen al registrar la muestra: Sector,
+# origen de la muestra, forma farmacéutica, si el cuadro analítico es complejo, número de especificaciones (lo fija el
+# cuadro que se asigna al recibirla), tipo de lote, cuántas muestras del mismo lote ya se habían registrado antes y la
+# historia del cliente. Le dimos varias vueltas a dos fugas. La primera era el tamaño del lote: Antes usábamos el total
+# de muestras del lote en el día, que solo se sabe cuando el día se cierra. Ahora contamos solo las muestras
+# del mismo cliente, día y tipo registradas antes que esta. La segunda era la historia del cliente: Solo cuenta los
+# dictámenes cuya última lectura es anterior al ingreso (y nunca antes del ingreso de esa muestra porque hay lecturas
+# con fecha mal digitada).
+#
+# La guía del curso propone como referencia 60 % de entrenamiento, 20 % de validación y 20 % de prueba. Nosotros
+# mantuvimos los mismos cortes por fecha de todo el proyecto (entrenamiento antes de julio de 2025, validación hasta
+# diciembre de 2025 y prueba en 2026) porque así el modelo siempre se mide en un periodo posterior al que vio, que es
+# como se usaría en recepción. La guía permite proporciones distintas si se justifican. Toda la preparación
+# (imputación, escalado y codificación) vive dentro de una tubería que se ajusta solo con entrenamiento.
 
 # %%
-datos_reales.riesgo(c).mostrar()
+datos_reales.riesgo_protocolo(c).mostrar()
+
+# %% [markdown]
+# ### 5.2 Modelos y configuraciones
+#
+# Comparamos cuatro cosas. La **referencia** le da a todas las muestras la probabilidad de entrenamiento y no ordena
+# nada. La **regla simple** usa como probabilidad la tasa histórica de no conformidad del cliente (encogida hacia la
+# tasa general cuando tiene poca historia). La **regresión logística** la probamos con tres valores de C, el inverso de
+# la regularización (con C chico los coeficientes se encogen más). El **árbol de decisión** lo probamos con tres
+# profundidades.
+#
+# Como la clase 1 es rara la métrica principal es el **PR-AUC** (el área bajo la curva de precisión y recall), que
+# dice qué tan limpia sale la lista de alertas cuando se ordena por riesgo. Si el modelo ordenara al azar el PR-AUC
+# sería la prevalencia así que esa es la vara. Al lado reportamos el ROC-AUC (con la probabilidad de la clase 1) y la
+# precisión, el recall y el F1 con el umbral de menor costo en validación de cada configuración. La elegida es la de
+# mayor PR-AUC en validación.
+
+# %%
+datos_reales.riesgo_modelos(c).mostrar()
+
+# %% [markdown]
+# ### 5.3 Umbral por costo
+#
+# El modelo entrega una probabilidad y para decidir hay que cortarla en un umbral. No tenemos un costo real de cada
+# error así que lo declaramos como un **supuesto académico**, el mismo de la etapa 05: Un falso negativo (una muestra no
+# conforme que no se prioriza) cuesta lo mismo que cinco falsas alarmas. Recorrimos los umbrales en validación, nos
+# quedamos con el de menor costo y miramos la matriz de confusión con las etiquetas 0 y 1.
+
+# %%
+datos_reales.riesgo_umbral(c).mostrar()
+
+# %% [markdown]
+# ### 5.4 Cálculo ilustrativo
+#
+# Para ver qué hace cada modelo por dentro tomamos la muestra no conforme de validación a la que la regresión
+# logística le dio más riesgo y rehicimos su probabilidad a mano. El modelo suma un intercepto y cada coeficiente por el
+# valor de la variable y después pasa ese logit por la sigmoide:
+#
+# $$z = {\color{#3B64A8}{\beta_0}} + \sum_j {\color{#C46A2B}{\beta_j}}\, x_j, \qquad p = \frac{1}{1 + e^{-z}}$$
+#
+# En el árbol miramos el primer corte. El índice de Gini de un nodo con una fracción $p$ de no conformes es
+# $G = 1 - p^2 - (1 - p)^2 = 2p(1 - p)$ y el árbol elige el corte que más baja el promedio de los Gini de los dos hijos,
+# pesado por cuántas muestras cae en cada uno.
+
+# %%
+datos_reales.riesgo_calculo(c).mostrar()
+
+# %% [markdown]
+# ### 5.5 Qué dicen los coeficientes y las reglas
+#
+# La razón de odds es $e^{\beta}$: Cuánto se multiplican las odds de no conformidad cuando la variable sube en una
+# unidad (en las numéricas, una desviación estándar) y lo demás se queda igual. En el árbol cada hoja es una regla
+# que se puede leer en voz alta.
+
+# %%
+datos_reales.riesgo_interpretacion(c).mostrar()
 
 # %% [markdown]
 # ## 6. Qué tan lejos estaba la simulación
@@ -127,7 +198,19 @@ datos_reales.riesgo(c).mostrar()
 datos_reales.comparacion_simulacion(c).mostrar()
 
 # %% [markdown]
-# ## 7. Cierre
+# ## 7. La prueba de 2026
+#
+# Con el modelo, el umbral y los predictores ya decididos en validación guardamos la decisión completa (con una huella
+# del modelo para comprobar después que no cambió) y solo entonces abrimos el bloque de 2026. Lo leemos una sola vez y
+# la lectura queda en el mismo registro de custodia que usa la etapa 07. Ya sabíamos que en 2026 la base cambia
+# (llegaron clientes nuevos y la no conformidad bajó) así que lo que nos interesa es qué tanto aguanta el modelo ese
+# cambio y si le gana a la prevalencia y a la regla simple.
+
+# %%
+datos_reales.prueba_real(c).mostrar()
+
+# %% [markdown]
+# ## 8. Cierre
 
 # %%
 datos_reales.cierre(c).mostrar()

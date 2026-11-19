@@ -10,6 +10,11 @@ El archivo es confidencial y nunca se versiona (`datos/` está en
 `.gitignore`). Si no está, `hay_exportacion()` devuelve False y quien llame
 decide cómo seguir sin él (por ejemplo, en Colab).
 
+Las fechas desde `config.CORTE_PRUEBA` son la prueba de la base real:
+`leer_desarrollo()` las deja por fuera y solo `leer_con_prueba()` las trae,
+con la misma custodia que la prueba de la simulación (solo en las etapas de
+`config.ETAPA_PRUEBA` y con la lectura anotada en `lecturas_prueba.log`).
+
 Definiciones:
 
 - **Lote**: las muestras que un mismo cliente ingresa el mismo día y del
@@ -24,6 +29,8 @@ import numpy as np
 import pandas as pd
 
 from proyecto.base import rutas
+from proyecto.base.artefactos import registrar_lectura_prueba
+from proyecto.base.config import CORTE_PRUEBA
 
 PATRON_EXPORTACION = "muestras_*.parquet"
 ORIGEN_PLANTA = "Muestreo en planta"
@@ -53,6 +60,22 @@ def leer_exportacion(columnas=None):
             "El archivo es confidencial: pídalo al laboratorio y cópielo en esa carpeta."
         )
     return pd.read_parquet(ruta, columns=columnas)
+
+
+def leer_desarrollo(columnas=None):
+    """Filas de la exportación con ingreso anterior al corte de prueba."""
+    filas = leer_exportacion(columnas)
+    return filas[filas["fecha_ingreso"] < pd.Timestamp(CORTE_PRUEBA)].reset_index(drop=True)
+
+
+def leer_con_prueba(nombre="exportacion_real_2026"):
+    """Exportación completa, con el bloque de prueba (ingresos desde el corte
+    de prueba). Trae también el desarrollo porque la historia de un cliente
+    al ingresar una muestra de prueba incluye sus resultados anteriores.
+    Solo funciona en una etapa de `config.ETAPA_PRUEBA` y deja la lectura en
+    `lecturas_prueba.log`."""
+    registrar_lectura_prueba(nombre)
+    return leer_exportacion()
 
 
 # ----------------------------------------------------------------------
