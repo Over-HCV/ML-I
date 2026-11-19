@@ -303,7 +303,19 @@ def _nuevo_notebook(celdas):
     return nb
 
 
-def armar_encadenado(etapa, celdas_etapa, disponibles):
+CLAVE_WIDGETS = "application/vnd.jupyter.widget-state+json"
+
+
+def _estado_widgets(*metadatos):
+    """Une el estado de los paneles (ipywidgets) guardado por nbclient al ejecutar. Sin él, un notebook abierto
+    sin núcleo no puede dibujar los paneles y el visor muestra "Could not render content"."""
+    estado = {}
+    for metadato in metadatos:
+        estado.update(((metadato or {}).get(CLAVE_WIDGETS) or {}).get("state", {}))
+    return {CLAVE_WIDGETS: {"state": estado, "version_major": 2, "version_minor": 0}} if estado else None
+
+
+def armar_encadenado(etapa, celdas_etapa, disponibles, widgets=None):
     """Notebook de una etapa: título, navegación, arranque y contenido."""
     corte = _posicion_tras_primer_texto(celdas_etapa)
     resto = celdas_etapa[corte:]
@@ -315,10 +327,13 @@ def armar_encadenado(etapa, celdas_etapa, disponibles):
                              f"nav-{etapa[:2]}-desarrollo"))
     celdas += resto
     celdas.append(celda_de_navegacion(etapa, disponibles, f"nav-{etapa[:2]}-fin"))
-    return _nuevo_notebook(celdas)
+    nb = _nuevo_notebook(celdas)
+    if _estado_widgets(widgets):
+        nb.metadata["widgets"] = _estado_widgets(widgets)
+    return nb
 
 
-def armar_fusionado(celdas_por_etapa):
+def armar_fusionado(celdas_por_etapa, widgets_por_etapa=None):
     """Notebook único: portada, arranque una vez y todas las etapas."""
     indice = "\n".join(f"{i}. {TITULOS_ETAPAS.get(e, e)}"
                        for i, e in enumerate(celdas_por_etapa, start=1))
@@ -341,7 +356,11 @@ def armar_fusionado(celdas_por_etapa):
                     if "execution_count" in salida:
                         salida["execution_count"] = contador
             celdas.append(celda)
-    return _nuevo_notebook(celdas)
+    nb = _nuevo_notebook(celdas)
+    estado = _estado_widgets(*(widgets_por_etapa or {}).values())
+    if estado:
+        nb.metadata["widgets"] = estado
+    return nb
 
 
 def armar_presentacion(celdas):
@@ -389,12 +408,12 @@ def leer_guion(etapa):
 
 
 def leer_construido(etapa):
-    """Celdas propias de una etapa ya construida (sin arranque ni navegación)."""
+    """Celdas propias de una etapa ya construida (sin arranque ni navegación) y el estado de sus paneles."""
     ruta = DIR_NOTEBOOKS / f"{etapa}.ipynb"
     if not ruta.exists():
-        return None
+        return None, None
     nb = nbformat.read(ruta, as_version=4)
-    return [c for c in nb.cells if "proyecto" not in c.metadata]
+    return [c for c in nb.cells if "proyecto" not in c.metadata], nb.metadata.get("widgets")
 
 
 def _escribir(nb, ruta):
@@ -427,7 +446,7 @@ def construir(ejecutar=True, solo=None):
     elif ejecutar:
         artefactos.reiniciar_etapas()
 
-    celdas_por_etapa = {}
+    celdas_por_etapa, widgets_por_etapa = {}, {}
     for etapa in con_guion:
         if etapa in elegidas:
             nb = leer_guion(etapa)
@@ -443,8 +462,9 @@ def construir(ejecutar=True, solo=None):
             else:
                 print(f"Etapa {etapa}: sin ejecutar (--no-execute).")
             celdas_por_etapa[etapa] = list(nb.cells)
+            widgets_por_etapa[etapa] = nb.metadata.get("widgets")
         else:
-            previas = leer_construido(etapa)
+            previas, widgets_por_etapa[etapa] = leer_construido(etapa)
             if previas is None:
                 print(f"Etapa {etapa}: no se ha construido todavía; "
                       "no entra en el notebook completo.")
@@ -454,9 +474,9 @@ def construir(ejecutar=True, solo=None):
     disponibles = list(celdas_por_etapa)
     print("Escribiendo notebooks:")
     for etapa, celdas in celdas_por_etapa.items():
-        _escribir(armar_encadenado(etapa, celdas, disponibles),
+        _escribir(armar_encadenado(etapa, celdas, disponibles, widgets_por_etapa.get(etapa)),
                   DIR_NOTEBOOKS / f"{etapa}.ipynb")
-    _escribir(armar_fusionado(celdas_por_etapa),
+    _escribir(armar_fusionado(celdas_por_etapa, widgets_por_etapa),
               DIR_NOTEBOOKS / f"{NOMBRE_FUSIONADO}.ipynb")
     return True
 
