@@ -1,4 +1,4 @@
-"""Capa 8 · Mecánica compartida del modelado a fondo (etapas 04 y 05).
+"""Capa 8 · Mecánica compartida del modelado a fondo (etapas 03 y 04).
 
 Responsabilidad única: lo que las etapas de regresión y clasificación hacen
 igual (variables discretas, tuberías de las corridas del diseño, vistas de

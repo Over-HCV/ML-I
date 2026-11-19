@@ -62,7 +62,7 @@ _INSTRUCCIONES = [
     "Puede añadir tantas entradas como sinónimos existan; mayúsculas, tildes y espacios no importan.",
     "4. «opciones» es opcional: separador, codificación del archivo y orden día/mes de las fechas.",
     "5. Active la lectura con la variable de entorno PROYECTO_ORIGEN=real (o ORIGEN_DATOS = \"real\" "
-    "en proyecto/base/config.py) y ejecute la etapa 01_datos.",
+    "en proyecto/base/config.py) y ejecute la etapa 01_datos_exploracion.",
     "Dos tablas pueden leerse del mismo archivo (por ejemplo, clientes dentro de la exportación de muestras).",
 ]
 

@@ -1,9 +1,10 @@
-"""Capa 8 · Etapa 03: cribado de análisis.
+"""Capa 8 · Etapa 03, parte A: cribado de análisis.
 
-Responsabilidad única: armar las piezas de la etapa 03 (catálogo de
-candidatos, regla de selección, tablas de modelado auditadas, prueba rápida,
-regla simple, agrupamiento y selección), guardar las tablas de modelado y el
-artefacto del cribado, y registrar sus cifras para el informe.
+Responsabilidad única: armar las piezas de la parte A de la etapa 03
+(catálogo de candidatos, regla de selección, tablas de modelado auditadas,
+prueba rápida, regla simple, agrupamiento y selección), guardar las tablas de
+modelado y el artefacto del cribado, y registrar sus cifras para el informe.
+Abre la etapa y la deja abierta para la parte B (`regresion`), que la cierra.
 """
 import numpy as np
 import pandas as pd
@@ -11,13 +12,13 @@ import pandas as pd
 from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_modelado, leer_tabla
 from proyecto.cribado import analisis, catalogo
-from proyecto.etapas.comun import Resultado, abrir, cerrar, lista_nombres
+from proyecto.etapas.comun import Resultado, abrir, cerrar_parte, lista_nombres
 from proyecto.preparacion import particion
 from proyecto.reporte import graficos_cribado, latex
 from proyecto.reporte.html import comparacion, embudo, nota, pasos, pestanas, tabla_html, tarjetas
 from proyecto.variables.comunes import auditar_momentos
 
-ETAPA = "03_cribado_analisis"
+ETAPA = "03_cribado_regresion"
 TIPOS_CRIBABLES = [*catalogo.TIPOS_SUPERVISADOS, "agrupamiento"]
 NOMBRES_TIPO = {"regresion": "Regresión", "clasificacion": "Clasificación", "agrupamiento": "Agrupamiento",
                 "bayes": "Bayes"}
@@ -51,7 +52,7 @@ MACRO_TIPO = {"regresion": "Reg", "clasificacion": "Clf", "agrupamiento": "Agr",
 
 
 def iniciar():
-    return abrir(ETAPA, "Muchos candidatos, la misma prueba rápida y una regla fija")
+    return abrir(ETAPA, "Del cribado con una regla fija al modelo de regresión congelado sin abrir la prueba")
 
 
 def catalogo_y_regla(c):
@@ -205,7 +206,7 @@ def prueba_rapida(c):
     r.agregar(pestanas(fichas, titulo="Resultados de la prueba rápida (la fila resaltada es la elegida)"))
     segundos = float(tc["segundos"].sum())
     r.agregar(nota(f"La prueba completa de los {len(c.cribados)} candidatos tardó **{segundos:.1f} s**, o sea que el "
-                   "filtro sale barato frente al modelado a fondo de las etapas siguientes."))
+                   "filtro sale barato frente al modelado a fondo que sigue."))
 
     sup = c.supervisados
     r.figura(graficos_cribado.figura_habilidad(tc, analisis.NOTA_REGLA_SIMPLE), "03_habilidad")
@@ -269,7 +270,7 @@ def regla_simple(c):
             "habilidad. "
             + ("Para esa pregunta recomendaríamos entonces una regla operativa sobre esa variable y no un modelo. La "
                "pregunta de fondo (qué tan probable es que un no conforme sea falso) la respondemos de forma analítica con "
-               "las fichas de Bayes de la etapa 05." if mas_habil["observacion"] == analisis.NOTA_REGLA_SIMPLE else
+               "las fichas de Bayes del notebook 04." if mas_habil["observacion"] == analisis.NOTA_REGLA_SIMPLE else
                "En la regla ese criterio pesa más que la habilidad bruta."),
             "hallazgo", titulo="La mayor habilidad no siempre gana"))
     elif mas_habil is not None:
@@ -324,7 +325,7 @@ def seleccion(c):
     n_elegidos = sum(v is not None for v in sel.values())
     n_bayes = int((tc["tipo"] == "bayes").sum())
     r.agregar(embudo([
-        ("Análisis candidatos", len(tc), f"{n_bayes} analíticos (Bayes) pasan directo a la etapa 05"),
+        ("Análisis candidatos", len(tc), f"{n_bayes} analíticos (Bayes) pasan directo a la etapa 04"),
         ("Cribados con su tabla de modelado", len(cr),
          f"{len(c.motivos)} no disponibles, prueba rápida en el periodo de entrenamiento"),
         ("Elegibles según la regla", c.n_elegibles, "mayor puntaje por tipo"),
@@ -398,7 +399,7 @@ def seleccion(c):
 
 
 def consecuencias(c):
-    """Qué modela cada etapa siguiente y artefacto del cribado."""
+    """Qué modela la parte B y cada etapa siguiente, y artefacto del cribado."""
     r = Resultado()
     sel, g = c.seleccion, c.de_agrupamiento
     otros = g[g["analisis"] != sel["agrupamiento"]]
@@ -411,17 +412,17 @@ def consecuencias(c):
 
     comp = c.complementario
     r.agregar(pasos([
-        ("Etapa 04: Regresión",
+        ("Parte B de esta etapa: Regresión",
          f"Modelamos a fondo \"{sel['regresion']}\" para {decision(sel['regresion'])[:1].lower()}"
          f"{decision(sel['regresion'])[1:]}" if sel["regresion"]
-         else "No hay análisis de regresión elegible: La etapa solo documenta el cribado."),
-        ("Etapa 05: Clasificación y Bayes",
+         else "No hay análisis de regresión elegible: La parte B no tiene nada que modelar."),
+        ("Etapa 04: Clasificación y Bayes",
          (f"Modelamos a fondo \"{sel['clasificacion']}\" para {decision(sel['clasificacion'])[:1].lower()}"
           f"{decision(sel['clasificacion'])[1:]} " if sel["clasificacion"]
           else "No hay análisis de clasificación elegible. ")
          + f"Además desarrollamos los {len(bayes)} análisis bayesianos, que son analíticos y no se criban: "
          + lista_nombres(f.nombre for f in bayes) + "."),
-        ("Etapa 06: Agrupamiento",
+        ("Etapa 05: Agrupamiento",
          (f"Modelamos a fondo \"{sel['agrupamiento']}\", el que eligió la regla. " if sel["agrupamiento"]
           else "Ningún candidato de agrupamiento es elegible. ")
          + (f"Por fuera de la regla agregamos como **complemento** \"{comp}\", que es el candidato no elegido con mayor "
@@ -442,7 +443,8 @@ def consecuencias(c):
 
 
 def terminar(c):
-    cerrar({
+    """Cierra la parte A. La etapa sigue abierta para la parte B (`regresion`)."""
+    cerrar_parte({
         "candidatos": int(len(c.tabla_cribado)), "cribados": int(len(c.cribados)), "elegibles": c.n_elegibles,
         "seleccion": c.seleccion, "agrupamiento_complementario": c.complementario,
         "auditorias_superadas": c.n_superadas,

@@ -34,30 +34,29 @@ CORTE_PRUEBA = "2026-01-01"
 BLOQUES_VALIDACION_CRUZADA = 4
 
 # Orden de las etapas (un notebook por etapa). La partición de prueba solo
-# puede leerse desde las etapas de ETAPA_PRUEBA: la 07 abre la prueba de la
-# simulación y la 08 abre una sola vez el bloque de 2026 de la exportación
-# real. La primera de la tupla es la que evalúa la simulación.
+# puede leerse desde las etapas de ETAPA_PRUEBA: la 02 abre una sola vez el
+# bloque de 2026 de la exportación real (después de congelar su modelo) y la
+# 06 abre la prueba de la base simulada. Se nombran por separado para no
+# depender del orden de la tupla.
 ETAPAS = [
-    "01_datos",
-    "02_exploracion",
-    "03_cribado_analisis",
-    "04_regresion",
-    "05_clasificacion_bayes",
-    "06_agrupamiento",
-    "07_evaluacion_final",
-    "08_datos_reales",
+    "01_datos_exploracion",
+    "02_base_real",
+    "03_cribado_regresion",
+    "04_clasificacion_bayes",
+    "05_agrupamiento",
+    "06_evaluacion_final",
 ]
-ETAPA_PRUEBA = ("07_evaluacion_final", "08_datos_reales")
+ETAPA_PRUEBA_REAL = "02_base_real"
+ETAPA_PRUEBA_SIMULACION = "06_evaluacion_final"
+ETAPA_PRUEBA = (ETAPA_PRUEBA_REAL, ETAPA_PRUEBA_SIMULACION)
 
 TITULOS_ETAPAS = {
-    "01_datos": "Datos",
-    "02_exploracion": "Exploración",
-    "03_cribado_analisis": "Cribado de análisis",
-    "04_regresion": "Regresión",
-    "05_clasificacion_bayes": "Clasificación y Bayes",
-    "06_agrupamiento": "Agrupamiento",
-    "07_evaluacion_final": "Evaluación final",
-    "08_datos_reales": "Datos reales",
+    "01_datos_exploracion": "Datos y exploración",
+    "02_base_real": "Base real",
+    "03_cribado_regresion": "Cribado y regresión",
+    "04_clasificacion_bayes": "Clasificación y Bayes",
+    "05_agrupamiento": "Agrupamiento",
+    "06_evaluacion_final": "Evaluación final",
 }
 
 # Relación de costos de la clasificación: un falso negativo (muestra de riesgo

@@ -1,9 +1,10 @@
-"""Capa 8 · Etapa 02: limpieza, integración y exploración.
+"""Capa 8 · Etapa 01, parte B: limpieza, integración y exploración.
 
-Responsabilidad única: armar las piezas de la etapa 02 (auditoría de la
-limpieza, partición temporal y análisis exploratorio del periodo de
-desarrollo), guardar las tablas limpias y el artefacto de calidad, y
-registrar sus cifras para el informe. Cada función pública es una sección.
+Responsabilidad única: armar las piezas de la parte B de la etapa 01
+(auditoría de la limpieza, partición temporal y análisis exploratorio del
+periodo de desarrollo), guardar las tablas limpias y el artefacto de calidad,
+y registrar sus cifras para el informe. Cada función pública es una sección.
+Continúa la etapa que abrió la parte A (`datos`) y la cierra.
 """
 import numpy as np
 import pandas as pd
@@ -11,17 +12,18 @@ import pandas as pd
 from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_tabla
 from proyecto.datos import carga, esquema
-from proyecto.etapas.comun import Resultado, abrir, cerrar, pct
+from proyecto.etapas.comun import Resultado, cerrar, continuar, pct
 from proyecto.preparacion import integracion, limpieza, particion
 from proyecto.reporte import exploracion as graficos
 from proyecto.reporte import latex
 from proyecto.reporte.html import nota, pasos, pestanas, tabla_html, tarjetas
 
-ETAPA = "02_exploracion"
+ETAPA = "01_datos_exploracion"
 
 
 def iniciar():
-    return abrir(ETAPA, "Calidad de los datos, limpieza y lo que vimos antes de modelar")
+    """Contexto de la parte B, en la etapa que dejó abierta la parte A."""
+    return continuar(ETAPA)
 
 
 def limpieza_auditada(c):
@@ -143,7 +145,7 @@ def particion_temporal(c):
 def faltantes(c):
     r = Resultado()
     tabla = limpieza.faltantes_por_columna(c.limpias_desarrollo)
-    r.figura(graficos.figura_faltantes(tabla), "02_faltantes")
+    r.figura(graficos.figura_faltantes(tabla), "01_faltantes")
     con_faltantes = tabla[tabla["faltantes"] > 0]
     c.peor_faltante = tabla.loc[tabla["pct_no_estructural"].idxmax()]
     solo_estructural = int(((con_faltantes["estructurales"] > 0) & (con_faltantes["no_estructurales"] == 0)).sum())
@@ -169,7 +171,7 @@ def volumen(c):
     """Volumen semanal por línea y estacionalidad mensual."""
     r = Resultado()
     d = c.desarrollo
-    r.figura(graficos.figura_volumen_semanal(d, c.limpias["calendario"]), "02_volumen_semanal")
+    r.figura(graficos.figura_volumen_semanal(d, c.limpias["calendario"]), "01_volumen_semanal")
     semanal = d.groupby("semana").size()
     completas = semanal.iloc[1:-1] if len(semanal) > 2 else semanal
     por_sector = d["sector"].value_counts(normalize=True)
@@ -183,7 +185,7 @@ def volumen(c):
         f"({pct(por_sector.iloc[-1])}).",
         "hallazgo",
     ))
-    r.figura(graficos.figura_estacionalidad(d), "02_estacionalidad")
+    r.figura(graficos.figura_estacionalidad(d), "01_estacionalidad")
     mensual = d.groupby(["anio", "mes"]).size()
     indice = mensual.groupby(level="mes").mean() / mensual.mean()
     alto, bajo = int(indice.idxmax()), int(indice.idxmin())
@@ -217,7 +219,7 @@ def tasa_no_conforme(c):
     r = Resultado()
     a = c.aceptadas
     columnas = [x for x in ("sector", "matriz", "ensayo") if x in a.columns]
-    r.figura(graficos.figura_tasa_por_categoria(a, columnas=tuple(columnas)), "02_tasa_por_categoria")
+    r.figura(graficos.figura_tasa_por_categoria(a, columnas=tuple(columnas)), "01_tasa_por_categoria")
     frases = []
     for columna in columnas:
         por_nivel = a.groupby(columna)["no_conforme"].agg(["mean", "count"])
@@ -245,7 +247,7 @@ def distribuciones(c):
     a = c.aceptadas
     numericas = [x for x in esquema.columnas("muestras", tipo="numero", hasta="llegada")
                  if x in a.columns and a[x].notna().sum() > graficos.MINIMO_CELDA]
-    r.figura(graficos.figura_distribuciones_por_resultado(a, columnas=numericas), "02_distribuciones_por_resultado")
+    r.figura(graficos.figura_distribuciones_por_resultado(a, columnas=numericas), "01_distribuciones_por_resultado")
     medias = a.groupby("no_conforme")[numericas].mean()
     diferencia = ((medias.loc[1] - medias.loc[0]) / a[numericas].std()).sort_values(key=np.abs)
     r.agregar(nota(
@@ -264,7 +266,7 @@ def distribuciones(c):
         ("ExpDiferenciaEstandarMax", abs(float(diferencia.iloc[-1])), "diferencia de medias en desviaciones estándar", 2),
     ])
     if {"temperatura_transporte_c", "horas_transporte"} <= set(a.columns):
-        r.figura(graficos.figura_transporte(a), "02_transporte")
+        r.figura(graficos.figura_transporte(a), "01_transporte")
         frases, sube = [], []
         for columna, nombre, macro, unidad in (("temperatura_transporte_c", "temperatura de transporte", "Temperatura", "°C"),
                                                ("horas_transporte", "duración del transporte", "Horas", "horas")):
@@ -280,7 +282,7 @@ def distribuciones(c):
             ])
         r.agregar(nota(
             "Para ver si el transporte pesa comparamos los extremos de cada variable. " + " ".join(frases)
-            + (" Las dos se conocen apenas llega la muestra así que le pueden servir al clasificador de la etapa 05."
+            + (" Las dos se conocen apenas llega la muestra así que le pueden servir al clasificador del notebook 04."
                if all(sube) else " No apuntan las dos en el mismo sentido así que no esperamos una lectura simple."),
             "hallazgo"))
     return r
@@ -289,7 +291,7 @@ def distribuciones(c):
 def entrega(c):
     r = Resultado()
     a = c.aceptadas
-    r.figura(graficos.figura_dias_entrega(a), "02_dias_entrega")
+    r.figura(graficos.figura_dias_entrega(a), "01_dias_entrega")
     con_entrega = a.dropna(subset=["dias_entrega"])
     c.tasa_tardia = float(con_entrega["entrega_tardia"].mean())
     por_ensayo = con_entrega.groupby("ensayo")["entrega_tardia"].agg(["mean", "count"])
@@ -317,7 +319,7 @@ def entrega(c):
 def estabilidad(c):
     r = Resultado()
     a = c.aceptadas
-    r.figura(graficos.figura_tasa_mensual(a), "02_tasa_mensual")
+    r.figura(graficos.figura_tasa_mensual(a), "01_tasa_mensual")
     c.tasa_mes = a.groupby(a["fecha_recepcion"].dt.to_period("M"))["no_conforme"].mean()
     por_anio = a.groupby("anio")["no_conforme"].mean()
     primero, ultimo = int(por_anio.index.min()), int(por_anio.index.max())
@@ -352,7 +354,7 @@ def correlaciones(c):
                                     "entrega_tardia"])
         if x in a.columns and a[x].notna().sum() > graficos.MINIMO_CELDA and a[x].nunique() > 1
     ]
-    r.figura(graficos.figura_correlaciones(a, columnas=columnas), "02_correlaciones")
+    r.figura(graficos.figura_correlaciones(a, columnas=columnas), "01_correlaciones")
     corr = a[columnas].astype(float).corr(method="spearman")
     resultados = [x for x in ("recuento_ufc", "dias_entrega", "no_conforme", "entrega_tardia") if x in columnas]
     entradas = [x for x in columnas if x not in resultados]
@@ -379,7 +381,7 @@ def correlaciones(c):
 
 def concentracion(c):
     r = Resultado()
-    r.figura(graficos.figura_volumen_clientes(c.desarrollo), "02_volumen_clientes")
+    r.figura(graficos.figura_volumen_clientes(c.desarrollo), "01_volumen_clientes")
     por_cliente = c.desarrollo["id_cliente"].value_counts()
     acumulado = por_cliente.cumsum() / por_cliente.sum()
     c.clientes_mitad = int((acumulado < 0.5).sum()) + 1
@@ -444,7 +446,7 @@ def implicaciones(c):
             "tasa_rechazo": float(d["rechazada"].mean()),
             "tasa_entrega_tardia": c.tasa_tardia,
         },
-    }, rutas.DIR_ARTEFACTOS / "02_calidad.json")
+    }, rutas.DIR_ARTEFACTOS / "01_calidad.json")
     return r
 
 

@@ -192,7 +192,7 @@ def tipografia(fig):
 
 def guardar_figura(fig, nombre):
     """Guarda la figura como PNG en `figuras/` y devuelve la ruta.
-    Uso: `guardar_figura(fig, "02_estacionalidad")`."""
+    Uso: `guardar_figura(fig, "01_estacionalidad")`."""
     rutas.DIR_FIGURAS.mkdir(parents=True, exist_ok=True)
     ruta = rutas.DIR_FIGURAS / f"{nombre}.png"
     tipografia(fig)
@@ -204,7 +204,7 @@ def mostrar_figura(fig, nombre=None):
     """Muestra una figura de matplotlib una sola vez y la cierra (si queda
     abierta, el notebook la dibuja de nuevo al terminar la celda). Con
     `nombre`, además la guarda. No devuelve nada, para que pueda ser la
-    última línea de una celda. Uso: `mostrar_figura(fig, "02_volumen")`."""
+    última línea de una celda. Uso: `mostrar_figura(fig, "01_volumen")`."""
     tipografia(fig)
     if nombre:
         guardar_figura(fig, nombre)

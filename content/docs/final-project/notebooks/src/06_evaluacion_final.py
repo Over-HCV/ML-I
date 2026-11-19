@@ -1,7 +1,7 @@
 # %% [markdown]
-# # Etapa 07: Abrir la prueba una sola vez
+# # Etapa 06: Abrir la prueba una sola vez
 #
-# Las etapas 04, 05 y 06 dejaron modelos congelados (variables, hiperparámetros, calibración y umbral) sin mirar
+# Las etapas 03, 04 y 05 dejaron modelos congelados (variables, hiperparámetros, calibración y umbral) sin mirar
 # nunca el periodo de prueba. Aquí abrimos ese periodo una sola vez, con `leer_prueba`, que deja constancia de cada
 # lectura, y medimos lo que hacen los modelos con datos que nadie usó para decidir. Primero mostramos lo congelado,
 # después abrimos la prueba y al final comparamos las dos cosas sin reajustar ni reelegir nada.
@@ -11,7 +11,7 @@ from proyecto.base.artefactos import iniciar_etapa
 from proyecto.base.salida import mostrar
 from proyecto.etapas import evaluacion_final as final
 
-iniciar_etapa("07_evaluacion_final")
+iniciar_etapa("06_evaluacion_final")
 c = final.iniciar()
 mostrar(c.encabezado)
 
@@ -40,7 +40,7 @@ c.prueba_reensayo = leer_prueba(final.NOMBRE_REENSAYO)   # no conformes reensaya
 final.abrir_prueba(c).mostrar()
 
 # %% [markdown]
-# Los modelos congelados se usan tal cual salieron de las etapas 04 y 05. El de la carga recibe las variables de la
+# Los modelos congelados se usan tal cual salieron de las etapas 03 y 04. El de la carga recibe las variables de la
 # víspera y el clasificador da la probabilidad de no conformidad, que se compara con el umbral congelado. Así se ven
 # los primeros días y las primeras muestras de la prueba:
 
@@ -48,9 +48,9 @@ final.abrir_prueba(c).mostrar()
 from proyecto.reporte.html import tabla_html
 
 dias = c.prueba_reg.head(5)                                                 # primeros días de la prueba
-carga = c.modelo_reg.predict(dias[c.reg["variables_entrada"]])              # modelo congelado en la etapa 04
+carga = c.modelo_reg.predict(dias[c.reg["variables_entrada"]])              # modelo congelado en la etapa 03
 muestras = c.prueba_clf.head(5)                                             # primeras muestras de la prueba
-riesgo = c.modelo_clf.predict_proba(muestras[c.clf["variables_entrada"]])[:, 1]   # congelado en la etapa 05
+riesgo = c.modelo_clf.predict_proba(muestras[c.clf["variables_entrada"]])[:, 1]   # congelado en la etapa 04
 tabla_dias = dias[[c.papeles_reg["fecha"], c.papeles_reg["objetivo"]]].assign(predicción=carga)
 tabla_muestras = muestras[["id_muestra", "ensayo"]].assign(riesgo=riesgo, alerta=riesgo >= c.umbral)
 mostrar(tabla_html(tabla_dias, "Carga predicha", decimales=1), tabla_html(tabla_muestras, "Riesgo y alerta", decimales=3))
@@ -59,7 +59,7 @@ mostrar(tabla_html(tabla_dias, "Carga predicha", decimales=1), tabla_html(tabla_
 # ## 3. Regresión: ¿Cuántas muestras van a llegar mañana?
 #
 # El modelo congelado predice cada día con la información de la víspera y lo comparamos con las mismas referencias
-# ingenuas de la etapa 04. La habilidad se mide frente a la misma referencia de entonces.
+# ingenuas de la etapa 03. La habilidad se mide frente a la misma referencia de entonces.
 
 # %%
 final.regresion(c).mostrar()
@@ -67,7 +67,7 @@ final.regresion(c).mostrar()
 # %% [markdown]
 # ### 3.1 Residuos, fin de año y operación
 #
-# La tolerancia práctica es la misma de la etapa 04 (en muestras por día) para que la prueba no mueva la vara con que
+# La tolerancia práctica es la misma de la etapa 03 (en muestras por día) para que la prueba no mueva la vara con que
 # la juzgamos.
 
 # %%
@@ -112,7 +112,7 @@ final.auditoria(c).mostrar()
 # %% [markdown]
 # ### 5.2 La regla de reensayo en la prueba
 #
-# Aplicamos a los reensayos de la prueba el mismo borde que fijamos en la etapa 05, leído de su artefacto.
+# Aplicamos a los reensayos de la prueba el mismo borde que fijamos en la etapa 04, leído de su artefacto.
 
 # %%
 final.regla_reensayo(c).mostrar()
@@ -121,7 +121,7 @@ final.regla_reensayo(c).mostrar()
 # ## 6. Agrupamiento
 #
 # El agrupamiento no se evalúa en la prueba porque no hay una respuesta correcta con que compararlo. Resumimos lo
-# que dejó la etapa 06.
+# que dejó la etapa 05.
 
 # %%
 final.agrupamiento(c).mostrar()

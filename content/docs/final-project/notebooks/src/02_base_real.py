@@ -1,12 +1,12 @@
 # %% [markdown]
-# # Etapa 08: Datos reales
+# # Etapa 02: La base real del laboratorio
 #
 # Esta etapa trabaja la base real del proyecto: La exportación del laboratorio que consiguió Daniel Arias Mutis (con
-# los clientes anonimizados). Las etapas 01 a 07 la complementaron con una base simulada de la misma estructura para
-# aplicar más técnicas del curso y aquí volvemos a los datos reales. Daniel trabaja en el laboratorio y nos propuso
-# dos cosas: Clasificar a los clientes por su volumen semanal o mensual y a los lotes por
-# su tamaño. Además nos dijo que las llegadas de muestras le sonaban a un proceso de Poisson. Esta etapa cuenta qué
-# pasó cuando pusimos a prueba esa idea.
+# los clientes anonimizados). Los notebooks 01 y 03 a 06 la complementan con una base simulada de la misma estructura
+# para aplicar más técnicas del curso y aquí trabajamos con los datos reales. Daniel trabaja en el laboratorio y nos
+# propuso dos cosas: Clasificar a los clientes por su volumen semanal o mensual y a los lotes por su tamaño. Además
+# nos dijo que las llegadas de muestras le sonaban a un proceso de Poisson. Esta etapa cuenta qué pasó cuando pusimos
+# a prueba esa idea.
 #
 # Dos reglas de entrada. La primera es que usamos solo fechas de desarrollo: Todo lo que ingresó desde el corte de
 # prueba (es decir 2026) se queda por fuera de cada cuenta hasta la sección 7, donde lo abrimos una sola vez para
@@ -19,7 +19,7 @@ from proyecto.base.artefactos import iniciar_etapa
 from proyecto.base.salida import mostrar
 from proyecto.etapas import datos_reales
 
-iniciar_etapa("08_datos_reales")
+iniciar_etapa("02_base_real")
 c = datos_reales.iniciar()
 mostrar(c.encabezado)
 
@@ -98,7 +98,7 @@ datos_reales.lotes(c).mostrar()
 # %% [markdown]
 # ## 4. Segmentos de clientes
 #
-# La otra propuesta de Daniel era clasificar a los clientes por su volumen. Usamos el mismo procedimiento de la etapa 06
+# La otra propuesta de Daniel era clasificar a los clientes por su volumen. Usamos el mismo procedimiento de la etapa 05
 # (K-means con la regla de la silueta y nombres que salen de las variables en que cada grupo más se aparta) pero ahora
 # con variables que salen de las secciones anteriores: Muestras y lotes por semana, dispersión semanal, proporción de
 # semanas con envío, tamaño de lote, proporción de muestreo en planta y no conformidad.
@@ -156,7 +156,7 @@ datos_reales.riesgo_modelos(c).mostrar()
 # ### 5.3 Umbral por costo
 #
 # El modelo entrega una probabilidad y para decidir hay que cortarla en un umbral. No tenemos un costo real de cada
-# error así que lo declaramos como un **supuesto académico**, el mismo de la etapa 05: Un falso negativo (una muestra no
+# error así que lo declaramos como un **supuesto académico**, el mismo de la etapa 04: Un falso negativo (una muestra no
 # conforme que no se prioriza) cuesta lo mismo que cinco falsas alarmas. Recorrimos los umbrales en validación, nos
 # quedamos con el de menor costo y miramos la matriz de confusión con las etiquetas 0 y 1.
 
@@ -192,7 +192,7 @@ datos_reales.riesgo_interpretacion(c).mostrar()
 # %% [markdown]
 # ## 6. Qué tan lejos estaba la simulación
 #
-# Le dimos varias vueltas a si valía la pena rehacer las etapas anteriores con este hallazgo. Antes de decidir
+# Le dimos varias vueltas a si valía la pena rehacer la base simulada con este hallazgo. Antes de decidir
 # comparamos pieza por pieza el mecanismo de llegada de la simulación con lo que encontramos en la base real.
 
 # %%
@@ -203,7 +203,7 @@ datos_reales.comparacion_simulacion(c).mostrar()
 #
 # Con el modelo, el umbral y los predictores ya decididos en validación guardamos la decisión completa (con una huella
 # del modelo para comprobar después que no cambió) y solo entonces abrimos el bloque de 2026. Lo leemos una sola vez y
-# la lectura queda en el mismo registro de custodia que usa la etapa 07. Ya sabíamos que en 2026 la base cambia
+# la lectura queda en el mismo registro de custodia que usa la etapa 06. Ya sabíamos que en 2026 la base cambia
 # (llegaron clientes nuevos y la no conformidad bajó) así que lo que nos interesa es qué tanto aguanta el modelo ese
 # cambio y si le gana a la prevalencia y a la regla simple.
 

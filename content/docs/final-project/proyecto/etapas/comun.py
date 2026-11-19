@@ -6,6 +6,12 @@ que se muestran y las cifras que la narración necesita), de abrir y cerrar
 una etapa (estilo de figuras, registro de cifras para el informe, marca de
 etapa terminada) y unos pocos formatos de texto que comparten.
 
+Una etapa puede tener dos partes, cada una en su módulo (por ejemplo la
+etapa 01 con `datos` y `exploracion`). El módulo de la primera parte abre la
+etapa con `abrir` y la deja abierta con `cerrar_parte`. El de la segunda toma
+un contexto nuevo con `continuar` (mismo registro de cifras, sin encabezado)
+y la cierra con `cerrar`. Así la etapa se abre y se cierra una sola vez.
+
 Cada sección de una etapa es una función `seccion(c) -> Resultado`, donde
 `c` es el `Contexto` de la etapa (lo que las secciones anteriores dejaron).
 El guion del notebook solo llama `seccion(c).mostrar()`; una presentación
@@ -58,6 +64,9 @@ class Contexto(SimpleNamespace):
     """Estado de una etapa entre secciones (tablas, modelos y cifras ya calculadas)."""
 
 
+_PARTES = {}   # etapa → resumen de su primera parte, que se suma a la marca al cerrar la etapa
+
+
 def abrir(etapa, subtitulo):
     """Prepara una etapa ya iniciada con `iniciar_etapa`: estilo de figuras, registro de
     cifras vacío y encabezado. Devuelve el contexto, con el encabezado en `c.encabezado`."""
@@ -65,16 +74,35 @@ def abrir(etapa, subtitulo):
         raise RuntimeError(f"Llame primero a iniciar_etapa({etapa!r}).")
     configurar_estilo()
     latex.iniciar_registro(etapa)
+    _PARTES.pop(etapa, None)
     return Contexto(etapa=etapa, encabezado=encabezado_etapa(etapa, subtitulo=subtitulo))
+
+
+def continuar(etapa):
+    """Contexto de la segunda parte de una etapa que otro módulo abrió con `abrir` y dejó abierta
+    con `cerrar_parte`: mismo registro de cifras y sin encabezado nuevo."""
+    if etapa_actual() != etapa or etapa not in _PARTES:
+        raise RuntimeError(f"La primera parte de {etapa!r} debe abrirse con abrir() y dejarse con cerrar_parte().")
+    configurar_estilo()
+    return Contexto(etapa=etapa)
+
+
+def cerrar_parte(resumen=None):
+    """Termina la primera parte de una etapa sin cerrarla: guarda su resumen para la marca de la etapa."""
+    _PARTES[etapa_actual()] = dict(resumen or {})
 
 
 def cerrar(resumen=None):
     """Guarda las cifras registradas, rehace `informe/generado/resultados.tex` y deja la marca
-    de etapa terminada."""
+    de etapa terminada (con el resumen de la primera parte, si la etapa tiene dos)."""
     etapa = etapa_actual()
+    previo = _PARTES.pop(etapa, {})
+    repetidas = sorted(set(previo) & set(resumen or {}))
+    if repetidas:
+        raise ValueError(f"Claves repetidas en el resumen de las dos partes de {etapa}: {repetidas}")
     latex.guardar_etapa(etapa)
     latex.escribir_macros()
-    cerrar_etapa(resumen)
+    cerrar_etapa({**previo, **(resumen or {})})
 
 
 def aviso_origen(texto_simulacion, texto_real="Los datos provienen de la exportación real del laboratorio."):

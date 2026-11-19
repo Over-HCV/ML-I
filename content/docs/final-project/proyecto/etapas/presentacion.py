@@ -44,7 +44,7 @@ TOTAL = 11
 FECHA_PRESENTACION = "21 de noviembre de 2026"
 INSTITUCION = "Universidad del Rosario"
 CORRIDAS_L16 = 16   # definición del arreglo ortogonal L16, no un resultado
-ARCHIVOS = ["02_calidad", "03_cribado", "04_regresion", "05_clasificacion", "06_agrupamiento", "07_evaluacion"]
+ARCHIVOS = ["01_calidad", "03_cribado", "03_regresion", "04_clasificacion", "05_agrupamiento", "06_evaluacion"]
 ARCHIVO_DATOS = "presentacion_datos.npz"
 MUESTRA_AGRUPAMIENTO = 600      # filas de la animación de K-means
 DIAS_REGRESION = 10             # días de validación que recibe el modelo congelado en la demostración
@@ -79,7 +79,7 @@ def _artefacto(nombre):
 
 
 def artefacto(nombre):
-    """Artefacto JSON de una etapa (por ejemplo `"05_clasificacion"`), ya leído."""
+    """Artefacto JSON de una etapa (por ejemplo `"04_clasificacion"`), ya leído."""
     return _artefacto(nombre)
 
 
@@ -150,13 +150,13 @@ def _clasificacion_desarrollo():
 
 def _datos_umbral(c):
     """Probabilidades de validación del modelo elegido (ajustado con entrenamiento y calibrado con los
-    bloques), las mismas con las que la etapa 05 eligió el umbral."""
+    bloques), las mismas con las que la etapa 04 eligió el umbral."""
     from sklearn.calibration import CalibratedClassifierCV
 
     from proyecto.etapas import taguchi
     from proyecto.evaluacion import metricas, validacion
 
-    clf = _artefacto("05_clasificacion")
+    clf = _artefacto("04_clasificacion")
     fila = pd.Series({**clf["configuracion"], "hiper": clf["hiperparametros"]}, dtype=object)
     base = taguchi.constructor("clasificacion", c.papeles, clf["discretas"])(fila)
     if clf["calibracion"]["usada"]:
@@ -217,7 +217,7 @@ def submuestras_paneles(c):
     preprocesamiento ajustado solo con entrenamiento, para los paneles que reentrenan en vivo (red, KNN y
     árbol), y los nombres de sus columnas. Se guardan en float16: Bastan para una demostración y mantienen
     el paquete pequeño. `c` necesita `numericas`, `categoricas`, `X_ent`, `y_ent`, `X_val` e `y_val`
-    (sirve el contexto de la etapa 05)."""
+    (sirve el contexto de la etapa 04)."""
     from proyecto.modelos import tuberias
 
     preparar = tuberias.preprocesador(c.numericas, c.categoricas).fit(c.X_ent)
@@ -250,8 +250,8 @@ def meta_paneles(variables, umbral, umbrales, costos, semanas, vpp_por_ensayo, h
 
 
 def _datos_interactivo(c):
-    """Submuestras de los paneles y los valores congelados de las etapas 05 y 06."""
-    clf, agr = _artefacto("05_clasificacion"), _artefacto("06_agrupamiento")
+    """Submuestras de los paneles y los valores congelados de las etapas 04 y 05."""
+    clf, agr = _artefacto("04_clasificacion"), _artefacto("05_agrupamiento")
     arreglos, variables = submuestras_paneles(c)
     meta = meta_paneles(variables, clf["umbral"], [u["Umbral"] for u in clf["tabla_umbrales"]], clf["costos"],
                         clf["semanas_validacion"], clf["bayes"]["vpp_por_ensayo"],
@@ -274,12 +274,12 @@ def datos_kmeans(matriz, k):
 
 
 def _datos_kmeans():
-    """La matriz de agrupamiento elegida en la etapa 06, preparada igual que allí."""
+    """La matriz de agrupamiento elegida en la etapa 05, preparada igual que allí."""
     from proyecto.etapas.agrupamiento import ASIMETRIA_LOG
     from proyecto.modelos.agrupamiento import preparar_matrices
     from proyecto.variables.comunes import columnas_de_grupo
 
-    seleccionado = _artefacto("06_agrupamiento")["seleccionado"]
+    seleccionado = _artefacto("05_agrupamiento")["seleccionado"]
     nombre = seleccionado["analisis"]
     papeles = leer_json(rutas.DIR_MODELADO / f"{nombre}.json")
     numericas, categoricas = columnas_de_grupo(papeles, "ampliado")
@@ -293,7 +293,7 @@ def _datos_regresion():
     """Los últimos días de validación de la carga diaria, con las columnas que recibe el modelo congelado."""
     from proyecto.evaluacion import validacion
 
-    reg = _artefacto("04_regresion")
+    reg = _artefacto("03_regresion")
     nombre = _artefacto("03_cribado")["seleccion"]["regresion"]
     papeles = leer_json(rutas.DIR_MODELADO / f"{nombre}.json")
     _, val = validacion.separar_desarrollo(leer_modelado(nombre), papeles["fecha"])
@@ -316,7 +316,7 @@ def preparar_datos():
         a, m = bloque()
         arreglos.update(a)
         meta.update(m)
-    clf = _artefacto("05_clasificacion")
+    clf = _artefacto("04_clasificacion")
     meta["comprobacion"] = {"auc_artefacto": clf["calibracion"]["auc_calibrado" if clf["calibracion"]["usada"] else "auc_sin"],
                             "costo_artefacto": clf["umbral_elegido"]["Costo"]}
     ruta = rutas.DIR_ARTEFACTOS / ARCHIVO_DATOS
@@ -376,7 +376,7 @@ def diapositiva_problema():
 
 def diapositiva_datos():
     """3 · El contrato de datos (momentos del proceso), tamaños de las tablas y origen."""
-    calidad = _artefacto("02_calidad")
+    calidad = _artefacto("01_calidad")
     momento_reg, momento_clf = _m("RegMomento"), _m("ClfMomento")
     hitos = []
     for i, momento in enumerate(MOMENTOS, start=1):
@@ -455,7 +455,7 @@ def diapositiva_metodo():
         ("elegibles", int(_n("CriElegibles")), "puntaje = habilidad × valor para el laboratorio"),
         ("elegidos: uno por tipo", int(_n("CriElegidos"))),
     ], titulo="Qué se modela a fondo")
-    partes = {p["Bloque"]: p for p in _artefacto("02_calidad")["particion"]}
+    partes = {p["Bloque"]: p for p in _artefacto("01_calidad")["particion"]}
     protocolo = []
     for bloque, accion, color in (("entrenamiento", "ajustar y comparar (CV por bloques)", "azul"),
                                   ("validacion", "decidir modelo y umbral", "morado"),
@@ -481,7 +481,7 @@ def diapositiva_metodo():
 
 def diapositiva_regresion():
     """6 · Carga diaria: modelos del curso comparados, ganador y error en prueba frente a la referencia."""
-    reg, final = _artefacto("04_regresion"), _artefacto("07_evaluacion")["regresion"]
+    reg, final = _artefacto("03_regresion"), _artefacto("06_evaluacion")["regresion"]
     rmse = {NOMBRES_REFERENCIA.get(f["Modelo"], f["Modelo"].split(" (")[0]): f["RMSE"]
             for f in reg["didactica"] if f["Modelo"] != "base_dia_anterior"}
     mejor = _m("RegMejorDidactico")
@@ -518,7 +518,7 @@ def diapositiva_regresion():
 
 def diapositiva_clasificacion():
     """7 · Riesgo de no conformidad: modelos, umbral por costo, alertas por semana, validación frente a prueba."""
-    clf, final = _artefacto("05_clasificacion"), _artefacto("07_evaluacion")["clasificacion"]
+    clf, final = _artefacto("04_clasificacion"), _artefacto("06_evaluacion")["clasificacion"]
     auc = {NOMBRES_REFERENCIA.get(f["Modelo"], f["Modelo"]): f["ROC-AUC"] for f in clf["didactica"]}
     barras = barras_animadas(dict(sorted(auc.items(), key=lambda par: -par[1])),
                              "Validación cruzada: ROC-AUC medio (más es mejor)", formato="{:.3f}",
@@ -560,7 +560,7 @@ def diapositiva_clasificacion():
 
 def diapositiva_red():
     """8 · Perceptrón multicapa: arquitectura usada, parada temprana y comparación con la regresión logística."""
-    didactica = {f["Modelo"]: f for f in _artefacto("05_clasificacion")["didactica"]}
+    didactica = {f["Modelo"]: f for f in _artefacto("04_clasificacion")["didactica"]}
     red, log = didactica["Perceptrón multicapa"], didactica["Regresión logística"]
     mlp = _cargar().mlp
     duelo = comparacion([
@@ -597,7 +597,7 @@ def diapositiva_red():
 
 def diapositiva_bayes():
     """9 · ¿Falso positivo?: VPP por ensayo, el mismo positivo con riesgo bajo y alto, regla de reensayo."""
-    bayes = _artefacto("05_clasificacion")["bayes"]
+    bayes = _artefacto("04_clasificacion")["bayes"]
     vpp = {f["ensayo"]: f["vpp"] for f in sorted(bayes["vpp_por_ensayo"], key=lambda f: f["vpp"])}
     peor = _m("ClfVPPPeorEnsayo")
     barras = barras_animadas(vpp, "VPP por ensayo (desarrollo)", formato="{:.2f}", resaltar=peor, maximo=1,
@@ -626,7 +626,7 @@ def diapositiva_bayes():
 
 def diapositiva_agrupamiento():
     """10 · Segmentos de clientes y perfiles de muestra, con la advertencia sobre siluetas bajas."""
-    agr = _artefacto("06_agrupamiento")
+    agr = _artefacto("05_agrupamiento")
     sel, comp = agr["seleccionado"], agr["complementario"]
     segmentos = pd.DataFrame([{"Segmento de clientes": s["Segmento"], "Clientes": int(s["Clientes"]),
                                "% de muestras": 100 * s["Proporción de muestras"],
@@ -653,7 +653,7 @@ def diapositiva_agrupamiento():
 
 def diapositiva_conclusiones():
     """11 · Respuesta a cada pregunta, limitaciones y pasos siguientes."""
-    final = _artefacto("07_evaluacion")
+    final = _artefacto("06_evaluacion")
     reg, clf = final["regresion"], final["clasificacion"]
     modelo = {f["Predictor"]: f for f in reg["tabla"]}[_m("FinRegModelo")]
     m = clf["metricas"]
@@ -672,7 +672,7 @@ def diapositiva_conclusiones():
     ], titulo="Respuestas (prueba, abierta una sola vez)", por_fila=3)
     if ES_SIMULACION:
         limites = ("**Datos simulados:** las cifras prueban que el procedimiento funciona de punta a punta; la "
-                   "base real está en la etapa 08. La señal es moderada y los grupos, poco nítidos.")
+                   "base real está en la etapa 02. La señal es moderada y los grupos, poco nítidos.")
     else:
         limites = "La señal es moderada y los grupos, poco nítidos: las cifras deben leerse con sus intervalos."
     pasos_siguientes = ("Conectar la exportación real con el mapeo de columnas y reconstruir con "

@@ -1,10 +1,11 @@
-"""Capa 8 · Etapa 04: regresión.
+"""Capa 8 · Etapa 03, parte B: regresión.
 
-Responsabilidad única: armar las piezas de la etapa 04 (referencias
-ingenuas, pasada didáctica con los modelos del curso, cribado de la tubería
-con un L16 de Taguchi, afinamiento, evaluación única en validación,
-congelamiento y lectura operativa), guardar el modelo y el artefacto de la
-etapa, y registrar sus cifras para el informe.
+Responsabilidad única: armar las piezas de la parte B de la etapa 03
+(referencias ingenuas, pasada didáctica con los modelos del curso, cribado de
+la tubería con un L16 de Taguchi, afinamiento, evaluación única en
+validación, congelamiento y lectura operativa), guardar el modelo y el
+artefacto de la regresión, y registrar sus cifras para el informe. Continúa
+la etapa que abrió la parte A (`cribado`) y la cierra.
 """
 import time
 import warnings
@@ -18,7 +19,7 @@ from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_modelo, leer_json, leer_modelado
 from proyecto.cribado import arreglos, catalogo, corridas
 from proyecto.etapas import taguchi
-from proyecto.etapas.comun import Resultado, abrir, cerrar, legible, enumerar
+from proyecto.etapas.comun import Resultado, cerrar, continuar, legible, enumerar
 from proyecto.evaluacion import metricas, validacion
 from proyecto.evaluacion.remuestreo import intervalo_bootstrap
 from proyecto.modelos import registro, tuberias
@@ -27,7 +28,7 @@ from proyecto.reporte import latex
 from proyecto.reporte.html import comparacion, nota, pasos, pestanas, tabla_html, tarjetas
 from proyecto.variables.comunes import columnas_de_grupo
 
-ETAPA = "04_regresion"
+ETAPA = "03_cribado_regresion"
 TAREA = "regresion"
 NOMBRE_DUMMY = "Dummy (media)"
 COLUMNAS_L16 = {"modelo": "A", "escalado": "c", "grupo": "d", "objetivo_log": "abd", "seleccion": "acd",
@@ -44,14 +45,14 @@ def _media_desv(valores):
 
 
 def iniciar():
-    """Lee el análisis elegido en la etapa 03 y parte el desarrollo en entrenamiento y validación."""
+    """Lee el análisis elegido en la parte A y parte el desarrollo en entrenamiento y validación."""
     # Los avisos de no convergencia del perceptrón se cuentan en las corridas del diseño (columna `avisos`).
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
-    c = abrir(ETAPA, "Del modelo de clase al modelo congelado, sin abrir la prueba")
+    c = continuar(ETAPA)
     c.inicio = time.perf_counter()
     c.nombre = leer_json(rutas.DIR_ARTEFACTOS / "03_cribado.json")["seleccion"][TAREA]
     if c.nombre is None:
-        raise RuntimeError("La etapa 03 no eligió ningún análisis de regresión: no hay nada que modelar.")
+        raise RuntimeError("El cribado no eligió ningún análisis de regresión: no hay nada que modelar.")
     c.ficha = catalogo.ficha_por_nombre(c.nombre)
     c.papeles = leer_json(rutas.DIR_MODELADO / f"{c.nombre}.json")
     c.objetivo, c.fecha, c.referencias = c.papeles["objetivo"], c.papeles["fecha"], list(c.papeles["referencias"])
@@ -124,7 +125,7 @@ def referencias(c):
     r.agregar(nota(
         f"La mejor referencia ingenua es \"{mejor}\", con un RMSE medio de **{bloques.mean():.2f}** muestras por día "
         f"(entre {bloques.min():.2f} y {bloques.max():.2f} según el bloque). Contra ella medimos la habilidad en el resto "
-        "de la etapa. "
+        "de la regresión. "
         + (f"El `Dummy`, que ignora el pasado reciente, queda en {dummy:.2f}"
            + (", peor que las reglas ingenuas, o sea que el nivel reciente de la serie ya lleva información."
               if dummy > bloques.mean() else
@@ -158,7 +159,7 @@ def recta_simple(c):
     x_min, x_max = float(np.nanmin(x)), float(np.nanmax(x))
     x_p10, x_p90 = (float(q) for q in np.nanpercentile(x, [10, 90]))
     r2 = c.recta.score(c.X_ent, c.y_ent)
-    r.figura(graficos.figura_recta_simple(x, c.y_ent, b1, b0, v, c.objetivo), "04_recta_simple")
+    r.figura(graficos.figura_recta_simple(x, c.y_ent, b1, b0, v, c.objetivo), "03_recta_simple")
     r.agregar(nota(
         f"La variable más correlacionada con el objetivo es \"{v}\" (r = {corr[v]:.3f}) y la recta ajustada es "
         f"ŷ = {b0:.2f} + {b1:.3f} x. La pendiente dice que dentro del rango observado ({x_min:.1f} a {x_max:.1f}) cada "
@@ -245,7 +246,7 @@ def didactica(c):
                          resaltar=(t["Modelo"] == mejor["Modelo"]).to_numpy(), columnas_resaltadas="RMSE"))
     rmse = pd.DataFrame({n: e["RMSE"] for n, e in errores.items()}, index=c.etiquetas_bloque).T
     r.figura(graficos.figura_por_bloque(pd.concat([rmse, c.rmse_referencias.loc[[c.mejor_ref]]]), "RMSE (muestras por día)",
-                                        resaltar=[mejor["Modelo"], c.mejor_ref]), "04_didactico_bloques")
+                                        resaltar=[mejor["Modelo"], c.mejor_ref]), "03_didactico_bloques")
     por_modelo = t.set_index("Modelo")
     rmse_mlp, rmse_lineal = por_modelo.loc["Perceptrón multicapa", "RMSE"], por_modelo.loc["Lineal múltiple", "RMSE"]
     positivos = t[(t["Tipo"] == "modelo") & (t["Habilidad mínima"] > 0)]
@@ -284,7 +285,7 @@ def coeficientes(c):
     r = Resultado()
     ajustada = clone(c.didacticos["Lineal múltiple"]).fit(c.X_ent, c.y_ent)
     coef = pd.Series(ajustada.named_steps["modelo"].coef_, index=tuberias.nombres_variables(ajustada))
-    r.figura(graficos.figura_coeficientes(coef, "Coeficientes estandarizados de la regresión múltiple"), "04_coeficientes")
+    r.figura(graficos.figura_coeficientes(coef, "Coeficientes estandarizados de la regresión múltiple"), "03_coeficientes")
     principales = coef.reindex(coef.abs().sort_values(ascending=False).index).head(3)
     corr = c.entrenamiento[c.numericas].corr().abs().where(~np.eye(len(c.numericas), dtype=bool))
     par = corr.stack().idxmax()
@@ -392,7 +393,7 @@ def corridas_l16(c):
     c.respuesta = corridas.tabla_respuesta(res, c.nombres_factor)
     c.niveles_optimo, c.sn_predicha = corridas.predecir_optimo(res, c.nombres_factor)
     media_sn = float(res["sn"].mean())
-    r.figura(graficos.figura_efectos_principales(c.efectos, media_sn, optimo=c.niveles_optimo), "04_efectos_principales")
+    r.figura(graficos.figura_efectos_principales(c.efectos, media_sn, optimo=c.niveles_optimo), "03_efectos_principales")
     vr = taguchi.respuesta_legible(c.respuesta, c.nombres_factor)
     vr_vista = vr.rename(columns={"mejor_nivel": "Mejor nivel", "media_mejor": "S/N mejor", "peor_nivel": "Peor nivel",
                                   "media_peor": "S/N peor", "delta": "Delta", "rango": "Rango"})
@@ -491,7 +492,7 @@ def confirmacion(c):
         r.figura(graficos.figura_deltas(pd.DataFrame({
             "L16 (16 corridas)": c.respuesta["delta"],
             f"Factorial completo ({rc['corridas']} corridas)": respuesta_completo.loc[c.respuesta.index, "delta"]}),
-            "Influencia de cada factor según el diseño"), "04_l16_contra_completo")
+            "Influencia de cada factor según el diseño"), "03_l16_contra_completo")
         rc.update({"mejor_sn_completo": float(mejor_completo["sn"]), "puesto_confirmacion": puesto,
                    "deltas": respuesta_completo["delta"].to_dict()})
         rho, s_comp, iguales = rc["correlacion_rangos"], rc["segundos"], rc["factores_mismo_optimo"]
@@ -517,7 +518,7 @@ def confirmacion(c):
     else:
         r.agregar(nota(
             f"Con {c.segundos_l16:.1f} s para el L16 el factorial completo tardaría unos {rc['segundos_estimados']:.0f} s, "
-            f"por encima del límite de {taguchi.LIMITE_SEGUNDOS_COMPLETO:.0f} s que fijamos para esta etapa. Por eso no lo "
+            f"por encima del límite de {taguchi.LIMITE_SEGUNDOS_COMPLETO:.0f} s que fijamos para esta parte. Por eso no lo "
             "corrimos y la comparación queda pendiente.",
             "limite",
         ))
@@ -634,8 +635,8 @@ def diagnostico(c):
     pred = c.pred_val[c.final]
     nombre = registro.NOMBRES_LEGIBLES[c.final]
     r.figura(graficos.figura_serie_prediccion(c.validacion[c.fecha], c.y_val, {nombre: pred, c.mejor_ref: c.base_val},
-                                              unidad="muestras por día"), "04_validacion_serie")
-    r.figura(graficos.figura_residuos(c.validacion[c.fecha], c.y_val, pred, unidad="muestras por día"), "04_residuos")
+                                              unidad="muestras por día"), "03_validacion_serie")
+    r.figura(graficos.figura_residuos(c.validacion[c.fecha], c.y_val, pred, unidad="muestras por día"), "03_residuos")
     residuo = c.y_val - pred
     mitad = len(residuo) // 2
     corr = float(np.corrcoef(pred, np.abs(residuo))[0, 1])
@@ -694,7 +695,7 @@ def congelar(c):
 
 
 def operacion(c):
-    """Error en muestras por día y días fuera de una tolerancia práctica; artefacto de la etapa."""
+    """Error en muestras por día y días fuera de una tolerancia práctica; artefacto de la regresión."""
     r = Resultado()
     pred = c.pred_val[c.final]
     nombre = registro.NOMBRES_LEGIBLES[c.final]
@@ -756,7 +757,7 @@ def operacion(c):
                         "segundos": c.segundos_rejilla[m]} for m, b in c.busquedas.items()},
         "operacion": c.operacion,
         "segundos_etapa": c.segundos,
-    }, rutas.DIR_ARTEFACTOS / "04_regresion.json")
+    }, rutas.DIR_ARTEFACTOS / "03_regresion.json")
     return r
 
 

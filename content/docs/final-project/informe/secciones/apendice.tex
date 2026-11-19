@@ -11,7 +11,7 @@
 
 Todo el proyecto se reconstruye desde la carpeta raíz con \codigo{uv} y
 Python 3.12. Cada paso aleatorio parte de la semilla \DatSemilla{} así que
-dos ejecuciones dan las mismas cifras. Con \codigo{make notebooks} se ejecutan las ocho
+dos ejecuciones dan las mismas cifras. Con \codigo{make notebooks} se ejecutan las seis
 etapas en orden y se regenera \codigo{informe/generado/} (las macros, el
 índice y las tablas), con \codigo{make colab} los notebooks se copian a una
 carpeta vacía y se ejecutan allí sin el paquete para probar que se valen por
@@ -20,7 +20,7 @@ documento. Por último \codigo{make verificar} corre el guion
 \codigo{verificar.py} de la carpeta \codigo{verificacion/}. Ese guion revisa
 la regla de capas, que el generador sea determinista, la ortogonalidad del
 L16, las fórmulas de Bayes contra un cálculo a mano, que no haya fugas por
-momento, que solo las etapas~07 y~08 lean la prueba, que las etapas no tengan cifras
+momento, que solo las etapas~02 y~06 lean la prueba, que las etapas no tengan cifras
 escritas a mano y que no falten macros en el informe.
 
 En Google Colab basta con subir \codigo{notebooks/Proyecto\_Final.ipynb} y

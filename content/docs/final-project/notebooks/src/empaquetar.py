@@ -43,9 +43,9 @@ y no se entrega. Aquí van solo dos archivos para entender su forma:
 - `diccionario_datos.csv`: las 36 columnas con su tipo, descripción, papel en la clasificación de no
   conformidad y momento en que se conoce.
 
-Las etapas 01 a 07 usan la base simulada que genera `proyecto/datos/simulacion.py` (semilla 42), así que
-se reproducen completas. La etapa 08 necesita el archivo real en `datos/reales/`; sin él cada sección
-muestra una nota en lugar de cifras.
+Los notebooks 01 y 03 a 06 usan la base simulada que genera `proyecto/datos/simulacion.py` (semilla 42)
+así que se reproducen completos. El notebook 02 necesita el archivo real en `datos/reales/`; sin él cada
+sección muestra una nota en lugar de cifras.
 """
 
 

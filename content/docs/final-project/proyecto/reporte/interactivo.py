@@ -10,7 +10,7 @@ nunca de la prueba) y devuelve un contenedor de widgets: controles arriba y
 la figura, con el estilo editorial del proyecto, debajo. Cada panel marca el
 valor que el proyecto eligió (congelado) junto al valor actual. La excepción
 es `panel_taguchi(taguchi, congelada)`, que no reajusta nada: recibe la
-sección `taguchi` del artefacto de una etapa con L16 (04 o 05) y la
+sección `taguchi` del artefacto de una etapa con L16 (03 o 04) y la
 configuración congelada, y lo usan los notebooks de esas etapas.
 
 Sin núcleo (notebook guardado y abierto sin ejecutar), la celda conserva la
@@ -225,13 +225,13 @@ def panel_umbral(d):
     """Deslizador del umbral t sobre las probabilidades de validación del
     clasificador elegido (sin reajustar): matriz de confusión, precisión,
     recall, alertas por semana y costo `COSTO_FP FP + COSTO_FN FN`, con la
-    curva de costo, el umbral actual y el elegido en la etapa 05. La razón
+    curva de costo, el umbral actual y el elegido en la etapa 04. La razón
     FN/FP se puede cambiar para ver cómo se mueve el umbral óptimo."""
     datos = d.interactivo
     proba, y = np.asarray(d.proba_validacion, dtype=float), np.asarray(d.y_validacion, dtype=int)
     elegido, costos, semanas = datos["umbral"], datos["costos"], datos["semanas_validacion"]
     razon_elegida = costos["falso_negativo"] / costos["falso_positivo"]
-    rejilla = np.asarray(datos["umbrales"], dtype=float)   # recorrido de la etapa 05: ahí se busca el óptimo
+    rejilla = np.asarray(datos["umbrales"], dtype=float)   # recorrido de la etapa 04: ahí se busca el óptimo
     _, fp_r, fn_r, _ = _conteos(proba, y, rejilla)
     fina = np.round(np.arange(0.02, 0.6005, 0.0025), 4)    # solo para dibujar la curva
     _, fp_f, fn_f, _ = _conteos(proba, y, fina)
@@ -271,7 +271,7 @@ def panel_umbral(d):
         "razon": w.Dropdown(options=[(f"{r} : 1", r) for r in razones], value=int(razon_elegida),
                             description="Costo FN / costo FP", **_estilo_control("230px")),
     }
-    explicacion = (f"Se alerta cuando la probabilidad pasa <b>t</b>. En la etapa 05 elegimos t = <b>{elegido:.3f}</b> "
+    explicacion = (f"Se alerta cuando la probabilidad pasa <b>t</b>. En la etapa 04 elegimos t = <b>{elegido:.3f}</b> "
                    f"porque minimiza el costo cuando perder una no conforme cuesta <b>{razon_elegida:g}</b> veces más que "
                    "una falsa alarma (línea punteada). Al mover t se ve qué se gana y qué se pierde. Al cambiar la razón "
                    "de costos se ve dónde quedaría el óptimo (línea discontinua). Son las probabilidades de validación "
@@ -380,7 +380,7 @@ def panel_bayes(d):
     """Previa p (escala logarítmica), sensibilidad S y especificidad E: VPP y
     probabilidad de falso positivo en grande, y 1000 muestras como cuadritos
     (verdaderos positivos, falsos positivos, falsos negativos). El menú
-    carga los valores de cada ensayo tal como los estimó la etapa 05."""
+    carga los valores de cada ensayo tal como los estimó la etapa 04."""
     ensayos = {e["ensayo"]: e for e in sorted(d.interactivo["ensayos"], key=lambda e: e["vpp"])}
     primero = next(iter(ensayos.values()))
 
@@ -398,7 +398,7 @@ def panel_bayes(d):
         a1.text(0, 0.86, _pct(vpp), fontsize=36, color=TINTAS["sensibilidad"], va="top", fontfamily=familia("titulos"))
         a1.text(0, 0.56, "P(falso positivo) = 1 − VPP", fontsize=10, color=TENUE, va="top")
         a1.text(0, 0.44, _pct(falso), fontsize=36, color=TINTAS["falsos"], va="top", fontfamily=familia("titulos"))
-        a1.text(0, 0.12, f"{ensayo} en la etapa 05:\np = {_pct(ref['prevalencia_corregida'])}, VPP = {_pct(ref['vpp'])}",
+        a1.text(0, 0.12, f"{ensayo} en la etapa 04:\np = {_pct(ref['prevalencia_corregida'])}, VPP = {_pct(ref['vpp'])}",
                 fontsize=8.5, color=TENUE, va="top", wrap=True)
         texto_coloreado(a2, [("De 1000 muestras: ", None), (f"{vp} verdaderos positivos", TINTAS["sensibilidad"]),
                              (", ", None), (f"{fp} falsos positivos", TINTAS["falsos"]), (" y ", None),
@@ -423,7 +423,7 @@ def panel_bayes(d):
                                 readout_format=".3f", description="Especificidad E"),
     }
     explicacion = ("Al elegir un ensayo se cargan la sensibilidad y la especificidad que estimamos con sus controles en "
-                   "la etapa 05 y la previa corregida de su desarrollo. Después se puede mover la previa: Con una "
+                   "la etapa 04 y la previa corregida de su desarrollo. Después se puede mover la previa: Con una "
                    "contaminación rara hasta un ensayo muy específico puede dar más falsos positivos que verdaderos.")
     panel = Panel("Bayes", "¿Qué tan probable es que un positivo sea falso?", explicacion, controles, dibujar)
 
@@ -445,7 +445,7 @@ def panel_bayes(d):
 def panel_kmeans(d):
     """k = 2…8 sobre la misma muestra de perfiles de la animación: nube en
     dos componentes principales coloreada por grupo, silueta del k actual y
-    curva de silueta según k (muestra y matriz completa de la etapa 06)."""
+    curva de silueta según k (muestra y matriz completa de la etapa 05)."""
     from sklearn.metrics import silhouette_score
 
     X = np.asarray(d.kmeans_muestra, dtype=float)
@@ -479,7 +479,7 @@ def panel_kmeans(d):
         a2.plot(ks, [siluetas[i] for i in ks], "o-", color=TINTAS["previa"], ms=4, label=f"muestra ({len(X)} filas)")
         if completa:
             a2.plot(list(completa), list(completa.values()), "s--", color=TENUE, ms=3, lw=1,
-                    label="matriz completa (etapa 06)")
+                    label="matriz completa (etapa 05)")
         a2.plot([k], [silueta], "o", color=TINTAS["costo"], ms=9, zorder=5)
         _marca_elegida(a2, elegido, f"elegido k = {elegido}")
         a2.set_xlabel("número de grupos k")
@@ -491,10 +491,10 @@ def panel_kmeans(d):
 
     controles = {"k": w.IntSlider(value=elegido, min=min(GRUPOS), max=max(GRUPOS), step=1, description="Grupos k",
                                   continuous_update=False, **_estilo_control())}
-    explicacion = (f"En la etapa 06 elegimos <b>k = {elegido}</b> perfiles de muestra. Al cambiar k se rehace el mismo "
+    explicacion = (f"En la etapa 05 elegimos <b>k = {elegido}</b> perfiles de muestra. Al cambiar k se rehace el mismo "
                    f"K-means paso a paso de la animación sobre la misma muestra de {len(X)} perfiles y la curva muestra "
                    "la silueta de cada k (cohesión frente a separación). La curva de la muestra parte de una sola "
-                   "inicialización así que es más ruidosa que la de la matriz completa de la etapa 06, que es con la que "
+                   "inicialización así que es más ruidosa que la de la matriz completa de la etapa 05, que es con la que "
                    "elegimos k. Si la silueta es baja en todo el rango los grupos son poco nítidos.")
     return Panel("Agrupamiento", "Número de grupos de K-means", explicacion, controles, dibujar)
 
@@ -672,7 +672,7 @@ def panel_arbol(d):
         a1.plot(eje_x, tabla[:, 1], "o-", color=TENUE, ms=3, lw=1.2, label="ROC-AUC entrenamiento")
         a1.plot(eje_x, tabla[:, 2], "o-", color=TINTAS["previa"], ms=4, label="ROC-AUC validación")
         a1.plot([alfa + 1e-6], [auc_val], "o", color=TINTAS["costo"], ms=10, zorder=5)
-        _marca_elegida(a1, elegido + 1e-6, f"rejilla de la etapa 05: {elegido:.2g}")
+        _marca_elegida(a1, elegido + 1e-6, f"rejilla de la etapa 04: {elegido:.2g}")
         a1.set_xscale("log")
         a1.set_xlabel("ccp_alpha (escala logarítmica; α = 0 a la izquierda)")
         a1.set_ylabel("ROC-AUC")
@@ -697,7 +697,7 @@ def panel_arbol(d):
                                            **_estilo_control("420px"))}
     explicacion = (f"Sin poda (α = 0) el árbol crece hasta hojas de <b>{hiper['min_samples_leaf']}</b> filas y "
                    "memoriza el entrenamiento. Al subir α se cortan primero las ramas que menos reducen la impureza por "
-                   "cada hoja que agregan, hasta que solo queda la raíz. La rejilla de la etapa 05 eligió α con "
+                   "cada hoja que agregan, hasta que solo queda la raíz. La rejilla de la etapa 04 eligió α con "
                    f"validación cruzada (línea punteada). {_texto_submuestra(d)}")
     return Panel("Clasificación", "Árbol de decisión: poda por costo-complejidad", explicacion, controles, dibujar)
 
@@ -716,7 +716,7 @@ def _corrida_igual(taguchi, niveles):
     return next((c for c in taguchi["corridas"] if all(c[f] == v for f, v in niveles.items())), None)
 
 
-def panel_taguchi(taguchi, congelada=None, rotulo="Regresión", etapa="04"):
+def panel_taguchi(taguchi, congelada=None, rotulo="Regresión", etapa="03"):
     """Un selector por factor del L16. Con cada combinación muestra lo que aporta cada nivel según el modelo
     aditivo (barras) y la S/N predicha frente a la observada en la corrida del L16 que tenga esa misma
     combinación (si existe) y frente a la corrida de confirmación del óptimo. No reajusta nada: todo sale de la

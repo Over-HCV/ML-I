@@ -36,9 +36,9 @@ Qué hace, en orden:
    ellas. Antes de ejecutarla, `presentacion.preparar_datos()` escribe
    `artefactos/presentacion_datos.npz` (arreglos pequeños sacados de las
    tablas de desarrollo, nunca de la prueba) y comprueba que reproduce el
-   ROC-AUC y el costo de validación de la etapa 05. Su arranque recrea el
+   ROC-AUC y el costo de validación de la etapa 04. Su arranque recrea el
    paquete y esos artefactos (unos cientos de kB), de forma que en Colab se
-   ejecuta en segundos sin repetir las etapas. Antes de escribirla se comprueba que las siete
+   ejecuta en segundos sin repetir las etapas. Antes de escribirla se comprueba que las seis
    etapas estén terminadas y que los artefactos no cambien durante la
    ejecución (misma huella SHA-256 antes y después).
 
@@ -215,7 +215,7 @@ def videos_manim():
 
 
 # Etapas que muestran videos de Manim: su arranque (y el del notebook único) los lleva.
-ETAPAS_CON_VIDEO = ["05_clasificacion_bayes"]
+ETAPAS_CON_VIDEO = ["04_clasificacion_bayes"]
 
 
 def celdas_de_arranque(nombre, etapas_previas=(), presentacion=False, videos=False):
@@ -501,7 +501,7 @@ def construir_presentacion(ejecutar=True):
               f"ROC-AUC de validación reproducido {resumen['auc'][0]:.6f} (artefacto {resumen['auc'][1]:.6f}), "
               f"costo {resumen['costo'][0]} (artefacto {resumen['costo'][1]:.0f})")
         if abs(resumen["auc"][0] - resumen["auc"][1]) > 1e-6 or resumen["costo"][0] != resumen["costo"][1]:
-            print("Presentación: las probabilidades de validación no reproducen la etapa 05; se detiene.")
+            print("Presentación: las probabilidades de validación no reproducen la etapa 04; se detiene.")
             return False
     nb = jupytext.read(GUION_PRESENTACION, fmt="py:percent")
     for i, celda in enumerate(nb.cells):

@@ -1,8 +1,8 @@
 # %% [markdown]
-# # Etapa 05: Qué muestras vigilar y cuánto creerle a un positivo
+# # Etapa 04: Qué muestras vigilar y cuánto creerle a un positivo
 #
 # Esta etapa tiene dos partes que se apoyan una en la otra. En la parte A modelamos, con los mismos tres niveles de
-# la etapa 04, la probabilidad de que una muestra aceptada termine no conforme vista desde la recepción, y fijamos
+# la etapa 03, la probabilidad de que una muestra aceptada termine no conforme vista desde la recepción, y fijamos
 # un umbral de alerta por costo. En la parte B respondemos la pregunta con que empezó el laboratorio, qué tan
 # probable es que un positivo sea falso. Para eso juntamos la fiabilidad de cada ensayo (sus controles de calidad)
 # con el riesgo previo de cada muestra que da el clasificador de la parte A.
@@ -12,7 +12,7 @@ from proyecto.base.artefactos import iniciar_etapa
 from proyecto.base.salida import mostrar
 from proyecto.etapas import clasificacion
 
-iniciar_etapa("05_clasificacion_bayes")
+iniciar_etapa("04_clasificacion_bayes")
 c = clasificacion.iniciar()
 mostrar(c.encabezado)
 
@@ -48,7 +48,7 @@ clasificacion.planteamiento(c).mostrar()
 # ## 2. Pasada didáctica: Los modelos del curso
 #
 # Cada modelo usa el grupo ampliado de variables y el preprocesamiento por defecto (imputación por la mediana,
-# estandarización y one-hot), sin afinar nada y en los mismos bloques temporales de la etapa 04. Todo va dentro de
+# estandarización y one-hot), sin afinar nada y en los mismos bloques temporales de la etapa 03. Todo va dentro de
 # una tubería de scikit-learn que aprende la imputación, la escala y las categorías solo con el tramo de ajuste de
 # cada bloque. Así se arma la de la regresión logística:
 
@@ -61,7 +61,7 @@ mostrar(tuberia)   # imputar y escalar las numéricas, codificar las categórica
 # %% [markdown]
 # ### 2.1 Árbol de clasificación con poda por costo-complejidad
 #
-# Como en la etapa 04 el árbol crece completo y después lo podamos con `ccp_alpha`, el precio que se le cobra a cada
+# Como en la etapa 03 el árbol crece completo y después lo podamos con `ccp_alpha`, el precio que se le cobra a cada
 # hoja. Nos quedamos con el alfa de mayor ROC-AUC medio en los bloques. El árbol va sin escalar porque escalar no
 # cambia sus cortes y así los umbrales quedan en las unidades de cada variable.
 
@@ -174,7 +174,7 @@ mostrar(ui.panel_red(c.paneles))   # capas ocultas y α: pérdida, ROC-AUC y la 
 #
 # Los factores son el modelo, el escalado, el grupo de variables, qué hacer con el desbalance (sobremuestrear la
 # clase minoritaria, solo al ajustar), la selección de variables y la codificación. Las 128 combinaciones se reducen
-# a 16 con la misma asignación de columnas de la etapa 04. La respuesta es el ROC-AUC de cada bloque, resumido con la
+# a 16 con la misma asignación de columnas de la etapa 03. La respuesta es el ROC-AUC de cada bloque, resumido con la
 # razón señal/ruido de Taguchi en la versión "mayor es mejor", que castiga a la vez un ROC-AUC bajo y uno que cambia
 # mucho entre bloques:
 #
@@ -209,7 +209,7 @@ clasificacion.confirmacion(c).mostrar()
 # %% [markdown]
 # ## 4. Nivel 3: Afinamiento de hiperparámetros
 #
-# Igual que en la etapa 04 pasan la configuración de mayor S/N observada y la segunda mejor familia de modelos. Las
+# Igual que en la etapa 03 pasan la configuración de mayor S/N observada y la segunda mejor familia de modelos. Las
 # rejillas las recorremos con `GridSearchCV` en los mismos bloques y con el ROC-AUC como métrica.
 
 # %%
@@ -306,7 +306,7 @@ clasificacion.congelar(c).mostrar()
 from proyecto.etapas.comun import legible
 
 congelada = {f: legible(v) for f, v in c.configuracion_final.items()}   # niveles de la configuración congelada
-mostrar(ui.panel_taguchi(c.taguchi, congelada, rotulo="Clasificación", etapa="05"))
+mostrar(ui.panel_taguchi(c.taguchi, congelada, rotulo="Clasificación", etapa="04"))
 
 # %% [markdown]
 # ## Parte B: Bayes, o qué tan probable es que un positivo sea falso

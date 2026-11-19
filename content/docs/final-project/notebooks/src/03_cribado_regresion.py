@@ -1,5 +1,142 @@
 # %% [markdown]
-# # Etapa 04: Prever la carga de trabajo del laboratorio
+# # Etapa 03: Qué vale la pena modelar a fondo y cuántas muestras van a llegar
+#
+# Este notebook tiene dos partes. Con la base del laboratorio se pueden plantear muchos análisis (prever volúmenes,
+# anticipar resultados, agrupar clientes) y no nos daba el tiempo para estudiarlos todos a fondo. Así que en la parte A
+# los pasamos a todos por la misma prueba rápida y decidimos con una regla, escrita antes de ver resultados, cuáles
+# pasan al modelado a fondo. En la parte B modelamos a fondo el análisis de regresión elegido, que prevé la carga de
+# trabajo del laboratorio. La clasificación y el agrupamiento elegidos siguen en las etapas 04 y 05.
+
+# %%
+from proyecto.base.artefactos import iniciar_etapa
+from proyecto.base.salida import mostrar
+from proyecto.etapas import cribado
+
+iniciar_etapa("03_cribado_regresion")
+c = cribado.iniciar()
+mostrar(c.encabezado)
+
+# %% [markdown]
+# ## Parte A: Cribado de análisis
+#
+# ## 1. El embudo de cribado
+#
+# La idea la tomamos del diseño de experimentos: Probar de forma barata y pareja muchas opciones y dejar el estudio
+# costoso solo para las que pasan el filtro. Los cuatro pasos los escribimos antes de ver resultados:
+#
+# a. **Catálogo.** Cada candidato es una ficha con su unidad, su objetivo, el momento en que predice, su métrica,
+#    su línea base, la decisión del laboratorio que apoya y un valor de negocio de 1 a 3 que le pusimos nosotros.
+# b. **Prueba rápida.** Modelos sin afinar, entrenados solo con el entrenamiento y validados con los bloques de
+#    ventana creciente de la etapa 01.
+# c. **Regla de selección.** Unos umbrales fijos deciden quién es elegible y un puntaje decide quién gana en cada
+#    tipo.
+# d. **Modelado a fondo.** Solo los ganadores pasan a la parte B (regresión) y a las etapas 04 y 05.
+#
+# Para comparar candidatos tan distintos necesitábamos una sola escala, que llamamos **habilidad**: Qué parte del
+# camino entre la línea base y la perfección recorre el modelo. En regresión es la fracción del error de la
+# referencia que el modelo elimina (cero si empata con la referencia, uno si no se equivoca nunca) y en
+# clasificación es el coeficiente de Gini, que sale del área bajo la curva ROC (AUC, la probabilidad de que el
+# modelo le dé más riesgo a una no conforme que a una conforme tomadas al azar):
+#
+# $$\text{habilidad}_{\text{regresión}} = 1 - \frac{{\color{#B8423F}{\mathrm{RMSE}_{\text{modelo}}}}}{{\color{#3B64A8}{\mathrm{RMSE}_{\text{referencia}}}}}
+# \qquad\qquad
+# \text{habilidad}_{\text{clasificación}} = 2\,{\color{#2F8A4E}{\mathrm{AUC}}} - 1$$
+#
+# El RMSE es la raíz del error cuadrático medio, o sea el tamaño típico del error en las unidades del objetivo. En
+# las series de tiempo la referencia es un pronóstico ingenuo (el promedio de los últimos periodos) porque ganarle a
+# la media global sería demasiado fácil. El puntaje multiplica la habilidad por el valor de negocio
+# ${\color{#C46A2B}{v}}$, de modo que un análisis muy útil para el laboratorio puede ganar con algo menos de
+# habilidad:
+#
+# $$\text{puntaje} = \frac{\text{habilidad}\;{\color{#C46A2B}{v}}}{3}$$
+#
+# Las fichas de tipo Bayes no entrenan modelos sino que aplican el teorema de Bayes a los controles de calidad, así
+# que no se criban y pasan directo a la etapa 04.
+
+# %%
+cribado.catalogo_y_regla(c).mostrar()
+
+# %% [markdown]
+# ## 2. Tablas de modelado y auditoría de fugas
+#
+# Cada ficha arma su tabla a partir de las tablas limpias, con una fila por unidad de análisis (un día, una
+# muestra, un cliente), la fecha, el objetivo y las variables. La auditoría revisa que cada variable se conozca
+# antes o en el momento de la predicción y que ningún identificador ni objetivo entre como variable. Después
+# partimos cada tabla por fecha y la guardamos en dos archivos (desarrollo y prueba) junto con un JSON que dice el
+# papel de cada columna. El bloque de prueba se guarda sin abrirlo y solo la etapa 06 puede leerlo.
+
+# %%
+cribado.tablas_modelado(c).mostrar()
+
+# %% [markdown]
+# ## 3. La prueba rápida
+#
+# A cada candidato supervisado lo probamos con su línea base, un modelo lineal o logístico y un árbol poco profundo
+# sobre el grupo ampliado de variables. A cada candidato de agrupamiento, con el estadístico de Hopkins y la mejor
+# silueta de K-means (las dos se explican en la sección 5). Todo con las filas del entrenamiento.
+
+# %%
+cribado.prueba_rapida(c).mostrar()
+
+# %% [markdown]
+# ## 4. ¿Basta una regla simple?
+#
+# Un modelo solo se justifica si combina información. Para comprobarlo entrenamos en cada bloque un árbol que ve una
+# sola variable (la que más aporta) y, si su habilidad llega al umbral frente al mejor modelo rápido, lo que
+# recomendaríamos es una regla operativa y no un modelo.
+
+# %%
+cribado.regla_simple(c).mostrar()
+
+# %% [markdown]
+# ## 5. Candidatos de agrupamiento
+#
+# Aquí no hay línea base que superar así que la prueba hace dos preguntas. La primera es si los datos tienden a
+# formar grupos, y la responde el estadístico de **Hopkins**: Compara qué tan cerca quedan los puntos reales de sus
+# vecinos frente a puntos puestos al azar y da cerca de 0.5 cuando no hay grupos y se acerca a uno cuando sí. La
+# segunda es qué tan separados quedan los grupos de K-means y la responde la **silueta**, que va de menos uno a uno
+# y es alta cuando cada punto está más cerca de los de su grupo que de los del grupo vecino.
+
+# %%
+cribado.candidatos_agrupamiento(c).mostrar()
+
+# %% [markdown]
+# ## 6. Selección
+#
+# El embudo resume cuántos candidatos quedan en cada paso. Las comparaciones muestran los mejores puntajes de cada
+# tipo, incluidos los no elegibles, para que se vea qué dejamos de lado y por qué.
+
+# %%
+cribado.seleccion(c).mostrar()
+
+# %% [markdown]
+# Para ver con qué llega el clasificador elegido a la etapa 04 le preguntamos a su tabla qué momento declara, qué
+# variables usa y si la auditoría de fugas encontró algo:
+
+# %%
+from proyecto.reporte.html import fichas
+from proyecto.variables.comunes import auditar_momentos
+
+tabla, papeles = c.tablas_modelado[c.seleccion["clasificacion"]]
+hallazgos = auditar_momentos(tabla, papeles)   # lista vacía: ninguna variable se conoce después del momento
+mostrar(fichas(papeles["numericas"] + papeles["categoricas"],
+               f"Predice en \"{papeles['momento']}\" con estas variables ({len(hallazgos)} hallazgos de fuga)"))
+
+# %% [markdown]
+# ## 7. Lo que sigue
+#
+# La selección no se toca después: La parte B y las etapas 04 y 05 leen lo que quedó en
+# `artefactos/03_cribado.json`. La única excepción, que dejamos declarada aquí, es un análisis de agrupamiento
+# complementario sobre los clientes.
+
+# %%
+cribado.consecuencias(c).mostrar()
+
+# %%
+cribado.terminar(c)   # cierra la parte A; la etapa sigue abierta para la parte B
+
+# %% [markdown]
+# ## Parte B: Prever la carga de trabajo del laboratorio
 #
 # El cribado eligió un análisis de regresión y aquí lo modelamos a fondo en tres niveles. Primero pasamos por los
 # modelos del curso con su configuración de partida, después cribamos los factores de la tubería con un arreglo
@@ -7,16 +144,12 @@
 # sola vez en validación antes de congelarlo.
 
 # %%
-from proyecto.base.artefactos import iniciar_etapa
-from proyecto.base.salida import mostrar
 from proyecto.etapas import regresion
 
-iniciar_etapa("04_regresion")
-c = regresion.iniciar()
-mostrar(c.encabezado)
+c = regresion.iniciar()   # la misma etapa: sus cifras se suman a las de la parte A
 
 # %% [markdown]
-# ## 1. El problema y las referencias ingenuas
+# ## 8. El problema y las referencias ingenuas
 #
 # Decir que el modelo se equivoca en tantas muestras por día no dice nada si no lo ponemos al lado de lo que el
 # laboratorio ya consigue sin modelo. Por eso empezamos por las referencias ingenuas (repetir lo de ayer, promediar
@@ -39,12 +172,12 @@ regresion.planteamiento(c).mostrar()
 regresion.referencias(c).mostrar()
 
 # %% [markdown]
-# ## 2. Pasada didáctica: Los modelos del curso
+# ## 9. Pasada didáctica: Los modelos del curso
 #
 # Cada modelo usa el grupo ampliado de variables y el preprocesamiento por defecto (imputación por la mediana y
 # estandarización), sin afinar nada.
 #
-# ### 2.1 Regresión lineal simple
+# ### 9.1 Regresión lineal simple
 #
 # Empezamos por la variable con mayor correlación absoluta con el objetivo y la dejamos en sus unidades originales,
 # para que la pendiente se lea en muestras por día.
@@ -53,7 +186,7 @@ regresion.referencias(c).mostrar()
 regresion.recta_simple(c).mostrar()
 
 # %% [markdown]
-# ### 2.2 Árbol de regresión con poda por costo-complejidad
+# ### 9.2 Árbol de regresión con poda por costo-complejidad
 #
 # Un árbol que crece sin límite termina memorizando el entrenamiento. La poda por costo-complejidad le cobra un
 # precio `ccp_alpha` a cada hoja y corta las ramas que no reducen el error lo suficiente para pagarlo. Calculamos la
@@ -64,7 +197,7 @@ regresion.recta_simple(c).mostrar()
 regresion.poda(c).mostrar()
 
 # %% [markdown]
-# ### 2.3 Regresión múltiple, KNN, árbol y perceptrón en los mismos bloques
+# ### 9.3 Regresión múltiple, KNN, árbol y perceptrón en los mismos bloques
 #
 # La regresión lineal múltiple predice la carga del día siguiente como una suma ponderada de lo que ya sabemos la
 # víspera (rezagos, medias móviles, calendario y agenda), con un peso ${\color{#3B64A8}{\beta_j}}$ por variable:
@@ -86,7 +219,7 @@ mostrar(tuberia)   # imputar y escalar las numéricas, codificar las categórica
 regresion.didactica(c).mostrar()
 
 # %% [markdown]
-# ### 2.4 Qué dicen los coeficientes de la regresión múltiple
+# ### 9.4 Qué dicen los coeficientes de la regresión múltiple
 #
 # Como las variables están estandarizadas, cada coeficiente es el cambio esperado en la carga cuando la variable
 # sube una desviación estándar y las demás se quedan quietas.
@@ -95,7 +228,7 @@ regresion.didactica(c).mostrar()
 regresion.coeficientes(c).mostrar()
 
 # %% [markdown]
-# ## 3. Nivel 2: Cribado de la tubería con un arreglo L16 de Taguchi
+# ## 10. Nivel 2: Cribado de la tubería con un arreglo L16 de Taguchi
 #
 # Además del modelo, la tubería decide el escalado, el grupo de variables, si el objetivo va en logaritmo, si se
 # seleccionan variables y cómo se codifican las discretas. Probar todas las combinaciones exige 4 × 2⁵ = 128
@@ -149,7 +282,7 @@ regresion.corridas_l16(c).mostrar()
 regresion.confirmacion(c).mostrar()
 
 # %% [markdown]
-# ## 4. Nivel 3: Afinamiento de hiperparámetros
+# ## 11. Nivel 3: Afinamiento de hiperparámetros
 #
 # Al afinamiento pasa la configuración de mayor S/N observada (la confirmación o la mejor del L16) y, para no
 # apostarle a una sola familia, la segunda mejor familia de modelos con los demás factores iguales. Las rejillas las
@@ -173,16 +306,16 @@ regresion.evaluacion_validacion(c).mostrar()
 regresion.diagnostico(c).mostrar()
 
 # %% [markdown]
-# ## 5. Congelamiento del modelo
+# ## 12. Congelamiento del modelo
 #
 # Los hiperparámetros y la configuración quedan fijos y el modelo se reajusta con entrenamiento y validación, porque
-# los días recientes describen mejor el nivel actual de la serie. La etapa 07 lo evalúa una sola vez en la prueba.
+# los días recientes describen mejor el nivel actual de la serie. La etapa 06 lo evalúa una sola vez en la prueba.
 
 # %%
 regresion.congelar(c).mostrar()
 
 # %% [markdown]
-# El modelo congelado queda en disco y desde ahí lo usa la etapa 07. Así se carga y se le piden predicciones. Eso
+# El modelo congelado queda en disco y desde ahí lo usa la etapa 06. Así se carga y se le piden predicciones. Eso
 # sí, estos días de validación ya los vio el reajuste así que la tabla solo muestra la llamada y no mide nada: El
 # error de verdad se mide en la prueba.
 
@@ -208,7 +341,7 @@ congelada = {f: legible(v) for f, v in c.configuracion_final.items()}   # nivele
 mostrar(ui.panel_taguchi(c.taguchi, congelada))
 
 # %% [markdown]
-# ## 6. Qué significa en la operación
+# ## 13. Qué significa en la operación
 #
 # Al final traducimos el error a muestras por día y a cuántos días la predicción se aleja más de una tolerancia
 # práctica, que fijamos en el 20 % de la carga diaria media de validación.

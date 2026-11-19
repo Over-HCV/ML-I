@@ -3,7 +3,7 @@
 Responsabilidad única: animar, con el estilo editorial del proyecto (papel `PAPEL`, tinta `TINTA` y los
 colores `TINTAS` de las ecuaciones de la presentación), dos ideas que en el notebook son una ecuación
 coloreada. No calcula resultados: lee al renderizar las cifras que ya guardaron las etapas
-(`artefactos/05_clasificacion.json` para la sensibilidad, la especificidad, la previa y el VPP del ensayo
+(`artefactos/04_clasificacion.json` para la sensibilidad, la especificidad, la previa y el VPP del ensayo
 de esterilidad; `artefactos/presentacion_datos.npz` para la arquitectura y la α de la red). Los colores y el
 papel se leen del código fuente de `proyecto/reporte/` (sin importarlo), para que no haya dos copias.
 
@@ -76,7 +76,7 @@ def _cifra(x, decimales=4):
 
 
 def _ensayo(nombre):
-    clasificacion = json.loads((ARTEFACTOS / "05_clasificacion.json").read_text(encoding="utf-8"))
+    clasificacion = json.loads((ARTEFACTOS / "04_clasificacion.json").read_text(encoding="utf-8"))
     return next(e for e in clasificacion["bayes"]["vpp_por_ensayo"] if e["ensayo"] == nombre)
 
 
@@ -115,11 +115,11 @@ class EscenaBayes(Scene):
         fp = round(total * (1 - p) * (1 - E))
         fn, vn = contaminadas - vp, limpias - fp
         vpp = S * p / (S * p + (1 - E) * (1 - p))
-        assert abs(vpp - e["vpp"]) < 1e-9, "el VPP de la fórmula no coincide con el de la etapa 05"
+        assert abs(vpp - e["vpp"]) < 1e-9, "el VPP de la fórmula no coincide con el de la etapa 04"
         verde, rojo, azul, gris = TINTAS["sensibilidad"], TINTAS["falsos"], TINTAS["previa"], TINTAS["conformes"]
 
         encabezado = _encabezado("Bayes, término a término",
-                                 f"Ensayo de esterilidad: {total} muestras imaginarias con las cifras de la etapa 05")
+                                 f"Ensayo de esterilidad: {total} muestras imaginarias con las cifras de la etapa 04")
         self.play(FadeIn(encabezado, shift=0.2 * DOWN), run_time=1.2)
 
         # Árbol: previa y luego resultado del ensayo

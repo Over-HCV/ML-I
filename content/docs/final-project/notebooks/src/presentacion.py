@@ -81,7 +81,7 @@ p.diapositiva_regresion().mostrar()
 import joblib
 from proyecto.base import rutas
 
-modelo = joblib.load(rutas.DIR_ARTEFACTOS / "modelos" / "regresion.joblib")   # congelado en la etapa 04
+modelo = joblib.load(rutas.DIR_ARTEFACTOS / "modelos" / "regresion.joblib")   # congelado en la etapa 03
 r = d.regresion
 dias = r.dias.assign(predicción=modelo.predict(r.dias[r.variables]))
 mostrar(tabla_html(dias[[r.fecha, r.objetivo, "predicción"]], "Modelo congelado: muestras por día", decimales=1))
@@ -103,7 +103,7 @@ p.diapositiva_clasificacion().mostrar()
 # %%
 from proyecto.modelos import tuberias
 
-clf = p.artefacto("05_clasificacion")
+clf = p.artefacto("04_clasificacion")
 cfg = clf["configuracion"]                           # lo que eligieron el L16, la rejilla y la validación
 tuberia = tuberias.construir_tuberia(
     "clasificacion", cfg["modelo"], d.numericas, d.categoricas, escalado=cfg["escalado"],
@@ -111,7 +111,7 @@ tuberia = tuberias.construir_tuberia(
 mostrar(tuberia)
 
 # %%
-umbrales = [u["Umbral"] for u in clf["tabla_umbrales"]]   # el mismo recorrido de la etapa 05
+umbrales = [u["Umbral"] for u in clf["tabla_umbrales"]]   # el mismo recorrido de la etapa 04
 costos = clf["costos"]
 animacion = g.animacion_umbral(d.proba_validacion, d.y_validacion, umbrales,
                                costos["falso_positivo"], costos["falso_negativo"], clf["umbral"])

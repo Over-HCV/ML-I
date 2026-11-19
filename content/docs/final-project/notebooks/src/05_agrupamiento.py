@@ -1,5 +1,5 @@
 # %% [markdown]
-# # Etapa 06: Perfiles de muestra y segmentos de clientes
+# # Etapa 05: Perfiles de muestra y segmentos de clientes
 #
 # Aquí no hay una respuesta correcta que predecir. Lo que buscamos es si las muestras (y en un segundo análisis los
 # clientes) se dividen en grupos con un perfil que se pueda reconocer y que le sirva a la operación. Usamos los dos
@@ -10,7 +10,7 @@ from proyecto.base.artefactos import iniciar_etapa
 from proyecto.base.salida import mostrar
 from proyecto.etapas import agrupamiento
 
-iniciar_etapa("06_agrupamiento")
+iniciar_etapa("05_agrupamiento")
 c = agrupamiento.iniciar()
 mostrar(c.encabezado)
 

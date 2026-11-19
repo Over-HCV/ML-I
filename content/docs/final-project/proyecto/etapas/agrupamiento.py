@@ -1,6 +1,6 @@
-"""Capa 8 · Etapa 06: agrupamiento.
+"""Capa 8 · Etapa 05: agrupamiento.
 
-Responsabilidad única: armar las piezas de la etapa 06 (reglas fijadas de
+Responsabilidad única: armar las piezas de la etapa 05 (reglas fijadas de
 antemano, preparación y escalado, K-means, DBSCAN, ruido, comparación de
 particiones, perfiles con nombre, segmentos de clientes, auditoría con la
 simulación y comparación con la silueta del cribado), guardar el artefacto de
@@ -27,7 +27,7 @@ from proyecto.reporte.html import barras_animadas, nota, pasos, tabla_html, tarj
 from proyecto.reporte.segmentos import formato_ari
 from proyecto.variables.comunes import columnas_de_grupo
 
-ETAPA = "06_agrupamiento"
+ETAPA = "05_agrupamiento"
 # Reglas fijadas antes de mirar resultados.
 VALORES_K = list(range(2, 11))
 TOLERANCIA_SILUETA = 0.02          # diferencia de silueta que se discute (sin cambiar la regla)
@@ -167,7 +167,7 @@ def kmeans(c, papel="seleccionado"):
     if a is None:
         return r
     r.figura(graficos.figura_codo_silueta(a["tabla_k"], a["k"], f'K-means en "{a["nombre"]}"'),
-             f"06_{a['nombre']}_codo_silueta")
+             f"05_{a['nombre']}_codo_silueta")
     siluetas = a["tabla_k"].set_index("k")["silueta"]
     texto = (f"La silueta más alta sale con **k = {a['k']}** ({a['silueta_k']:.3f}) y por la regla ese es el número de "
              f"grupos de K-means. En toda la exploración la silueta va de {siluetas.min():.3f} a {siluetas.max():.3f}, ")
@@ -210,7 +210,7 @@ def dbscan(c, papel="seleccionado"):
     min_muestras = int(fila["min_muestras"]) if fila is not None else min(a["curvas"])
     eps = float(fila["eps"]) if fila is not None else float(np.median(a["rejillas"][min_muestras]))
     r.figura(graficos.figura_k_distancia(a["curvas"][min_muestras], min_muestras, eps, a["rejillas"][min_muestras]),
-             f"06_{nombre}_k_distancia")
+             f"05_{nombre}_k_distancia")
     vista = tabla_db.rename(columns={"min_muestras": "min_samples", "grupos": "Grupos", "proporcion_ruido": "Ruido",
                                      "silueta": "Silueta (sin ruido)"})
     resaltar = None
@@ -281,9 +281,9 @@ def comparar_particiones(c, papel="seleccionado"):
         soluciones["DBSCAN"] = (a["etiquetas_db"], None)
     if papel == "seleccionado" and a["etiquetas_db"] is None:
         r.figura(graficos.figura_pca_grupos(a["pca"], a["etiquetas_km"], a["pca_varianza"], a["nombres"]),
-                 f"06_{a['nombre']}_pca")
+                 f"05_{a['nombre']}_pca")
     else:
-        r.figura(graficos.figura_pca_comparada(a["pca"], soluciones, a["pca_varianza"]), f"06_{a['nombre']}_pca")
+        r.figura(graficos.figura_pca_comparada(a["pca"], soluciones, a["pca_varianza"]), f"05_{a['nombre']}_pca")
     varianza = 100 * a["pca_varianza"].sum()
     if papel == "seleccionado":
         texto = (f"Las dos componentes explican el {varianza:.1f} % de la varianza de la matriz escalada, "
@@ -333,7 +333,7 @@ def perfiles(c, papel="seleccionado"):
         _, z_db = agrupamiento.perfil_estandarizado(tabla, a["etiquetas_db"], numericas)
         filas_calor = pd.concat([filas_calor, z_db.loc[[-1]].rename(index={-1: "Ruido de DBSCAN"})])
     r.figura(graficos.figura_perfil_calor(filas_calor, segmentos.ETIQUETAS, f"Perfil de los grupos de K-means en "
-                                          f'"{a["nombre"]}"'), f"06_{a['nombre']}_perfiles")
+                                          f'"{a["nombre"]}"'), f"05_{a['nombre']}_perfiles")
     resumen = pd.DataFrame({"Grupo": [nombres[g] for g in perfil.index], "n": perfil["n"].to_numpy(),
                             "Proporción": perfil["proporcion"].to_numpy(),
                             "Variables que lo distinguen": [descripciones[g] for g in perfil.index]})
@@ -447,60 +447,60 @@ def silueta_cribado(c):
         puntaje = analisis_cribado.aplicar_regla({**fila, "silueta": a["silueta_k"], "hopkins": a["hopkins"],
                                                   "filas": len(a["tabla"])})[2]
         filas.append({
-            "Análisis": a["nombre"], "Filas (cribado)": int(fila["filas"]), "Filas (etapa 06)": len(a["tabla"]),
+            "Análisis": a["nombre"], "Filas (cribado)": int(fila["filas"]), "Filas (etapa 05)": len(a["tabla"]),
             "k (cribado)": int(fila["mejor_k"]), "Silueta (cribado)": float(fila["silueta"]),
-            "k (filas 06, sin log1p)": int(mejor["k"]), "Silueta (filas 06, sin log1p)": float(mejor["silueta"]),
-            "k (etapa 06)": a["k"], "Silueta (etapa 06)": a["silueta_k"],
+            "k (filas 05, sin log1p)": int(mejor["k"]), "Silueta (filas 05, sin log1p)": float(mejor["silueta"]),
+            "k (etapa 05)": a["k"], "Silueta (etapa 05)": a["silueta_k"],
             "Puntaje de la regla (cribado)": float(fila["puntaje_seleccion"]),
-            "Puntaje con la silueta de la etapa 06": puntaje,
+            "Puntaje con la silueta de la etapa 05": puntaje,
         })
     c.comparacion_cribado = t = pd.DataFrame(filas)
     r.agregar(tabla_html(t, "Silueta y puntaje de la regla de cribado con el preprocesamiento de cada etapa",
                          resaltar=(t["Análisis"] == c.seleccionado).to_numpy(), decimales=3))
     s = t.set_index("Análisis").loc[c.seleccionado]
-    efecto_filas = s["Silueta (filas 06, sin log1p)"] - s["Silueta (cribado)"]
-    efecto_log = s["Silueta (etapa 06)"] - s["Silueta (filas 06, sin log1p)"]
+    efecto_filas = s["Silueta (filas 05, sin log1p)"] - s["Silueta (cribado)"]
+    efecto_log = s["Silueta (etapa 05)"] - s["Silueta (filas 05, sin log1p)"]
     n_log = len(c.sel["con_log"])
     texto = (f"En \"{c.seleccionado}\" la silueta pasa de {s['Silueta (cribado)']:.3f} en el cribado "
-             f"({s['Filas (cribado)']} filas de entrenamiento, k = {s['k (cribado)']}) a {s['Silueta (etapa 06)']:.3f} en "
-             f"esta etapa ({s['Filas (etapa 06)']} filas de desarrollo, k = {s['k (etapa 06)']}), una diferencia de "
-             f"{s['Silueta (etapa 06)'] - s['Silueta (cribado)']:+.3f}. Si cambiamos solo las filas (sin log1p) la "
+             f"({s['Filas (cribado)']} filas de entrenamiento, k = {s['k (cribado)']}) a {s['Silueta (etapa 05)']:.3f} en "
+             f"esta etapa ({s['Filas (etapa 05)']} filas de desarrollo, k = {s['k (etapa 05)']}), una diferencia de "
+             f"{s['Silueta (etapa 05)'] - s['Silueta (cribado)']:+.3f}. Si cambiamos solo las filas (sin log1p) la "
              f"silueta se mueve {efecto_filas:+.3f} y al aplicar después log1p a {n_log} "
              f"{'variable' if n_log == 1 else 'variables'} se mueve {efecto_log:+.3f}, ")
     texto += ("o sea que la mayor parte de la diferencia la explica el preprocesamiento y no las filas."
               if abs(efecto_log) > abs(efecto_filas) else
               "o sea que la mayor parte de la diferencia la explican las filas y no el preprocesamiento.")
-    if s["k (filas 06, sin log1p)"] != s["k (etapa 06)"]:
+    if s["k (filas 05, sin log1p)"] != s["k (etapa 05)"]:
         texto += (f" La transformación cambia además el número de grupos que gana por silueta, de k = "
-                  f"{s['k (filas 06, sin log1p)']} sin log1p a k = {s['k (etapa 06)']} con ella. Es decir que las dos "
+                  f"{s['k (filas 05, sin log1p)']} sin log1p a k = {s['k (etapa 05)']} con ella. Es decir que las dos "
                   "siluetas describen particiones distintas y no la misma partición medida dos veces.")
     latex.registrar_varias([
         ("AgrSiluetaCribado", float(s["Silueta (cribado)"]), "silueta del seleccionado en el cribado", 3),
-        ("AgrSiluetaSinLog", float(s["Silueta (filas 06, sin log1p)"]), "silueta con filas de la etapa 06 sin log1p", 3),
+        ("AgrSiluetaSinLog", float(s["Silueta (filas 05, sin log1p)"]), "silueta con filas de la etapa 05 sin log1p", 3),
         ("AgrEfectoFilas", float(efecto_filas), "cambio de silueta por las filas", 3),
         ("AgrEfectoLog", float(efecto_log), "cambio de silueta por log1p", 3),
-        ("AgrPuntajeSelEtapa", float(s["Puntaje con la silueta de la etapa 06"]),
-         "puntaje de la regla del seleccionado con la silueta de la etapa 06", 3),
+        ("AgrPuntajeSelEtapa", float(s["Puntaje con la silueta de la etapa 05"]),
+         "puntaje de la regla del seleccionado con la silueta de la etapa 05", 3),
     ])
     if c.comp:
         k = t.set_index("Análisis").loc[c.complementario]
-        supera = k["Puntaje con la silueta de la etapa 06"] > s["Puntaje con la silueta de la etapa 06"]
+        supera = k["Puntaje con la silueta de la etapa 05"] > s["Puntaje con la silueta de la etapa 05"]
         texto += (f"\n\nCon la silueta de esta etapa el puntaje de la regla (la silueta por el peso de valor de negocio) "
-                  f"sería de {s['Puntaje con la silueta de la etapa 06']:.3f} para \"{c.seleccionado}\" y de "
-                  f"{k['Puntaje con la silueta de la etapa 06']:.3f} para \"{c.complementario}\". ")
-        texto += ("Es decir que con el preprocesamiento de la etapa 06 el análisis complementario habría quedado por "
+                  f"sería de {s['Puntaje con la silueta de la etapa 05']:.3f} para \"{c.seleccionado}\" y de "
+                  f"{k['Puntaje con la silueta de la etapa 05']:.3f} para \"{c.complementario}\". ")
+        texto += ("Es decir que con el preprocesamiento de la etapa 05 el análisis complementario habría quedado por "
                   "encima del seleccionado. Aun así mantenemos la selección porque la regla del cribado la fijamos antes "
                   "de ver los resultados y cambiarla después sería acomodar la regla al resultado. Además el análisis "
                   "complementario ya lo desarrollamos completo en la sección 3 así que no se pierde nada."
                   if supera else
-                  "Es decir que también con el preprocesamiento de la etapa 06 el análisis seleccionado se queda con el "
+                  "Es decir que también con el preprocesamiento de la etapa 05 el análisis seleccionado se queda con el "
                   "primer lugar y la selección del cribado se mantiene, como de todos modos habría pasado porque la regla "
                   "la fijamos antes de ver los resultados.")
         texto += (" La comparación cubre solo estos dos análisis y los demás candidatos de agrupamiento del cribado no se "
                   "recalculan aquí.")
         latex.registrar_varias([
-            ("AgrPuntajeCompEtapa", float(k["Puntaje con la silueta de la etapa 06"]),
-             "puntaje de la regla del complementario con la silueta de la etapa 06", 3),
+            ("AgrPuntajeCompEtapa", float(k["Puntaje con la silueta de la etapa 05"]),
+             "puntaje de la regla del complementario con la silueta de la etapa 05", 3),
             ("AgrComplementarioSupera", bool(supera), "el complementario habría superado al seleccionado"),
         ])
     r.agregar(nota(texto, "hallazgo"))
@@ -529,7 +529,7 @@ def sintesis(c):
                        + (f". Recupera el segmento latente con índice de Rand ajustado {formato_ari(au['ari_kmeans'])}"
                           if au else "") + "."))
     puntos.append(("Uso posible en la operación",
-                   "Los segmentos de clientes podrían servir como variable de entrada de modelos como los de la etapa 05 "
+                   "Los segmentos de clientes podrían servir como variable de entrada de modelos como los de la etapa 04 "
                    "o para diferenciar el servicio. El ruido de DBSCAN serviría como lista de casos para revisar a mano. Las "
                    "dos cosas quedan como trabajo futuro y no las probamos aquí."))
     r.agregar(pasos(puntos, titulo="Qué deja la etapa"))
@@ -550,7 +550,7 @@ def sintesis(c):
             resumen["complementario"]["segmentos_operacion"] = comp["segmentos_tabla"].to_dict("records")
         resumen["complementario"]["auditoria"] = au
     resumen["comparacion_cribado"] = c.comparacion_cribado.to_dict("records")
-    guardar_json(resumen, rutas.DIR_ARTEFACTOS / "06_agrupamiento.json")
+    guardar_json(resumen, rutas.DIR_ARTEFACTOS / "05_agrupamiento.json")
     return r
 
 

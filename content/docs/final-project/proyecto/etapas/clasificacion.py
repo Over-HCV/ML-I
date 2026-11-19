@@ -1,6 +1,6 @@
-"""Capa 8 · Etapa 05: clasificación y Bayes.
+"""Capa 8 · Etapa 04: clasificación y Bayes.
 
-Responsabilidad única: armar las piezas de la etapa 05 (parte A: costos,
+Responsabilidad única: armar las piezas de la etapa 04 (parte A: costos,
 pasada didáctica, L16 de Taguchi, sobremuestreo, afinamiento, calibración,
 umbral por costo y congelamiento; parte B: sensibilidad y especificidad por
 ensayo, VPP por ensayo y por muestra, posterior tras el reensayo, auditoría
@@ -36,7 +36,7 @@ from proyecto.reporte.figuras import guardar_figura
 from proyecto.reporte.html import comparacion, nota, pasos, pestanas, tabla_html, tarjetas
 from proyecto.variables.comunes import columnas_de_grupo
 
-ETAPA = "05_clasificacion_bayes"
+ETAPA = "04_clasificacion_bayes"
 TAREA = "clasificacion"
 NOMBRE_DUMMY = "Dummy (proporción)"
 METRICAS_DIDACTICAS = {"ROC-AUC": metricas.roc_auc, "Precisión media": metricas.precision_media, "Brier": metricas.brier}
@@ -90,7 +90,7 @@ def iniciar():
     c.inicio = time.perf_counter()
     c.nombre = leer_json(rutas.DIR_ARTEFACTOS / "03_cribado.json")["seleccion"][TAREA]
     if c.nombre is None:
-        raise RuntimeError("La etapa 03 no eligió ningún análisis de clasificación: No hay nada que modelar.")
+        raise RuntimeError("El cribado de la etapa 03 no eligió ningún análisis de clasificación: No hay nada que modelar.")
     c.ficha = catalogo.ficha_por_nombre(c.nombre)
     c.papeles = leer_json(rutas.DIR_MODELADO / f"{c.nombre}.json")
     c.objetivo, c.fecha = c.papeles["objetivo"], c.papeles["fecha"]
@@ -222,10 +222,10 @@ def didactica(c):
                          decimales=4, resaltar=(t["Modelo"] == mejor["Modelo"]).to_numpy(), columnas_resaltadas="ROC-AUC"))
     auc = pd.DataFrame({n: v["ROC-AUC"] for n, v in c.metricas_didacticas.items() if n != NOMBRE_DUMMY},
                        index=c.etiquetas_bloque).T
-    r.figura(graficos.figura_por_bloque(auc, "ROC-AUC", resaltar=[mejor["Modelo"]]), "05_didactico_bloques")
+    r.figura(graficos.figura_por_bloque(auc, "ROC-AUC", resaltar=[mejor["Modelo"]]), "04_didactico_bloques")
     r.figura(graficos_clf.figura_roc({n: apilar_bloques(p, c.y_ent) for n, p in c.predichas.items()},
                                      "Curvas ROC con las predicciones fuera de bloque (los 4 tramos juntos)"),
-             "05_roc_didactico")
+             "04_roc_didactico")
     c.por_modelo = pm = t.set_index("Modelo")
     auc_mlp, c.auc_log = pm.loc["Perceptrón multicapa", "ROC-AUC"], pm.loc["Regresión logística", "ROC-AUC"]
     peor = t.iloc[1:].sort_values("ROC-AUC").iloc[0]
@@ -278,9 +278,9 @@ def red_neuronal(c):
     c.variables_paneles = variables
     _actualizar_paneles(c)
     r.figura(graficos_red.figura_arquitectura(mlp["n_entradas"], tuple(mlp["ocultas"]), mlp["activacion"]),
-             "05_red_arquitectura")
+             "04_red_arquitectura")
     r.figura(graficos_red.figura_curva_perdida(perdida, puntaje, mlp["paciencia"], mlp["fraccion_validacion"],
-                                               mayoritaria, pie=False), "05_red_curvas")
+                                               mayoritaria, pie=False), "04_red_curvas")
     auc_mlp = c.por_modelo.loc["Perceptrón multicapa", "ROC-AUC"]
     r.agregar(comparacion([
         {"titulo": "Regresión logística", "valor": c.auc_log, "etiqueta": "ROC-AUC medio en los bloques", "decimales": 3,
@@ -338,7 +338,7 @@ def logistica(c):
     ajustada = clone(c.didacticos["Regresión logística"]).fit(c.X_ent, c.y_ent)
     coef = pd.Series(ajustada.named_steps["modelo"].coef_[0], index=tuberias.nombres_variables(ajustada))
     r.figura(graficos.figura_coeficientes(coef, "Coeficientes de la regresión logística (escala logit)"),
-             "05_coeficientes_logistica")
+             "04_coeficientes_logistica")
     principales = coef.reindex(coef.abs().sort_values(ascending=False).index).head(8)
     odds = pd.DataFrame({"Variable": principales.index, "Coeficiente": principales.to_numpy(),
                          "Razón de odds": np.exp(principales.to_numpy())})
@@ -436,7 +436,7 @@ def diseno(c):
     r.agregar(nota(
         f"De las {len(confusiones)} interacciones de dos factores {len(libres)} quedan libres ("
         + ", ".join(x.replace(" × ", " con ") for x in libres)
-        + "). Igual que en la etapa 04 la asignación protege la interacción entre modelo y escalado porque el escalado "
+        + "). Igual que en la etapa 03 la asignación protege la interacción entre modelo y escalado porque el escalado "
           "cambia las distancias de KNN y el entrenamiento del perceptrón pero no afecta al árbol. La interacción entre "
           "modelo y desbalance, en cambio, "
         + (f"queda mezclada con {enumerar(chr(34) + x + chr(34) for x in confusores)}. Si existe, una parte se va a leer "
@@ -479,7 +479,7 @@ def corridas_l16(c):
     c.respuesta = corridas.tabla_respuesta(res, c.nombres_factor)
     c.niveles_optimo, c.sn_predicha = corridas.predecir_optimo(res, c.nombres_factor)
     r.figura(graficos.figura_efectos_principales(c.efectos, float(res["sn"].mean()), optimo=c.niveles_optimo),
-             "05_efectos_principales")
+             "04_efectos_principales")
     vr = taguchi.respuesta_legible(c.respuesta, c.nombres_factor)
     vr_vista = vr.rename(columns={"mejor_nivel": "Mejor nivel", "media_mejor": "S/N mejor", "peor_nivel": "Peor nivel",
                                   "media_peor": "S/N peor", "delta": "Delta", "rango": "Rango"})
@@ -633,7 +633,7 @@ def confirmacion(c):
         r.figura(graficos.figura_deltas(pd.DataFrame({
             "L16 (16 corridas)": c.respuesta["delta"],
             f"Factorial completo ({rc['corridas']} corridas)": detalle["respuesta"].loc[c.respuesta.index, "delta"]}),
-            "Influencia de cada factor según el diseño"), "05_l16_contra_completo")
+            "Influencia de cada factor según el diseño"), "04_l16_contra_completo")
         r.agregar(nota(
             f"El factorial completo tardó {rc['segundos']:.1f} s frente a {c.segundos_l16:.1f} s del L16. La correlación de "
             f"rangos entre los deltas de los dos diseños es **{rc['correlacion_rangos']:.2f}** y coinciden en el mejor nivel "
@@ -649,7 +649,7 @@ def confirmacion(c):
             f"por encima del límite de {taguchi.LIMITE_SEGUNDOS_COMPLETO:.0f} s que fijamos para la etapa. Por eso no lo "
             f"corrimos. En el L16 la combinación más lenta es \"{lenta[0]}\" con desbalance \"{legible(lenta[1])}\", que "
             f"se lleva el {100 * tiempos.iloc[0] / c.segundos_l16:.0f} % del tiempo. La comparación entre el atajo y el "
-            "diseño completo ya la hicimos en la etapa 04 y aquí es la corrida de confirmación la que pone a prueba el "
+            "diseño completo ya la hicimos en la etapa 03 y aquí es la corrida de confirmación la que pone a prueba el "
             "modelo aditivo.",
             "limite",
         ))
@@ -754,7 +754,7 @@ def calibracion(c):
     auc_sin = c.auc_val[c.final]
     r.figura(graficos_clf.figura_fiabilidad(
         {"Sin calibrar": (c.y_val, proba_sin), "Calibrado (sigmoide, bloques temporales)": (c.y_val, proba_cal)},
-        n_tramos=10, titulo="Fiabilidad en validación (10 tramos con el mismo número de muestras)"), "05_fiabilidad")
+        n_tramos=10, titulo="Fiabilidad en validación (10 tramos con el mismo número de muestras)"), "04_fiabilidad")
     r.agregar(comparacion([
         {"titulo": "Sin calibrar", "valor": c.brier_sin, "etiqueta": "Brier en validación", "decimales": 4,
          "puntos": [f"ROC-AUC {auc_sin:.3f}", f"probabilidad media {proba_sin.mean():.3f}"]},
@@ -813,7 +813,7 @@ def umbral_por_costo(c):
     tabla_umbrales = tabla_html(vista, f"Recorrido de umbrales en validación ({c.semanas_val} semanas, costo = {fp} FP + "
                                 f"{fn} FN)", decimales=decimales, resaltar=np.isclose(t["Umbral"], u),
                                 columnas_resaltadas="Costo", maximo_filas=30)
-    r.figura(graficos_clf.figura_umbrales(t, u, c.umbral_teorico), "05_umbrales")
+    r.figura(graficos_clf.figura_umbrales(t, u, c.umbral_teorico), "04_umbrales")
     c.paneles.proba_validacion, c.paneles.y_validacion = c.p_val, c.y_val
     _actualizar_paneles(c)
 
@@ -834,7 +834,7 @@ def umbral_por_costo(c):
     ], titulo="El umbral elegido frente a las políticas sin modelo", elegida=1, sello="Menor costo"))
     confusion = graficos_clf.figura_confusion(int(f["TN"]), int(f["FP"]), int(f["FN"]), int(f["TP"]),
                                               f"Matriz de confusión en validación (umbral {u:.3f})")
-    guardar_figura(confusion, "05_confusion")
+    guardar_figura(confusion, "04_confusion")
     plt.close(confusion)
     r.agregar(pestanas({"Matriz de confusión": confusion, "Recorrido de umbrales": tabla_umbrales},
                        titulo="El umbral elegido por dentro"))
@@ -859,7 +859,7 @@ def umbral_por_costo(c):
            if f["Costo"] < trivial else
            f"El modelo no mejora a la mejor política sin modelo ({trivial:.0f}) así que con estos costos no conviene "
            "usarlo para alertar.")
-        + " Eso sí, como elegimos el umbral en estos mismos datos el costo de validación es algo optimista. La etapa 07 lo "
+        + " Eso sí, como elegimos el umbral en estos mismos datos el costo de validación es algo optimista. La etapa 06 lo "
           "mide en la prueba con el umbral ya fijo.",
         "hallazgo" if f["Costo"] < trivial else "advertencia",
     ))
@@ -1001,7 +1001,7 @@ def vpp_por_ensayo(c):
         "vpp": "VPP", "vpp_inf": "VPP inf.", "vpp_sup": "VPP sup.", "prob_falso_positivo": "P(falso positivo)"})
     r.agregar(tabla_html(vista, "VPP por ensayo en el desarrollo (intervalo del 95 % por sorteos de las posteriores Beta)",
                          decimales=3, barras="P(falso positivo)"))
-    r.figura(graficos_clf.figura_vpp_ensayo(t), "05_vpp_ensayo")
+    r.figura(graficos_clf.figura_vpp_ensayo(t), "04_vpp_ensayo")
     peor, mejor = t.sort_values("vpp").iloc[0], t.sort_values("vpp").iloc[-1]
     r.agregar(nota(
         f"Si ponderamos por el número de positivos el VPP estimado del laboratorio es **{g:.3f}**: De cada cien "
@@ -1044,7 +1044,7 @@ def vpp_por_muestra(c):
     c.positivas = pos = v.assign(p_x=c.p_val, previa_x=previa_x, vpp_x=vpp_x)[c.y_val == 1]
     c.recorte_cero, c.recorte_uno = float(np.mean(pos["previa_x"] == 0)), float(np.mean(pos["previa_x"] == 1))
     r.figura(graficos_clf.figura_vpp_muestra(pos.rename(columns={"vpp_x": "vpp"}),
-                                             c.tabla_vpp.set_index("ensayo")["vpp"].to_dict()), "05_vpp_muestra")
+                                             c.tabla_vpp.set_index("ensayo")["vpp"].to_dict()), "04_vpp_muestra")
     c.resumen_muestra = res = pos.groupby("ensayo", observed=True)["vpp_x"].describe(percentiles=[0.1, 0.5, 0.9])
     vista = res[["count", "mean", "10%", "50%", "90%"]].reset_index().rename(columns={
         "ensayo": "Ensayo", "count": "Positivos", "mean": "VPP(x) medio", "10%": "Percentil 10", "50%": "Mediana",
@@ -1193,7 +1193,7 @@ def auditoria(c):
     r.figura(graficos_clf.figura_vpp_ensayo(t.rename(columns={"VPP estimado": "vpp", "VPP real": "vpp_real"}),
                                             columna_real="vpp_real",
                                             titulo="VPP por ensayo: estimado con controles frente al verdadero"),
-             "05_auditoria_vpp")
+             "04_auditoria_vpp")
     val = c.positivas[["id_muestra", "ensayo", "vpp_x"]].merge(verdad_m, on="id_muestra")
     vpp_ensayo = val["ensayo"].map(c.tabla_vpp.set_index("ensayo")["vpp"]).to_numpy(dtype=float)
     brier_x = metricas.brier(val["contaminada_real"], val["vpp_x"])
@@ -1203,7 +1203,7 @@ def auditoria(c):
     r.figura(graficos_clf.figura_fiabilidad(
         {"VPP(x), previa por muestra": (val["contaminada_real"], val["vpp_x"])}, n_tramos=5,
         titulo="Calibración del VPP(x) en los positivos de validación", etiqueta_x="VPP(x) estimado (media del tramo)",
-        etiqueta_y="Fracción realmente contaminada"), "05_auditoria_vpp_muestra")
+        etiqueta_y="Fracción realmente contaminada"), "04_auditoria_vpp_muestra")
     fp_real = float(1 - c.reensayadas.merge(verdad_m, on="id_muestra")["contaminada_real"].mean())
     sesgo = (t["Espec. estimada"] - t["Espec. efectiva real"]).mean()
     peor = t.sort_values("VPP real").iloc[0]
@@ -1262,7 +1262,7 @@ def regla_reensayo(c):
     r.figura(graficos_clf.figura_tasa_por_tramo(t, "log10(recuento / límite), por sextiles",
                                                 "Fracción de reensayos conformes",
                                                 "Reensayos conformes según cuánto supera el recuento al límite",
-                                                referencia=UMBRAL_DUDA), "05_regla_reensayo")
+                                                referencia=UMBRAL_DUDA), "04_regla_reensayo")
     dudosos = t[t["tasa"] >= UMBRAL_DUDA]
     if len(dudosos):
         c.borde = borde = float(dudosos["borde"].max())
@@ -1358,7 +1358,7 @@ def _guardar_artefacto(c):
         },
         "auditoria": c.resumen_auditoria,
         "segundos_etapa": c.segundos,
-    }, rutas.DIR_ARTEFACTOS / "05_clasificacion.json")
+    }, rutas.DIR_ARTEFACTOS / "04_clasificacion.json")
 
 
 def terminar(c):

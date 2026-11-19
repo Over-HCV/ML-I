@@ -1,6 +1,6 @@
-"""Capa 8 · Etapa 08: datos reales.
+"""Capa 8 · Etapa 02: base real.
 
-Responsabilidad única: armar las piezas de la etapa 08 sobre la exportación
+Responsabilidad única: armar las piezas de la etapa 02 sobre la exportación
 real del laboratorio, con fechas de desarrollo (anteriores al corte de
 prueba) en todo menos la última sección: la base y su granularidad, las llegadas de muestras frente a las de
 lotes con la prueba de Poisson, el tamaño de los lotes por tipo y las
@@ -38,7 +38,7 @@ from proyecto.reporte import segmentos as lectura_segmentos
 from proyecto.reporte.html import nota, pasos, tabla_html, tarjetas
 from proyecto.variables import cliente_real
 
-ETAPA = "08_datos_reales"
+ETAPA = "02_base_real"
 # Reglas fijadas antes de mirar resultados.
 NIVEL = 0.05                                  # valor p de la prueba de dispersión
 MAXIMO_LOTES_SEMANA = 6                       # última clase de las figuras de lotes por semana
@@ -178,7 +178,7 @@ def llegadas(c):
         r.figura(graficos_reales.figura_llegadas(
             poisson.frecuencias_mezcla_poisson(por_lotes, MAXIMO_LOTES_SEMANA),
             poisson.frecuencias_mezcla_poisson(por_muestras, MAXIMO_MUESTRAS_SEMANA),
-            dl["indice"].median(), dm["indice"].median(), TIPOS[tipo]), f"08_llegadas_{tipo}")
+            dl["indice"].median(), dm["indice"].median(), TIPOS[tipo]), f"02_llegadas_{tipo}")
     t = pd.DataFrame(filas)
     c.tabla_llegadas = t
     r.agregar(tabla_html(t, f"Índice de dispersión semanal por cliente (clientes con al menos "
@@ -190,7 +190,7 @@ def llegadas(c):
     clientes = cuantos[cuantos >= cliente_real.MINIMO_LOTES].index
     todas_m = poisson.dispersion_por_fila(cliente_real.conteos_semanales(c.muestras, desde, hasta, clientes))
     todas_l = poisson.dispersion_por_fila(cliente_real.conteos_semanales(c.lotes, desde, hasta, clientes))
-    r.figura(graficos_reales.figura_dispersion_clientes(todas_m, todas_l), "08_dispersion_clientes")
+    r.figura(graficos_reales.figura_dispersion_clientes(todas_m, todas_l), "02_dispersion_clientes")
     p, q = t.set_index("Tipo").loc[TIPOS["producto"]], t.set_index("Tipo").loc[TIPOS["planta"]]
     r.agregar(nota(
         f"En producto el índice de las muestras por semana tiene mediana {p['Índice muestras (mediana)']:.2f} y el de "
@@ -263,7 +263,7 @@ def lotes(c):
                           "Diferencia de AIC": a["delta_aic"]})
         f = poisson.frecuencias_tamano(tamanos, ajustes, CORTES_TAMANO)
         frecuencias.append(f.assign(Tipo=TIPOS[tipo]))
-    r.figura(graficos_reales.figura_tamano_lote(por_tipo), "08_tamano_lote")
+    r.figura(graficos_reales.figura_tamano_lote(por_tipo), "02_tamano_lote")
     t = pd.DataFrame(filas)
     r.agregar(tabla_html(t, "Modelos del tamaño de lote X: X menos uno es Poisson, geométrico o binomial negativo",
                          resaltar=(t["Diferencia de AIC"] == 0).to_numpy(), decimales=2))
@@ -341,10 +341,10 @@ def segmentos(c):
          "detalle": "índice de Rand ajustado entre semillas"},
     ]))
     r.figura(graficos_agrupamiento.figura_codo_silueta(a["tabla_k"], a["k"], "K-means sobre los clientes reales"),
-             "08_codo_silueta")
+             "02_codo_silueta")
     r.figura(graficos_agrupamiento.figura_pca_grupos(a["pca"], a["etiquetas_km"], a["pca_varianza"], nombres,
                                                      "Clientes reales en dos componentes principales"),
-             "08_segmentos_pca")
+             "02_segmentos_pca")
     seg = lectura_segmentos.tabla_segmentos(tabla, a["etiquetas_km"], nombres, peso="muestras")
     medias = tabla.assign(grupo=a["etiquetas_km"]).groupby("grupo")[cliente_real.VARIABLES_CLIENTE].median()
     medias.index = [nombres[g] for g in medias.index]
@@ -522,7 +522,7 @@ def riesgo_modelos(c):
               c.mejor_logistica: (c.y_val, c.ajustados[c.mejor_logistica]["p_val"]),
               c.mejor_arbol: (c.y_val, c.ajustados[c.mejor_arbol]["p_val"])}
     r.figura(graficos_reales.figura_precision_recall(curvas, float(c.y_val.mean()),
-                                                     "Precisión y recall en validación"), "08_precision_recall")
+                                                     "Precisión y recall en validación"), "02_precision_recall")
     gana_regla = elegido["ap_val"] - regla["ap_val"]
     r.agregar(nota(
         f"El elegido por PR-AUC en validación es **{c.elegido}** con {elegido['ap_val']:.3f}. La referencia, que le "
@@ -582,11 +582,11 @@ def riesgo_umbral(c):
     teorico = umbral.umbral_teorico()
     positivos, negativos = int(c.y_val.sum()), int(len(c.y_val) - c.y_val.sum())
     c.costo_nada, c.costo_todo = config.COSTO_FN * positivos, config.COSTO_FP * negativos
-    r.figura(graficos_clf.figura_umbrales(t, u, teorico), "08_umbrales")
+    r.figura(graficos_clf.figura_umbrales(t, u, teorico), "02_umbrales")
     r.figura(graficos_clf.figura_confusion(int(f["TN"]), int(f["FP"]), int(f["FN"]), int(f["TP"]),
                                            f"Validación con umbral {u:.2f} (etiquetas 0 y 1)",
                                            clases=("0 conforme", "1 no conforme"),
-                                           acciones=("0 sin alerta", "1 alerta")), "08_confusion_validacion")
+                                           acciones=("0 sin alerta", "1 alerta")), "02_confusion_validacion")
     mejor_trivial = min(c.costo_nada, c.costo_todo)
     r.agregar(nota(
         f"Supusimos que dejar pasar una no conforme cuesta {config.COSTO_FN} veces lo que una falsa alarma. Con esa "
@@ -791,7 +791,7 @@ def comparacion_simulacion(c):
         f"una Poisson la varianza del tamaño no pasa de su media y el índice de las muestras queda entre {bajo:.1f} y "
         f"{alto:.1f}, lejos de la cola de planta. Para acercarla bastaría con separar producto y planta y sacar el "
         "tamaño de una binomial negativa con los parámetros de la sección 3. Eso lo dejamos propuesto y no lo "
-        "cambiamos porque las etapas 01 a 07 ya están cerradas sobre la simulación actual.", "info"))
+        "cambiamos porque los notebooks 01 y 03 a 06 ya están cerrados sobre la simulación actual.", "info"))
     latex.registrar_varias([
         ("RealSimIndiceBajo", bajo, "índice de muestras de la simulación con el lote medio menor", 1),
         ("RealSimIndiceAlto", alto, "índice de muestras de la simulación con el lote medio mayor", 1),
@@ -901,7 +901,7 @@ def prueba_real(c):
     r.figura(graficos_clf.figura_confusion(m["TN"], m["FP"], m["FN"], m["TP"],
                                            f"Prueba con umbral {decision['umbral']:.2f} (etiquetas 0 y 1)",
                                            clases=("0 conforme", "1 no conforme"),
-                                           acciones=("0 sin alerta", "1 alerta")), "08_confusion_prueba")
+                                           acciones=("0 sin alerta", "1 alerta")), "02_confusion_prueba")
     regla_t = t.iloc[1]
     val_ap, val_auc = decision["validacion"]["pr_auc"], decision["validacion"]["roc_auc"]
     val_prev = float(c.y_val.mean())

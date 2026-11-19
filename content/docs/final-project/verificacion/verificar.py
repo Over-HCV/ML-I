@@ -18,10 +18,15 @@ PAQUETE = RAIZ / "proyecto"
 FUENTES = RAIZ / "notebooks" / "src"
 CAPAS = {"base": 0, "datos": 1, "preparacion": 2, "variables": 3, "modelos": 4, "evaluacion": 5, "cribado": 6,
          "reporte": 7, "etapas": 8}
-# Únicos módulos que pueden leer la prueba: la 07 la de la simulación y la 08 el bloque de 2026 de la exportación real.
+# Únicos módulos que pueden leer la prueba: la etapa 02 el bloque de 2026 de la exportación real y la 06 la de la simulación.
 MODULOS_PRUEBA = {PAQUETE / "etapas" / "evaluacion_final.py", PAQUETE / "etapas" / "datos_reales.py"}
 MAXIMO_LINEAS_CELDA = 8                                        # celdas de código cortas en los guiones
-ETAPA_PRUEBA = ("07_evaluacion_final", "08_datos_reales")   # la primera evalúa la simulación
+ETAPA_PRUEBA_REAL = "02_base_real"                           # abre una sola vez el bloque de 2026 real
+ETAPA_PRUEBA_SIMULACION = "06_evaluacion_final"               # abre la prueba de la base simulada
+ETAPA_PRUEBA = (ETAPA_PRUEBA_REAL, ETAPA_PRUEBA_SIMULACION)
+# Etapas que deben dejar su registro de cifras (todas: la 02 lo deja vacío si no tiene la exportación real).
+ETAPAS = ["01_datos_exploracion", "02_base_real", "03_cribado_regresion", "04_clasificacion_bayes", "05_agrupamiento",
+          "06_evaluacion_final"]
 LECTOR_PRUEBA_REAL = "leer_con_prueba"                        # lectura custodiada de la exportación real
 BLOQUE_PRUEBA_REAL = "exportacion_real_2026"                  # nombre con que queda en el registro
 
@@ -29,9 +34,9 @@ BLOQUE_PRUEBA_REAL = "exportacion_real_2026"                  # nombre con que q
 # didácticos con valores hipotéticos y constantes de regla fijadas antes de ver resultados. Ninguno es
 # un resultado.
 PERMITIDOS_TEXTO = {
-    "03_cribado_analisis.py": {"0.5"},           # Hopkins ≈ 0.5 sin estructura (definición)
-    "06_agrupamiento.py": {"0.5"},               # Hopkins > 0.5 (definición)
-    "05_clasificacion_bayes.py": {
+    "03_cribado_regresion.py": {"0.5"},          # Hopkins ≈ 0.5 sin estructura (definición)
+    "05_agrupamiento.py": {"0.5"},               # Hopkins > 0.5 (definición)
+    "04_clasificacion_bayes.py": {
         "1.5",                                    # ejemplo de razón de odds
         "0.5",                                    # ROC-AUC de un modelo que no ordena (definición)
         "0.005",                                  # tolerancia de empate de la regla de elección
@@ -229,11 +234,14 @@ def custodia_prueba():
     assert registro.exists(), "no existe el registro de lecturas (ejecute `make notebooks`)"
     lineas = [l.split("\t") for l in registro.read_text(encoding="utf-8").splitlines() if l.strip()]
     assert lineas, "el registro está vacío"
+    from proyecto.base import config
+
+    assert set(config.ETAPA_PRUEBA) == set(ETAPA_PRUEBA), f"config.ETAPA_PRUEBA es {config.ETAPA_PRUEBA}"
     etapas = {l[1] for l in lineas}
     assert etapas <= set(ETAPA_PRUEBA), f"leyeron la prueba: {sorted(etapas - set(ETAPA_PRUEBA))}"
-    assert ETAPA_PRUEBA[0] in etapas, f"la etapa {ETAPA_PRUEBA[0]} no leyó la prueba"
-    ajenas = [l[2] for l in lineas if l[1] == ETAPA_PRUEBA[1] and l[2] != BLOQUE_PRUEBA_REAL]
-    assert not ajenas, f"la etapa {ETAPA_PRUEBA[1]} leyó algo distinto del bloque real: {sorted(set(ajenas))}"
+    assert ETAPA_PRUEBA_SIMULACION in etapas, f"la etapa {ETAPA_PRUEBA_SIMULACION} no leyó la prueba"
+    ajenas = [l[2] for l in lineas if l[1] == ETAPA_PRUEBA_REAL and l[2] != BLOQUE_PRUEBA_REAL]
+    assert not ajenas, f"la etapa {ETAPA_PRUEBA_REAL} leyó algo distinto del bloque real: {sorted(set(ajenas))}"
     sospechosos = []
     candidatos = [g for g in sorted(FUENTES.glob("0*.py")) if g.stem not in ETAPA_PRUEBA]
     candidatos += [m for m in sorted((PAQUETE / "etapas").glob("*.py")) if m not in MODULOS_PRUEBA]
@@ -254,17 +262,17 @@ def supuestos_narrativos():
     leer = lambda nombre: json.loads((artefactos / nombre).read_text(encoding="utf-8"))  # noqa: E731
     seleccion = leer("03_cribado.json")["seleccion"]
     reportado = {
-        "regresion": leer("04_regresion.json")["analisis"],
-        "clasificacion": leer("05_clasificacion.json")["analisis"],
-        "agrupamiento": leer("06_agrupamiento.json")["seleccionado"]["analisis"],
+        "regresion": leer("03_regresion.json")["analisis"],
+        "clasificacion": leer("04_clasificacion.json")["analisis"],
+        "agrupamiento": leer("05_agrupamiento.json")["seleccionado"]["analisis"],
     }
     distintos = [f"{t}: cribado «{seleccion[t]}», etapa «{reportado[t]}»" for t in reportado
                  if seleccion[t] != reportado[t]]
-    if (artefactos / "07_evaluacion.json").exists():
-        final = leer("07_evaluacion.json")
+    if (artefactos / "06_evaluacion.json").exists():
+        final = leer("06_evaluacion.json")
         for tarea in ("regresion", "clasificacion"):
             if final[tarea]["analisis"] != seleccion[tarea]:
-                distintos.append(f"07 evalúa «{final[tarea]['analisis']}» en {tarea}")
+                distintos.append(f"{ETAPA_PRUEBA_SIMULACION} evalúa «{final[tarea]['analisis']}» en {tarea}")
     assert not distintos, "; ".join(distintos)
     return ", ".join(f"{t} = {n}" for t, n in seleccion.items())
 
@@ -317,8 +325,9 @@ def macros_del_informe():
     artefactos = RAIZ / "artefactos"
     registros = {r.stem.removeprefix("macros_"): json.loads(r.read_text(encoding="utf-8"))
                  for r in sorted(artefactos.glob("macros_*.json"))}
-    faltan = [e for e in ("01_datos", "02_exploracion", "03_cribado_analisis", "04_regresion",
-                          "05_clasificacion_bayes", "06_agrupamiento", ETAPA_PRUEBA[0]) if e not in registros]
+    faltan = [e for e in ETAPAS if e not in registros]
+    sobran = sorted(set(registros) - set(ETAPAS))
+    assert not sobran, f"registros de cifras de etapas que ya no existen: {sobran}"
     assert not faltan, f"etapas sin registro de cifras: {faltan}"
     nombres = [n for r in registros.values() for n in r["macros"]]
     assert len(nombres) == len(set(nombres)), "macros repetidas entre etapas"
@@ -356,7 +365,7 @@ MAXIMO_KB_DATOS_PRESENTACION = 500
 
 def datos_de_presentacion():
     """Los arreglos de la presentación son pequeños, vienen del desarrollo (nunca de la prueba), reproducen
-    el ROC-AUC y el costo de validación de la etapa 05 y el guion no pasa de su número de celdas."""
+    el ROC-AUC y el costo de validación de la etapa 04 y el guion no pasa de su número de celdas."""
     import numpy as np
 
     from proyecto.base import config
@@ -371,9 +380,9 @@ def datos_de_presentacion():
         fechas = archivo["fechas_entrenamiento"]
         n_val = len(archivo["proba_validacion"])
     assert fechas.max() < np.datetime64(str(config.CORTE_VALIDACION)[:10]), "fechas de entrenamiento fuera del corte"
-    clf = json.loads((RAIZ / "artefactos" / "05_clasificacion.json").read_text(encoding="utf-8"))
+    clf = json.loads((RAIZ / "artefactos" / "04_clasificacion.json").read_text(encoding="utf-8"))
     tabla = clf["tabla_umbrales"][0]
-    assert n_val == tabla["TN"] + tabla["FP"] + tabla["FN"] + tabla["TP"], "la validación no tiene las filas de la etapa 05"
+    assert n_val == tabla["TN"] + tabla["FP"] + tabla["FN"] + tabla["TP"], "la validación no tiene las filas de la etapa 04"
     assert abs(meta["auc_reproducido"] - meta["comprobacion"]["auc_artefacto"]) < 1e-6, "ROC-AUC de validación distinto"
     assert meta["costo_reproducido"] == meta["comprobacion"]["costo_artefacto"], "costo de validación distinto"
     guion = (FUENTES / "presentacion.py").read_text(encoding="utf-8")
@@ -399,8 +408,7 @@ def colores_de_ecuaciones():
 
 
 # Notebooks de etapa cuyo texto ya sigue la guía de redacción (la lista crece a medida que se revisan las demás).
-ETAPAS_ESTILO = ["01_datos", "02_exploracion", "03_cribado_analisis", "04_regresion", "05_clasificacion_bayes",
-                 "06_agrupamiento", "07_evaluacion_final", "08_datos_reales", "Presentacion"]
+ETAPAS_ESTILO = ETAPAS + ["Presentacion"]
 PROHIBIDOS_ESTILO = {"·": "punto medio", "«": "comilla angular", "»": "comilla angular", "—": "raya",
                      "\\cdot": "\\cdot"}
 
@@ -446,7 +454,7 @@ def estilo_de_redaccion():
 MAXIMO_SEGUNDOS_PANEL = 1.5   # por redibujo (objetivo: menos de 1 s en un portátil)
 
 
-def _artefacto_regresion(nombre="04_regresion"):
+def _artefacto_regresion(nombre="03_regresion"):
     return json.loads((RAIZ / "artefactos" / f"{nombre}.json").read_text(encoding="utf-8"))
 
 
@@ -491,10 +499,10 @@ def paneles_interactivos():
     de_etapa = {"panel_taguchi": lambda: interactivo.panel_taguchi(
         _artefacto_regresion()["taguchi"],
         {f: legible(v) for f, v in _artefacto_regresion()["configuracion"].items()}),
-        "panel_taguchi (etapa 05)": lambda: interactivo.panel_taguchi(
-            _artefacto_regresion("05_clasificacion")["taguchi"],
-            {f: legible(v) for f, v in _artefacto_regresion("05_clasificacion")["configuracion"].items()},
-            rotulo="Clasificación", etapa="05")}
+        "panel_taguchi (etapa 04)": lambda: interactivo.panel_taguchi(
+            _artefacto_regresion("04_clasificacion")["taguchi"],
+            {f: legible(v) for f, v in _artefacto_regresion("04_clasificacion")["configuracion"].items()},
+            rotulo="Clasificación", etapa="04")}
     definidos = sorted(n for n in dir(interactivo) if n.startswith("panel_") and n not in de_etapa)
     assert nombres == definidos, f"paneles en el guion {nombres} y en el módulo {definidos}"
     usados = "".join(g.read_text(encoding="utf-8") for g in guiones_narrados())

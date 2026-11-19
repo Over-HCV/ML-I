@@ -1,9 +1,10 @@
-"""Capa 8 · Etapa 01: el conjunto de datos.
+"""Capa 8 · Etapa 01, parte A: el conjunto de datos.
 
-Responsabilidad única: armar las piezas de la etapa 01 (contrato de datos,
-tablas crudas validadas, cómo llegan los datos, cómo se conecta la exportación
-real y protocolo temporal) y registrar sus cifras para el informe. Cada
-función pública es una sección del notebook.
+Responsabilidad única: armar las piezas de la parte A de la etapa 01
+(contrato de datos, tablas crudas validadas, cómo llegan los datos, cómo se
+conecta la exportación real y protocolo temporal) y registrar sus cifras para
+el informe. Cada función pública es una sección del notebook. Abre la etapa y
+la deja abierta para la parte B (`exploracion`), que la cierra.
 """
 import html as html_estandar
 import json
@@ -12,12 +13,12 @@ import pandas as pd
 
 from proyecto.base import config
 from proyecto.datos import carga, esquema, mapeo
-from proyecto.etapas.comun import Resultado, abrir, cerrar
+from proyecto.etapas.comun import Resultado, abrir, cerrar_parte
 from proyecto.preparacion import limpieza
 from proyecto.reporte import latex
 from proyecto.reporte.html import linea_tiempo, nota, pasos, pestanas, tabla_html, tarjetas
 
-ETAPA = "01_datos"
+ETAPA = "01_datos_exploracion"
 FASES_MUESTRAS = {
     "muestras (toma)": ["maestro", "programacion", "toma"],
     "muestras (llegada y recepción)": ["llegada", "recepcion"],
@@ -29,19 +30,21 @@ SIGNIFICADO_MOMENTOS = {
     "lectura": "recuento y resultado", "reensayo": "confirmación", "reporte": "informe",
 }
 PROPOSITO_ETAPAS = {
-    "01_datos": "Contrato de datos y tablas crudas.",
-    "02_exploracion": "Auditoría de calidad, limpieza, integración y exploración del periodo de desarrollo.",
-    "03_cribado_analisis": "Catálogo de análisis candidatos, prueba rápida uniforme y selección con una regla fijada de antemano.",
-    "04_regresion": "Estudio a fondo del análisis de regresión elegido.",
-    "05_clasificacion_bayes": "Estudio a fondo del análisis de clasificación elegido, umbral por costo y capa bayesiana.",
-    "06_agrupamiento": "K-medias y DBSCAN sobre el análisis de agrupamiento elegido.",
-    "07_evaluacion_final": "Modelos congelados evaluados una sola vez sobre el bloque de prueba.",
+    "01_datos_exploracion": "Contrato de datos, tablas crudas, auditoría de calidad, limpieza, integración y exploración "
+                            "del periodo de desarrollo.",
+    "02_base_real": "La exportación real: Llegadas de Poisson, tamaño de los lotes, segmentos de clientes y riesgo de "
+                    "no conformidad al ingreso con una sola prueba en 2026.",
+    "03_cribado_regresion": "Catálogo de análisis candidatos, prueba rápida uniforme, selección con una regla fijada de "
+                            "antemano y estudio a fondo del análisis de regresión elegido.",
+    "04_clasificacion_bayes": "Estudio a fondo del análisis de clasificación elegido, umbral por costo y capa bayesiana.",
+    "05_agrupamiento": "K-medias y DBSCAN sobre el análisis de agrupamiento elegido.",
+    "06_evaluacion_final": "Modelos congelados evaluados una sola vez sobre el bloque de prueba.",
 }
 
 
 def iniciar():
     """Contexto de la etapa (tras `iniciar_etapa`)."""
-    c = abrir(ETAPA, "El problema, el contrato de datos y las tablas crudas")
+    c = abrir(ETAPA, "El problema, el contrato de datos, la limpieza y lo que vimos antes de modelar")
     c.autores = nota(config.AUTORES, titulo=config.ROTULO_PROYECTO)
     return c
 
@@ -135,7 +138,7 @@ def tablas_crudas(c):
         "El origen trae todas las columnas del contrato (obligatorias y opcionales) así que ningún análisis del "
         "catálogo se cae por falta de datos." if faltan == 0 else
         f"Al origen le faltan **{faltan}** columnas opcionales. Los análisis que las necesitan no fallan: En el cribado "
-        "de la etapa 03 quedan marcados como no disponibles.",
+        "del notebook 03 quedan marcados como no disponibles.",
         "hallazgo",
     ))
     filas = {nombre: int(len(t)) for nombre, t in tablas.items()}
@@ -208,7 +211,7 @@ def como_llegan(c):
         f"**{n_imposibles}** valores fuera de su rango posible"
         + (f". De esos valores {en_repetidas} caen en filas duplicadas, por eso la limpieza (que primero quita las "
            f"duplicadas) cuenta {n_imposibles - en_repetidas}" if en_repetidas else "")
-        + ". Aquí no corregimos nada: Eso queda para la etapa 02, que deja constancia de cada cambio.",
+        + ". Aquí no corregimos nada: Eso queda para la parte B, que deja constancia de cada cambio.",
         "advertencia",
     ))
     latex.registrar_varias([
@@ -263,7 +266,7 @@ def protocolo(c):
         {"fecha": config.FECHA_INICIO, "titulo": "Entrenamiento", "detalle": "ajustar y comparar", "color": "azul"},
         {"fecha": config.CORTE_VALIDACION, "titulo": "Validación", "detalle": "decidir", "color": "naranja"},
         {"fecha": config.CORTE_PRUEBA, "titulo": "Prueba",
-         "detalle": f"se abre solo en la etapa {config.ETAPA_PRUEBA[0].split('_')[0]}",
+         "detalle": f"se abre solo en la etapa {config.ETAPA_PRUEBA_SIMULACION.split('_')[0]}",
          "color": "rojo"},
         {"fecha": config.FECHA_FIN, "titulo": "Fin del periodo", "color": "gris"},
     ], titulo="Bloques temporales del protocolo"))
@@ -283,7 +286,8 @@ def protocolo(c):
 
 
 def terminar(c):
-    cerrar({
+    """Cierra la parte A. La etapa sigue abierta para la parte B (`exploracion`)."""
+    cerrar_parte({
         "origen": config.ORIGEN_DATOS, "huella": c.huella,
         "filas": {nombre: int(len(t)) for nombre, t in c.tablas.items()},
         "clientes_con_muestras": c.clientes_con_muestras, "desde": c.desde, "hasta": c.hasta,

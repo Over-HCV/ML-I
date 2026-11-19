@@ -505,7 +505,7 @@ def _cifra(valor, decimales, prefijo="", sufijo=""):
 def encabezado_etapa(etapa, subtitulo=None):
     """Portada de una etapa: proyecto, título de la etapa y avance sobre
     `config.ETAPAS` (terminadas, actual, pendientes).
-    Uso: `mostrar(encabezado_etapa("03_cribado_analisis", "Qué análisis merece profundizarse"))`."""
+    Uso: `mostrar(encabezado_etapa("03_cribado_regresion", "Qué análisis merece profundizarse"))`."""
     if etapa not in ETAPAS:
         raise ValueError(f"Etapa desconocida: {etapa!r}")
     actual = ETAPAS.index(etapa)

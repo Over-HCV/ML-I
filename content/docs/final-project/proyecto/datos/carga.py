@@ -205,7 +205,7 @@ def leer_crudas():
         ruta = rutas.DIR_CRUDOS / f"{nombre}.csv"
         if not ruta.exists():
             raise FileNotFoundError(
-                f"Falta {ruta}. Ejecute primero la etapa «01_datos», que genera o carga las tablas crudas."
+                f"Falta {ruta}. Ejecute primero la etapa 01_datos_exploracion, que genera o carga las tablas crudas."
             )
         tablas[nombre] = pd.read_csv(ruta, dtype=str, keep_default_na=False, na_values=[""],
                                      encoding="utf-8")

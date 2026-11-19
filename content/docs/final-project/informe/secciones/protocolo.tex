@@ -34,7 +34,7 @@
 \node[paso, below=0.75cm of val] (decidir)
     {\textbf{Decidir y congelar}\\ modelo, calibración y umbral por costo; Reajuste con entrenamiento + validación};
 \node[paso, below=0.75cm of te] (evaluar)
-    {\textbf{Evaluar una sola vez}\\ Etapa 07: Métricas con intervalos bootstrap, sin cambiar nada};
+    {\textbf{Evaluar una sola vez}\\ Etapa 06: Métricas con intervalos bootstrap, sin cambiar nada};
 
 \draw[flecha, classblue] (tr) -- (ajuste);
 \draw[flecha, classgreen] (val) -- (decidir);
@@ -65,6 +65,6 @@ un solo papel: Con entrenamiento ajustamos y exploramos configuraciones con
 validación cruzada de ventana creciente (abajo a la izquierda, donde cada
 pliegue entrena con el pasado y valida con el tramo siguiente). Con
 validación decidimos y congelamos. La prueba se abre una sola vez en la
-etapa~07, que deja registrada cada lectura.}
+etapa~06, que deja registrada cada lectura.}
 \label{fig:protocolo}
 \end{figure}

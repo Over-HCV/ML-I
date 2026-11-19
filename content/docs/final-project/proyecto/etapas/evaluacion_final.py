@@ -1,10 +1,11 @@
-"""Capa 8 · Etapa 07: evaluación final en la prueba.
+"""Capa 8 · Etapa 06: evaluación final en la prueba.
 
-Responsabilidad única: armar las piezas de la etapa 07 (lo que quedó
+Responsabilidad única: armar las piezas de la etapa 06 (lo que quedó
 congelado, apertura única de la prueba, regresión, clasificación, Bayes y
 regla de reensayo en la prueba, resumen del agrupamiento y resumen final),
 guardar el artefacto de la etapa y registrar sus cifras para el informe. Es
-el único módulo que lee la partición de prueba, siempre con `leer_prueba`.
+el único módulo que lee la partición de prueba de la base simulada, siempre
+con `leer_prueba`.
 """
 import time
 
@@ -23,7 +24,7 @@ from proyecto.reporte import graficos_modelado as graficos
 from proyecto.reporte import latex
 from proyecto.reporte.html import comparacion, linea_tiempo, nota, pasos, tabla_html, tarjetas
 
-ETAPA = "07_evaluacion_final"
+ETAPA = "06_evaluacion_final"
 N_REPLICAS = 1000
 NOMBRE_REENSAYO = "falso_positivo_lectura"
 MINIMO_POSITIVOS = 30
@@ -48,8 +49,8 @@ def iniciar():
     c = abrir(ETAPA, "Los modelos congelados frente a un periodo que nadie miró")
     c.inicio = time.perf_counter()
     leer = lambda nombre: leer_json(rutas.DIR_ARTEFACTOS / nombre)  # noqa: E731
-    c.cribado, c.reg, c.clf, c.grp = (leer("03_cribado.json"), leer("04_regresion.json"),
-                                      leer("05_clasificacion.json"), leer("06_agrupamiento.json"))
+    c.cribado, c.reg, c.clf, c.grp = (leer("03_cribado.json"), leer("03_regresion.json"),
+                                      leer("04_clasificacion.json"), leer("05_agrupamiento.json"))
     c.nombre_reg, c.nombre_clf = c.cribado["seleccion"]["regresion"], c.cribado["seleccion"]["clasificacion"]
     c.papeles_reg = leer_json(rutas.DIR_MODELADO / f"{c.nombre_reg}.json")
     c.papeles_clf = leer_json(rutas.DIR_MODELADO / f"{c.nombre_clf}.json")
@@ -93,7 +94,7 @@ def congelado(c):
     r.agregar(nota(
         "La regresión se eligió por el menor RMSE de validación y la clasificación por el mayor ROC-AUC, en los dos casos "
         "con una regla de empate que favorece al modelo más sencillo. Las dos reglas y sus resultados quedaron escritos en "
-        "los artefactos de las etapas 04 y 05 antes de esta celda así que lo que midamos en la prueba ya no puede cambiar "
+        "los artefactos de las etapas 03 y 04 antes de esta celda así que lo que midamos en la prueba ya no puede cambiar "
         "la elección.",
         "info", titulo="Nada se reelige después de este punto",
     ))
@@ -216,8 +217,8 @@ def regresion_diagnostico(c):
     r = Resultado()
     y, pred, base, fechas, completo = c.y_reg, c.pred_reg, c.base_reg, c.fechas_reg, c.completo
     r.figura(graficos.figura_serie_prediccion(fechas, y, {c.nombre_modelo_reg: pred, c.referencia: base},
-                                              unidad="muestras por día"), "07_serie_prueba")
-    r.figura(graficos.figura_residuos(fechas, y, pred, unidad="muestras por día"), "07_residuos_prueba")
+                                              unidad="muestras por día"), "06_serie_prueba")
+    r.figura(graficos.figura_residuos(fechas, y, pred, unidad="muestras por día"), "06_residuos_prueba")
     residuo = y - pred
     mes, dia = fechas.dt.month.to_numpy(), fechas.dt.day.to_numpy()
     ventana = ((mes == 12) & (dia >= 20)) | ((mes == 1) & (dia <= 8))
@@ -331,9 +332,9 @@ def clasificacion(c):
     ], titulo=f"El umbral congelado frente a las políticas sin modelo ({c.semanas} semanas de prueba)",
         elegida=int(np.argmin([c.costo_nada, res["Costo"], c.costo_todo])), sello="Menor costo"))
     r.figura(graficos_clf.figura_confusion(res["TN"], res["FP"], res["FN"], res["TP"],
-                                           f"Matriz de confusión en prueba (umbral {um:.3f})"), "07_confusion")
+                                           f"Matriz de confusión en prueba (umbral {um:.3f})"), "06_confusion")
     r.figura(graficos_clf.figura_fiabilidad({"Prueba": (y, p)}, n_tramos=10, titulo="Fiabilidad en la prueba (10 tramos "
-                                            "con el mismo número de muestras)"), "07_fiabilidad")
+                                            "con el mismo número de muestras)"), "06_fiabilidad")
     c.auc_val, c.auc_prueba = av, ap = vv["ROC-AUC"], ic["ROC-AUC"]
     c.ahorro = ahorro = 1 - res["Costo"] / min(c.costo_nada, c.costo_todo)
     prev = float(y.mean())
@@ -522,7 +523,7 @@ def regla_reensayo(c):
     c.borde, c.regla_prueba = borde, None
     pr = c.prueba_reensayo
     if borde is None or variable not in pr.columns:
-        return r.agregar(nota("La etapa 05 no fijó un borde para la regla de reensayo así que no hay nada que comprobar.",
+        return r.agregar(nota("La etapa 04 no fijó un borde para la regla de reensayo así que no hay nada que comprobar.",
                               "info"))
     con_razon = pr[pr[variable].notna()]
     bajo = con_razon[variable] <= borde
@@ -575,7 +576,7 @@ def agrupamiento(c):
     c.grp_sel, c.grp_comp = grp, comp
     nombres = [s["nombre"] for s in grp["segmentos"]]
     r.agregar(nota(
-        f"En \"{grp['analisis']}\" la etapa 06 encontró {grp['kmeans']['k']} grupos con K-means "
+        f"En \"{grp['analisis']}\" la etapa 05 encontró {grp['kmeans']['k']} grupos con K-means "
         f"({lista_nombres(nombres)}), con una silueta de {se:.3f} y un estadístico de Hopkins de "
         f"{grp['hopkins']:.3f}. DBSCAN, que sigue otra lógica, dejó {grp['dbscan']['grupos']} grupos y un "
         f"{100 * grp['dbscan']['proporcion_ruido']:.0f} % de ruido. Los dos coinciden poco (ARI de "
@@ -585,9 +586,9 @@ def agrupamiento(c):
         + "Las siluetas bajas dicen que hay tendencia a formar grupos pero sin fronteras nítidas así que los grupos sirven "
           "para describir y conversar con el laboratorio y no para decidir muestra a muestra."
         + f"\n\nEn el cribado (etapa 03) \"{grp['analisis']}\" tuvo una silueta de {sc:.3f}, frente a {se:.3f} con el "
-          f"preprocesamiento de la etapa 06 (variables elegidas, logaritmo en {len(grp['con_log1p'])} variables asimétricas "
+          f"preprocesamiento de la etapa 05 (variables elegidas, logaritmo en {len(grp['con_log1p'])} variables asimétricas "
           f"y escalado), una diferencia de {sc - se:+.3f}. Las dos cifras no se pueden comparar y la que describe los "
-          "grupos que mostramos es la de la etapa 06.",
+          "grupos que mostramos es la de la etapa 05.",
         "hallazgo",
     ))
     return r
@@ -662,7 +663,7 @@ def resumen(c):
         (f"Hay pocos positivos de prueba en {texto_pocos} así que su VPP y su tasa de reensayos conformes son poco "
          "precisos." if pocos else f"Todos los ensayos tienen al menos {MINIMO_POSITIVOS} positivos de prueba."),
         f"Las siluetas del agrupamiento son bajas ({c.silueta_etapa:.3f} en los perfiles de muestra) y la del cribado "
-        f"({c.silueta_cribado:.3f}) no se puede comparar con la de la etapa 06.",
+        f"({c.silueta_cribado:.3f}) no se puede comparar con la de la etapa 05.",
         "Los intervalos bootstrap remuestrean filas como si fueran independientes. En la serie diaria los días seguidos se "
         "parecen así que los intervalos de la regresión probablemente son más estrechos de lo que deberían.",
     ]
@@ -681,7 +682,7 @@ def resumen(c):
     ], titulo="Siguientes pasos con la exportación real"))
     latex.registrar_varias([
         ("FinAgrK", int(grp["kmeans"]["k"]), "perfiles de muestra de K-means"),
-        ("FinAgrSilueta", c.silueta_etapa, "silueta de los perfiles de muestra (etapa 06)", 3),
+        ("FinAgrSilueta", c.silueta_etapa, "silueta de los perfiles de muestra (etapa 05)", 3),
         ("FinAgrSiluetaCribado", c.silueta_cribado, "silueta del mismo análisis en el cribado", 3),
         ("FinAgrHopkins", float(grp["hopkins"]), "Hopkins de los perfiles de muestra", 3),
         ("FinEnsayosPocosPositivos", len(pocos), f"ensayos con menos de {MINIMO_POSITIVOS} positivos de prueba"),
@@ -745,7 +746,7 @@ def _guardar_artefacto(c):
         "agrupamiento": {"analisis": c.grp_sel["analisis"], "k": c.grp_sel["kmeans"]["k"], "silueta": c.silueta_etapa,
                          "silueta_cribado": c.silueta_cribado},
         "segundos_etapa": c.segundos,
-    }, rutas.DIR_ARTEFACTOS / "07_evaluacion.json")
+    }, rutas.DIR_ARTEFACTOS / "06_evaluacion.json")
 
 
 def terminar(c):

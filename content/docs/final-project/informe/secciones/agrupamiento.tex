@@ -2,7 +2,7 @@
 % agrupamiento.tex
 % Responsabilidad única: presentar los perfiles de muestra (análisis
 % elegido) y los segmentos de clientes (complementario), la diferencia de
-% silueta entre el cribado y la etapa 06 y por qué se mantuvo la selección.
+% silueta entre el cribado y la etapa 05 y por qué se mantuvo la selección.
 % Cifras: macros Agr*; tablas tabla_agr_*; figuras 06_*.
 % =====================================================================
 \section{Agrupamiento: Perfiles de muestra y segmentos de clientes}
@@ -65,7 +65,7 @@ prometido largo.
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.85\textwidth]{06_perfiles_muestra_pca.png}
+\includegraphics[width=0.85\textwidth]{05_perfiles_muestra_pca.png}
 \caption{Perfiles de muestra en las dos primeras componentes principales
 (\AgrSelPCAVarianzaPct{}\,\% de la varianza), con K-means a la izquierda y
 DBSCAN a la derecha (ruido en gris): La única región bien separada es la de
@@ -94,7 +94,7 @@ un \AgrCompDBRuidoPct{}\,\% de los clientes marcados como ruido).
 
 \begin{figure}[!htbp]
 \centering
-\includegraphics[width=0.9\textwidth]{06_segmentos_clientes_perfiles.png}
+\includegraphics[width=0.9\textwidth]{05_segmentos_clientes_perfiles.png}
 \caption{Perfil de los segmentos de clientes en desviaciones estándar
 respecto a la media general, con los clientes que DBSCAN marca como ruido en
 la fila inferior: Estos comparten la no conformidad y las entregas tardías
@@ -102,14 +102,14 @@ altas del primer segmento pero con una estacionalidad mucho más marcada.}
 \label{fig:agr-segmentos}
 \end{figure}
 
-\subsection{Silueta del cribado frente a la etapa 06}
+\subsection{Silueta del cribado frente a la etapa 05}
 \label{sec:silueta}
 
 Aquí nos encontramos con algo que no cuadraba. La silueta de los perfiles de
 muestra cae de \AgrSiluetaCribado{} en el cribado a \AgrSelSilueta{} en la
-etapa~06, muy por encima de la diferencia de \AgrToleranciaSilueta{} a partir
+etapa~05, muy por encima de la diferencia de \AgrToleranciaSilueta{} a partir
 de la cual el procedimiento obliga a discutirla. Para saber de dónde venía la
-caída la etapa~06 separa sus dos causas posibles
+caída la etapa~05 separa sus dos causas posibles
 (Tabla~\ref{tab:agr-silueta}). El cambio de filas (entrenamiento frente a
 todo el desarrollo) mueve la silueta en \AgrEfectoFilas{}
 (\AgrSiluetaSinLog{} sin $\log(1+x)$), mientras que aplicar $\log(1+x)$ antes
@@ -122,12 +122,12 @@ grupos con facilidad y con él esa separación desaparece.
 \centering
 \tablaancha{agr_silueta_cribado}
 \caption{Silueta y puntaje de la regla con el preprocesamiento del cribado y
-con el de la etapa 06, para los dos análisis de agrupamiento: El cambio de
+con el de la etapa 05, para los dos análisis de agrupamiento: El cambio de
 preprocesamiento basta para invertir cuál de los dos gana.}
 \label{tab:agr-silueta}
 \end{table}
 
-Con las siluetas de la etapa~06 el puntaje de la regla sería de
+Con las siluetas de la etapa~05 el puntaje de la regla sería de
 \AgrPuntajeSelEtapa{} para el análisis elegido y de \AgrPuntajeCompEtapa{}
 para el complementario, es decir que el complementario habría ganado
 (\AgrComplementarioSupera{}). Lo discutimos y aun así mantuvimos la
