@@ -30,7 +30,7 @@ from proyecto.datos import muestra_publica, rodam  # noqa: E402
 
 GRUPO = os.environ.get("GRUPO", "XX")
 DESTINO = RAIZ / "entrega"
-CARPETAS_CODIGO = ["proyecto", "notebooks/src", "verificacion", "configuracion"]
+CARPETAS_CODIGO = ["proyecto", "notebooks/src", "notebooks/codigo", "verificacion", "configuracion"]
 EXCLUIR = re.compile(r"(__pycache__|\.pyc$|\.ipynb_checkpoints|\.DS_Store|notebooks/src/idea/|"
                      r"informe/.*\.(aux|log|out|toc|fls|fdb_latexmk|bbl|blg|synctex\.gz)$)")
 NOTA_DATOS = """# Datos

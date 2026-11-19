@@ -75,16 +75,21 @@ datos.tablas_crudas(c).mostrar()
 datos.como_llegan(c).mostrar()
 
 # %% [markdown]
-# ## 4. Los datos simulados y la exportación real
+# ## 4. La base real y su complemento simulado
 #
-# Daniel, del equipo, va a conseguir la exportación real del laboratorio, pero no la teníamos a tiempo para
-# construir el proyecto. Mientras tanto trabajamos con una base simulada que reproduce el recorrido de cada muestra
-# por el laboratorio, con la misma suciedad que esperamos encontrar. Las variables ocultas que usa el simulador (si
-# la muestra estaba de verdad contaminada, qué tan higiénico es cada cliente) quedan aparte en `datos/auditoria/` y
-# ningún modelo las lee. Cuando llegue la exportación bastaría copiarla en `datos/reales/`, describir en
-# `configuracion/mapeo_columnas.json` cómo se llama cada columna y cada etiqueta y fijar `PROYECTO_ORIGEN=real`, sin
-# tocar el código. Eso sí, todas las cifras de estos notebooks describen la base simulada y el método, no todavía
-# al laboratorio.
+# La base del proyecto es la exportación real del laboratorio, que consiguió Daniel y que trabajamos en la etapa 08.
+# Trae lo que registra el sistema (cliente, sector, origen, análisis, lecturas y dictamen) pero no trae los controles
+# de calidad de cada ensayo ni los datos de recepción (temperatura, transporte, estado del envase) y varias técnicas
+# del curso los necesitan. Para complementarla armamos una base simulada con la misma estructura y esos campos.
+# Sobre ella aplicamos en las etapas 01 a 07 el cribado, la regresión, la clasificación con umbral por costo, Bayes
+# con los controles, Taguchi, la red neuronal y el agrupamiento.
+#
+# La base complementaria tiene además una ventaja: Conocemos la verdad. Las variables ocultas del simulador (si la
+# muestra estaba de verdad contaminada, qué tan higiénico es cada cliente) quedan aparte en `datos/auditoria/`, ningún
+# modelo las lee y nos sirven para comprobar si los modelos encuentran lo que de verdad hay. Las cifras de las etapas
+# 01 a 07 salen de esta base complementaria y las de la etapa 08 de la real. El mismo código puede leer la exportación
+# real en estas etapas con solo describir en `configuracion/mapeo_columnas.json` cómo se llama cada columna y fijar
+# `PROYECTO_ORIGEN=real`.
 
 # %%
 datos.exportacion_real(c).mostrar()

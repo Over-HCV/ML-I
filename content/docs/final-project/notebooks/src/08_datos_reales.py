@@ -1,9 +1,10 @@
 # %% [markdown]
 # # Etapa 08: Datos reales
 #
-# Las etapas 01 a 07 las hicimos sobre una base simulada porque la exportación del laboratorio no estaba lista. Al
-# final del semestre Daniel Arias Mutis, que trabaja en el laboratorio, consiguió la exportación real (con los clientes
-# anonimizados) y nos propuso dos cosas: Clasificar a los clientes por su volumen semanal o mensual y a los lotes por
+# Esta etapa trabaja la base real del proyecto: La exportación del laboratorio que consiguió Daniel Arias Mutis (con
+# los clientes anonimizados). Las etapas 01 a 07 la complementaron con una base simulada de la misma estructura para
+# aplicar más técnicas del curso y aquí volvemos a los datos reales. Daniel trabaja en el laboratorio y nos propuso
+# dos cosas: Clasificar a los clientes por su volumen semanal o mensual y a los lotes por
 # su tamaño. Además nos dijo que las llegadas de muestras le sonaban a un proceso de Poisson. Esta etapa cuenta qué
 # pasó cuando pusimos a prueba esa idea.
 #

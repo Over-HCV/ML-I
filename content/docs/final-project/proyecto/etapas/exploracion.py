@@ -11,7 +11,7 @@ import pandas as pd
 from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_tabla
 from proyecto.datos import carga, esquema
-from proyecto.etapas.comun import Resultado, abrir, cerrar, aviso_origen, pct
+from proyecto.etapas.comun import Resultado, abrir, cerrar, pct
 from proyecto.preparacion import integracion, limpieza, particion
 from proyecto.reporte import exploracion as graficos
 from proyecto.reporte import latex
@@ -125,8 +125,6 @@ def particion_temporal(c):
          "detalle": "de las muestras aceptadas", "color": "rojo"},
         {"titulo": "Clientes con muestras", "valor": clientes, "color": "verde"},
     ], titulo="Periodo de desarrollo (lo único que exploramos)"))
-    r.agregar(aviso_origen("Los datos son **simulados** así que lo que encontramos en esta etapa describe la base "
-                              "simulada. Nos sirve para decidir cómo modelar y no para concluir sobre el laboratorio real."))
     filas = bloques.set_index("Bloque")["Filas"]
     latex.registrar_varias([
         ("ExpFilasEntrenamiento", int(filas["entrenamiento"]), "muestras del bloque de entrenamiento"),

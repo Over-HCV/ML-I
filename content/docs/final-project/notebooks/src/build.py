@@ -12,9 +12,10 @@ Qué hace, en orden:
 2. Ejecuta cada guion con nbclient (núcleo `python3`, directorio de trabajo
    = raíz del proyecto, paquete `proyecto/` real del repositorio).
 3. Después de ejecutar, inserta tras la primera celda de texto el arranque,
-   **sin ejecutar**: un título plegable y una sola celda que lleva, en
-   base64, un .tar.xz determinista (entradas ordenadas, fecha fija) con el
-   paquete, `configuracion/mapeo_columnas.json` y, en los notebooks
+   **sin ejecutar**: un título plegable y una celda corta que busca
+   `notebooks/codigo/<notebook>.tar.xz` (se escribe aquí y se versiona: un
+   .tar.xz determinista, entradas ordenadas y fecha fija) o lo descarga del
+   repositorio si el notebook está solo. El archivo lleva el paquete, `configuracion/mapeo_columnas.json` y, en los notebooks
    encadenados, los guiones de las etapas previas (para que
    `iniciar_etapa` pueda reconstruir lo que falte en una sesión nueva de
    Colab). La celda comprueba el SHA-256 y no reemplaza archivos que ya
@@ -24,7 +25,8 @@ Qué hace, en orden:
    `notebooks/Proyecto_Final.ipynb` (arranque una sola vez y todas las
    etapas en orden).
 5. Con `--prueba-colab DIR` copia los notebooks a una carpeta vacía y los
-   ejecuta allí completos (arranque incluido) en un entorno donde el paquete
+   ejecuta allí completos (arranque incluido, con su archivo de código en
+   `codigo/` como si se subieran juntos a Colab) en un entorno donde el paquete
    del repositorio no es importable. Con `--sin-construir` hace solo esta
    prueba sobre los notebooks ya construidos.
 
@@ -43,7 +45,6 @@ Qué hace, en orden:
 Un guion de etapa que todavía no existe se omite con un aviso.
 """
 import argparse
-import base64
 import copy
 import hashlib
 import io
@@ -119,58 +120,60 @@ def modulos_del_paquete():
 ARCHIVO_MAPEO = RAIZ / "configuracion" / "mapeo_columnas.json"
 # Mismos archivos → mismos bytes: entradas ordenadas, fecha 0, dueño y permisos fijos.
 
+# El código de cada notebook viaja en notebooks/codigo/<notebook>.tar.xz (se versiona) y la celda
+# de arranque solo lo busca al lado o lo descarga de aquí si el notebook está solo (Colab).
+DIR_CODIGO = DIR_NOTEBOOKS / "codigo"
+URL_CODIGO = "https://raw.githubusercontent.com/Over-HCV/ML-I/main/content/docs/final-project/notebooks/codigo/"
+
 CODIGO_ARRANQUE = """\
-# Código del proyecto. Esta celda recrea en el directorio de trabajo:
-#   - el paquete `proyecto/` ({modulos} módulos) y `configuracion/mapeo_columnas.json`;{guiones}
-# para que el notebook funcione en Google Colab sin clonar el repositorio. Todo viaja
-# al final de la celda como un .tar.xz en base64 ({archivos} archivos, {tamano} kB).
-# Antes de extraer se comprueba su huella SHA-256. Un archivo que ya existe con el
-# mismo contenido no se toca, y uno que existe con otro contenido (una copia local
-# del repositorio con cambios, por ejemplo) se conserva y se avisa; para
-# reemplazarlo hay que poner SOBRESCRIBIR = True.
-import base64
-import hashlib
-import importlib
-import io
-import os
-import sys
-import tarfile
+# Código del proyecto ({archivos} archivos, {tamano} kB): {contenido}.
+# En una copia del repositorio o en la carpeta de la entrega ya está y no se toca nada.
+# En Colab se extrae de codigo/{archivo} si se subió junto al notebook o se descarga
+# del repositorio; en los dos casos se comprueba su huella SHA-256 antes de extraerlo.
+# Un archivo local con otro contenido se conserva (SOBRESCRIBIR = True lo reemplaza).
+import hashlib, importlib, io, os, sys, tarfile, urllib.request
 from pathlib import Path
 
-SOBRESCRIBIR = False
+ARCHIVO, HUELLA, SOBRESCRIBIR = "{archivo}", "{huella}", False
+URL = "{url}" + ARCHIVO
+
+if Path.cwd().name == "notebooks" and Path("../proyecto/__init__.py").exists():
+    os.chdir("..")  # abierto desde notebooks/: se trabaja en la raíz del proyecto
 
 
-def recrear_proyecto(huella, codificado):
-    datos = base64.b64decode(codificado)
-    if hashlib.sha256(datos).hexdigest() != huella:
-        raise ValueError("El código embebido está dañado: su SHA-256 no coincide.")
-    escritos, iguales, conservados = 0, 0, []
-    with tarfile.open(fileobj=io.BytesIO(datos), mode="r:xz") as archivo:
-        for miembro in archivo.getmembers():
-            nombre = miembro.name
-            if Path(nombre).is_absolute() or ".." in Path(nombre).parts:
-                raise ValueError(f"Ruta no permitida en el archivo: {{nombre}}")
-            contenido, destino = archivo.extractfile(miembro).read(), Path(nombre)
-            if destino.exists() and destino.read_bytes() == contenido:
-                iguales += 1
-            elif destino.exists() and not SOBRESCRIBIR:
-                conservados.append(nombre)
-            else:
-                destino.parent.mkdir(parents=True, exist_ok=True)
-                destino.write_bytes(contenido)
-                escritos += 1
+def recrear_proyecto():
+    origen = next((Path(d) / ARCHIVO for d in ("notebooks/codigo", "codigo", ".") if (Path(d) / ARCHIVO).exists()), None)
+    if origen is None and Path("proyecto/__init__.py").exists():
+        escritos, iguales, conservados = 0, None, []
+    else:
+        datos = origen.read_bytes() if origen else urllib.request.urlopen(URL, timeout=60).read()
+        if hashlib.sha256(datos).hexdigest() != HUELLA:
+            raise ValueError(f"{{ARCHIVO}} no corresponde a este notebook: su SHA-256 no coincide.")
+        escritos, iguales, conservados = 0, 0, []
+        with tarfile.open(fileobj=io.BytesIO(datos), mode="r:xz") as archivo:
+            for miembro in archivo.getmembers():
+                destino = Path(miembro.name)
+                if destino.is_absolute() or ".." in destino.parts:
+                    raise ValueError(f"Ruta no permitida en el archivo: {{miembro.name}}")
+                contenido = archivo.extractfile(miembro).read()
+                if destino.exists() and destino.read_bytes() == contenido:
+                    iguales += 1
+                elif destino.exists() and not SOBRESCRIBIR:
+                    conservados.append(miembro.name)
+                else:
+                    destino.parent.mkdir(parents=True, exist_ok=True)
+                    destino.write_bytes(contenido)
+                    escritos += 1
     if os.getcwd() not in sys.path:
         sys.path.insert(0, os.getcwd())
     importlib.invalidate_caches()
-    print(f"Código del proyecto: {{escritos}} archivos escritos, {{iguales}} ya estaban iguales.")
+    print("Código del proyecto:", "se usa la copia local." if iguales is None
+          else f"{{escritos}} archivos escritos, {{iguales}} ya estaban iguales.")
     if conservados:
         print(f"Se conservaron {{len(conservados)}} archivos locales distintos:", ", ".join(conservados))
 
 
-recrear_proyecto(
-    huella="{huella}",
-    codificado="{codificado}",
-)"""
+recrear_proyecto()"""
 
 
 def archivos_de_arranque(etapas_previas=()):
@@ -215,7 +218,7 @@ def videos_manim():
 ETAPAS_CON_VIDEO = ["05_clasificacion_bayes"]
 
 
-def celdas_de_arranque(etapas_previas=(), presentacion=False, videos=False):
+def celdas_de_arranque(nombre, etapas_previas=(), presentacion=False, videos=False):
     """Título plegable y una sola celda que recrea el paquete (y los guiones previos, o los
     artefactos que lee la presentación, y los videos de Manim si la etapa los muestra)."""
     rutas_archivos, guiones = archivos_de_arranque(etapas_previas)
@@ -227,10 +230,10 @@ def celdas_de_arranque(etapas_previas=(), presentacion=False, videos=False):
     modulos = [m for m in modulos_del_paquete() if m.stat().st_size > 0]
     explicacion = (
         "## Código del proyecto\n\n"
-        "La celda siguiente vuelve a crear el paquete `proyecto/` dentro de la sesión. Así el notebook funciona en "
-        "Google Colab sin clonar ningún repositorio: Basta con ejecutarla una vez (*Entorno de ejecución → Ejecutar "
-        "todas*). En una copia local del repositorio no reemplaza ningún archivo y la sección se puede plegar desde su "
-        "título."
+        "La celda siguiente prepara el código del proyecto. En una copia del repositorio no hace nada y en Google Colab "
+        "trae el paquete `proyecto/` desde `notebooks/codigo/` (si se subió junto al notebook) o desde el repositorio, "
+        "así que basta con ejecutar todo (*Entorno de ejecución → Ejecutar todas*). La sección se puede plegar desde "
+        "su título."
     )
     if presentacion:
         explicacion += (" Trae también los artefactos pequeños que leen las diapositivas (JSON, arreglos y el modelo de regresión), así que no hace "
@@ -240,15 +243,21 @@ def celdas_de_arranque(etapas_previas=(), presentacion=False, videos=False):
     if guiones:
         explicacion += (" Trae también los guiones de las etapas anteriores: Si sus resultados no están en la sesión, "
                         "la etapa los vuelve a calcular en silencio antes de empezar.")
+    archivo = f"{nombre}.tar.xz"
+    DIR_CODIGO.mkdir(exist_ok=True)
+    ruta = DIR_CODIGO / archivo
+    if not ruta.exists() or ruta.read_bytes() != datos:
+        ruta.write_bytes(datos)
+    contenido = f"el paquete proyecto/ ({len(modulos)} módulos) y el mapeo de columnas"
+    if guiones:
+        contenido += f", los guiones de las {len(guiones)} etapas previas"
+    if presentacion:
+        contenido += f", los {len(artefactos_de_presentacion())} artefactos que lee la presentación"
+    if videos and not presentacion and videos_manim():
+        contenido += " y los videos de Manim"
     codigo = CODIGO_ARRANQUE.format(
-        modulos=len(modulos),
-        guiones=(f"\n#   - los guiones de las {len(guiones)} etapas previas (se reconstruyen si faltan);"
-                 if guiones else
-                 f"\n#   - los {len(artefactos_de_presentacion())} artefactos pequeños que lee la presentación;"
-                 if presentacion else "")
-                + ("\n#   - los videos de Manim que muestra la etapa;" if videos and not presentacion else ""),
-        archivos=len(rutas_archivos), tamano=round(len(datos) / 1024),
-        huella=hashlib.sha256(datos).hexdigest(), codificado=base64.b64encode(datos).decode("ascii"),
+        archivos=len(rutas_archivos), tamano=round(len(datos) / 1024), contenido=contenido,
+        archivo=archivo, huella=hashlib.sha256(datos).hexdigest(), url=URL_CODIGO,
     )
     return [_texto(explicacion, "arranque", "arranque-000"),
             _codigo(codigo, "arranque", "arranque-001", oculta=True)]
@@ -300,7 +309,7 @@ def armar_encadenado(etapa, celdas_etapa, disponibles):
     resto = celdas_etapa[corte:]
     celdas = list(celdas_etapa[:corte])
     celdas.append(celda_de_navegacion(etapa, disponibles, f"nav-{etapa[:2]}-inicio"))
-    celdas += celdas_de_arranque(ETAPAS[: ETAPAS.index(etapa)], videos=etapa in ETAPAS_CON_VIDEO)
+    celdas += celdas_de_arranque(etapa, ETAPAS[: ETAPAS.index(etapa)], videos=etapa in ETAPAS_CON_VIDEO)
     if not _empieza_con_titulo(resto):  # cierra la sección plegable del arranque
         celdas.append(_texto("## Desarrollo de la etapa", "navegacion",
                              f"nav-{etapa[:2]}-desarrollo"))
@@ -318,7 +327,7 @@ def armar_fusionado(celdas_por_etapa):
                "Cada etapa guarda sus resultados en disco y la siguiente los "
                "lee de allí.\n\n" + indice)
     celdas = [_texto(portada, "navegacion", "portada")] + celdas_de_arranque(
-        videos=any(e in ETAPAS_CON_VIDEO for e in celdas_por_etapa))
+        NOMBRE_FUSIONADO, videos=any(e in ETAPAS_CON_VIDEO for e in celdas_por_etapa))
     contador = 0
     for etapa, celdas_etapa in celdas_por_etapa.items():
         if not _empieza_con_titulo(celdas_etapa):
@@ -338,7 +347,7 @@ def armar_fusionado(celdas_por_etapa):
 def armar_presentacion(celdas):
     """Notebook de la presentación: título, arranque (paquete y artefactos) y diapositivas."""
     corte = _posicion_tras_primer_texto(celdas)
-    nuevas = list(celdas[:corte]) + celdas_de_arranque(presentacion=True)
+    nuevas = list(celdas[:corte]) + celdas_de_arranque(NOMBRE_PRESENTACION, presentacion=True)
     nuevas.append(_texto("## Diapositivas", "navegacion", "pres-diapositivas"))
     return _nuevo_notebook(nuevas + list(celdas[corte:]))
 
@@ -536,6 +545,8 @@ def _probar_notebook(nombre, carpeta, etapas_esperadas, guiones_esperados, origi
     archivos que el arranque debe recrear idénticos (por omisión, paquete, mapeo y guiones)."""
     carpeta.mkdir(parents=True)
     shutil.copy(DIR_NOTEBOOKS / f"{nombre}.ipynb", carpeta)
+    (carpeta / "codigo").mkdir()
+    shutil.copy(DIR_CODIGO / f"{nombre}.tar.xz", carpeta / "codigo")
     entorno = _entorno(con_paquete=False)
 
     # El paquete no debe poder importarse antes de ejecutar el arranque.

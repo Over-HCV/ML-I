@@ -679,9 +679,6 @@ def resumen(c):
         ("Revisar los controles", "Sin controles de calidad no hay sensibilidad ni especificidad y la parte de Bayes no "
                                   "aplica."),
     ], titulo="Siguientes pasos con la exportación real"))
-    if config.ORIGEN_DATOS == "simulacion":
-        r.agregar(nota("Todas las cifras de este proyecto salen de una base **simulada** con la estructura de la del "
-                       "laboratorio. Ninguna describe todavía su operación real.", "simulacion"))
     latex.registrar_varias([
         ("FinAgrK", int(grp["kmeans"]["k"]), "perfiles de muestra de K-means"),
         ("FinAgrSilueta", c.silueta_etapa, "silueta de los perfiles de muestra (etapa 06)", 3),

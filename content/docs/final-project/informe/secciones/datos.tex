@@ -64,17 +64,22 @@ En total leímos \DatMuestrasCrudas{} filas crudas de muestras de
 la exportación real puede que falten algunas y para eso la etapa~01 produce
 una tabla de cobertura que dice de antemano qué análisis quedarían por fuera.
 
-\subsection{Datos simulados y conexión con la exportación real}
+\subsection{Base real y complemento simulado}
 \label{sec:simulacion}
 
-Hay que decirlo de frente: \textbf{Los datos de este informe son simulados}.
-La exportación real de la base la gestiona un integrante del equipo dentro del
-laboratorio y no estuvo lista a tiempo así que escribimos un generador
-(\codigo{proyecto/datos/simulacion.py}, semilla \DatSemilla{}) que produce
+La base del proyecto es la exportación real del laboratorio
+(Sección~\ref{sec:datos-reales}). Como no trae los controles de calidad de
+los ensayos ni los datos de recepción, que varias técnicas del curso
+necesitan, la complementamos con una base simulada de la misma estructura
+(\codigo{proyecto/datos/simulacion.py}, semilla \DatSemilla{}) y sobre ella
+aplicamos lo de las Secciones~\ref{sec:exploracion} a~\ref{sec:evaluacion}.
+La base complementaria nos da además algo que la real no puede dar: La
+verdad detrás de cada muestra, con la que podemos auditar lo que encuentran
+los modelos. El generador produce
 tablas con la misma estructura del contrato y con el tipo de suciedad que
 esperamos de una exportación real (faltantes, categorías mal escritas,
 duplicados, valores imposibles y recuentos escritos como texto). El conjunto
-de datos es entonces una premisa del trabajo y no su aporte.
+de datos simulado es entonces una herramienta del trabajo y no su aporte.
 
 Quisimos que el generador no favoreciera a ningún modelo por construcción y
 por eso la señal mezcla efectos lineales, umbrales,

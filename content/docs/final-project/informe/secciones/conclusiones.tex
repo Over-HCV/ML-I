@@ -7,7 +7,32 @@
 \section{Conclusiones, limitaciones y trabajo futuro}
 \label{sec:conclusiones}
 
-\subsection{Respuestas a las preguntas del laboratorio}
+\ifdefined\RealMuestras
+\subsection{Lo que muestra la base real}
+
+Con la base real (Sección~\ref{sec:datos-reales}) pudimos poner a prueba
+una idea de Daniel, que trabaja en el laboratorio: Que las muestras llegan
+como una Poisson. Contadas una por una no lo hacen ya que la varianza
+semanal de cada cliente es \RealDispMuestrasTodos{} veces su media (en la
+mediana). Contadas por lotes sí se acercan, con un índice de
+\RealDispLotesTodos{}. O sea que la llegada es una Poisson compuesta: Los
+lotes llegan al azar y cada lote trae un número de muestras que en el
+muestreo en planta tiene una cola muy larga (mediana de
+\RealLoteMedianaPlanta{} y máximo de \RealLoteMaxPlanta{}). Eso nos dejó
+tranquilos con la estructura de la simulación pero también nos mostró su
+punto débil porque con uno más una Poisson el tamaño de los lotes no
+alcanza a dispersarse como en la realidad.
+
+Los clientes se dividen en \RealSegK{} segmentos de volumen y el más grande
+(\RealSegMayor{}) concentra el \RealSegMayorMuestrasPct{}\,\% de las
+muestras. El clasificador de no conformidad con datos reales tiene algo de
+señal (ROC-AUC de \RealRiesgoAUCLogistica{} en validación) pero casi toda
+viene de la historia de cada cliente, que sola llega a
+\RealRiesgoAUCHistoria{}. Por eso no esperaríamos con datos reales las
+habilidades que vimos en la simulación.
+\fi
+
+\subsection{Respuestas con la base complementaria}
 
 En la Tabla~\ref{tab:preguntas} está la respuesta a cada pregunta del
 laboratorio con la evidencia de la prueba y su limitación principal. La
@@ -35,8 +60,8 @@ evidencia en la prueba y la limitación principal.}
 
 \subsection{Recomendaciones}
 
-Son modestas a propósito porque las cifras vienen de datos simulados y lo
-primero sería comprobarlas con los reales:
+Son modestas a propósito porque las que salen de la base complementaria
+habría que confirmarlas con la operación real:
 
 \begin{enumerate}[label=\alph*.]
     \item \textbf{Planeación de turnos.} Usaríamos la predicción diaria como
@@ -57,12 +82,12 @@ primero sería comprobarlas con los reales:
 \subsection{Limitaciones}
 
 \begin{enumerate}[label=\alph*.]
-    \item \textbf{Datos simulados.} Las métricas muestran que el
-          procedimiento funciona de punta a punta y sin fugas, pero no miden
-          la operación real. Como el generador fija las relaciones que luego
-          encuentran los modelos, con datos reales las habilidades podrían ser
-          menores y las razones de odds o los perfiles no son hallazgos sobre
-          el laboratorio.
+    \item \textbf{Base complementaria.} Las cifras de las
+          Secciones~\ref{sec:exploracion} a~\ref{sec:evaluacion} salen de la
+          base simulada. Como el generador fija las relaciones que luego
+          encuentran los modelos, con la base real las habilidades son menores
+          (lo vimos en la Sección~\ref{sec:datos-reales}) y sus razones de
+          odds o sus perfiles hay que leerlos como resultados del método.
     \item \textbf{Pocos casos en algunos ensayos.} \textit{Salmonella} y
           esterilidad tienen pocos positivos y por eso sus intervalos son
           anchos y en la prueba no los interpretamos.
@@ -80,37 +105,13 @@ primero sería comprobarlas con los reales:
           cambios de nivel de la serie.
 \end{enumerate}
 
-\ifdefined\RealMuestras
-\subsection{Lo que nos dijo la exportación real}
-
-Con la base real (Sección~\ref{sec:datos-reales}) pudimos poner a prueba
-una idea de Daniel, que trabaja en el laboratorio: Que las muestras llegan
-como una Poisson. Contadas una por una no lo hacen ya que la varianza
-semanal de cada cliente es \RealDispMuestrasTodos{} veces su media (en la
-mediana). Contadas por lotes sí se acercan, con un índice de
-\RealDispLotesTodos{}. O sea que la llegada es una Poisson compuesta: Los
-lotes llegan al azar y cada lote trae un número de muestras que en el
-muestreo en planta tiene una cola muy larga (mediana de
-\RealLoteMedianaPlanta{} y máximo de \RealLoteMaxPlanta{}). Eso nos dejó
-tranquilos con la estructura de la simulación pero también nos mostró su
-punto débil porque con uno más una Poisson el tamaño de los lotes no
-alcanza a dispersarse como en la realidad.
-
-Los clientes se dividen en \RealSegK{} segmentos de volumen y el más grande
-(\RealSegMayor{}) concentra el \RealSegMayorMuestrasPct{}\,\% de las
-muestras. El clasificador de no conformidad con datos reales tiene algo de
-señal (ROC-AUC de \RealRiesgoAUCLogistica{} en validación) pero casi toda
-viene de la historia de cada cliente, que sola llega a
-\RealRiesgoAUCHistoria{}. Por eso no esperaríamos con datos reales las
-habilidades que vimos en la simulación.
-\fi
 
 \subsection{Trabajo futuro con la exportación real}
 
-El siguiente paso sería conectar la exportación real
-(Sección~\ref{sec:simulacion}), revisar la tabla de cobertura y la auditoría
-de limpieza y mover las fechas de corte al periodo exportado. Después
-repetiríamos el cribado con el mismo preprocesamiento del estudio a fondo,
+El siguiente paso sería pedirle al laboratorio los controles de calidad de
+los ensayos y los datos de recepción, que son lo que le falta a la
+exportación, para correr todas las etapas directamente sobre la base real
+(Sección~\ref{sec:simulacion}). Después repetiríamos el cribado con el mismo preprocesamiento del estudio a fondo,
 usaríamos en la serie diaria un bootstrap de bloques móviles (que remuestrea
 tramos seguidos de días) y, si el piloto de alertas sirve, recalibraríamos el
 modelo cada cierto tiempo porque la tasa de no conformidad cambia con la

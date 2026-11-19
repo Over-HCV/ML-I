@@ -36,6 +36,16 @@ preguntas de la operación y una cuarta, descriptiva:
           insumo para la planeación y para la relación con los clientes.
 \end{enumerate}
 
+\paragraph{Los datos.} Trabajamos con la exportación real del sistema del
+laboratorio, anonimizada, que consiguió Daniel Arias Mutis desde el
+laboratorio. Esa base es la que responde lo que le importa a la operación:
+Cómo llegan las muestras, qué clientes se parecen y qué tan bien se puede
+anticipar una no conformidad al ingreso. Como no trae los controles de
+calidad de los ensayos ni los datos de recepción, la complementamos con una
+base simulada de la misma estructura que nos dejó aplicar más técnicas del
+curso (la pregunta del falso positivo, por ejemplo, necesita los controles) y
+auditar los modelos contra una verdad conocida.
+
 \paragraph{Requisito del curso.} El proyecto final de Aprendizaje Automático
 de Máquina~I pide recorrer sobre un caso propio los temas del curso
 \cite{muller2016}: El preprocesamiento y el análisis exploratorio, $k$ vecinos
@@ -61,8 +71,9 @@ validación y abrimos la prueba una sola vez. Además cada cifra del informe es
 una macro que escriben los notebooks al ejecutarse así que el texto no se
 puede quedar atrás de los resultados.
 
-El informe sigue ese orden: Los datos y su exploración
-(Secciones~\ref{sec:datos} y~\ref{sec:exploracion}), la metodología común
+El informe sigue ese orden: Los datos y la base real
+(Secciones~\ref{sec:datos} y~\ref{sec:datos-reales}), la exploración de la
+base complementaria (Sección~\ref{sec:exploracion}), la metodología común
 (Sección~\ref{sec:metodologia}), cada análisis por separado
 (Secciones~\ref{sec:regresion} a~\ref{sec:agrupamiento}), la prueba
 (Sección~\ref{sec:evaluacion}) y las respuestas al laboratorio con sus

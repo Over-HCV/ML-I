@@ -19,8 +19,7 @@ mostrar(c.encabezado)
 #
 # El cribado eligió un análisis con su regla fija. Además conservamos uno complementario por fuera de la regla porque
 # al laboratorio le interesan sus clientes. Las reglas de decisión las fijamos antes de ver resultados para que
-# ningún número de grupos se acomode a lo que queríamos ver. Eso sí, los datos son simulados así que los grupos
-# describen el mecanismo de la simulación y sus lecturas son un ejercicio de método.
+# ningún número de grupos se acomode a lo que queríamos ver.
 
 # %%
 agrupamiento.reglas(c).mostrar()

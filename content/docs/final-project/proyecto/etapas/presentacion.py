@@ -671,8 +671,8 @@ def diapositiva_conclusiones():
                    "los reensayos conformes.")},
     ], titulo="Respuestas (prueba, abierta una sola vez)", por_fila=3)
     if ES_SIMULACION:
-        limites = ("**Datos simulados:** las cifras prueban que el procedimiento funciona de punta a punta, no "
-                   "describen todavía al laboratorio. La señal es moderada y los grupos, poco nítidos.")
+        limites = ("**Datos simulados:** las cifras prueban que el procedimiento funciona de punta a punta; la "
+                   "base real está en la etapa 08. La señal es moderada y los grupos, poco nítidos.")
     else:
         limites = "La señal es moderada y los grupos, poco nítidos: las cifras deben leerse con sus intervalos."
     pasos_siguientes = ("Conectar la exportación real con el mapeo de columnas y reconstruir con "

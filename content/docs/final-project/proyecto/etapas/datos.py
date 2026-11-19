@@ -237,7 +237,7 @@ def exportacion_real(c):
     r.agregar(nota(
         f'<pre style="margin:0;font-size:12.5px;line-height:1.45;white-space:pre-wrap">{texto}</pre>'
         "A la izquierda va el nombre del contrato y a la derecha el nombre (o la etiqueta) que usa la exportación real. "
-        "En la plantilla los dos coinciden porque todavía no tenemos la exportación.",
+        "En la plantilla los dos coinciden: Al conectar una exportación se cambia solo la columna derecha.",
         titulo="configuracion/mapeo_columnas.json (extracto)", con_marcado=True,
     ))
     if c.verdad is not None:

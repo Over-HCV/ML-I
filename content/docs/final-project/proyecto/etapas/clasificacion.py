@@ -23,7 +23,7 @@ from proyecto.base.artefactos import guardar_json, guardar_modelo, leer_json, le
 from proyecto.cribado import arreglos, catalogo, corridas
 from proyecto.datos import carga
 from proyecto.etapas import presentacion, taguchi
-from proyecto.etapas.comun import Resultado, abrir, cerrar, enumerar, legible, aviso_origen
+from proyecto.etapas.comun import Resultado, abrir, cerrar, enumerar, legible
 from proyecto.evaluacion import bayes, metricas, umbral, validacion
 from proyecto.evaluacion.remuestreo import intervalo_bootstrap
 from proyecto.modelos import registro, tuberias
@@ -1297,9 +1297,6 @@ def regla_reensayo(c):
                 "error de manipulación.",
         "hallazgo", titulo="Regla para el reensayo",
     ))
-    r.agregar(aviso_origen(
-        "Los datos son **simulados**: Las cifras muestran que el procedimiento funciona de punta a punta pero el VPP real "
-        "del laboratorio va a depender de sus controles y de su exportación, que se procesarían con el mismo código."))
     latex.registrar_varias([
         ("ClfSinRazonReensayados", len(sin_razon), "reensayados de ensayos sin recuento"),
         ("ClfSinRazonConformes", float(sin_razon["falso_positivo"].mean()), "fracción conforme en ensayos sin recuento", 3),

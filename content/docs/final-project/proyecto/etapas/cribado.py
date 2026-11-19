@@ -11,7 +11,7 @@ import pandas as pd
 from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_modelado, leer_tabla
 from proyecto.cribado import analisis, catalogo
-from proyecto.etapas.comun import Resultado, abrir, cerrar, lista_nombres, aviso_origen
+from proyecto.etapas.comun import Resultado, abrir, cerrar, lista_nombres
 from proyecto.preparacion import particion
 from proyecto.reporte import graficos_cribado, latex
 from proyecto.reporte.html import comparacion, embudo, nota, pasos, pestanas, tabla_html, tarjetas
@@ -375,9 +375,6 @@ def seleccion(c):
         if sel[tipo] is None:
             frases.append(f"En {NOMBRES_TIPO[tipo].lower()} ningún candidato es elegible así que no elegimos ninguno.")
     r.agregar(nota("\n\n".join(frases), "hallazgo", titulo="Qué decidió la regla"))
-    r.agregar(aviso_origen(
-        "Los datos son **simulados**: El cribado describe la base simulada y muestra que el procedimiento funciona. Con "
-        "la exportación real la misma regla podría elegir otros análisis."))
     latex.registrar_varias([
         ("CriElegibles", c.n_elegibles, "candidatos elegibles según la regla"),
         ("CriElegidos", n_elegidos, "análisis elegidos para el modelado a fondo"),

@@ -6,9 +6,9 @@
 
 **Exposición.** La charla recorre los notebooks de etapa `01_datos.ipynb` a `08_datos_reales.ipynb` en orden. Las etapas 04 a 06 traen paneles interactivos (umbral de alerta, KNN, poda del árbol, red neuronal, Bayes, K-means y Taguchi) que solo se mueven con el núcleo en marcha: Antes de exponer hay que ejecutar el notebook (sin núcleo cada panel muestra la figura de su estado inicial). `Presentacion.ipynb` queda como un resumen corto de once diapositivas.
 
-Se aplica aprendizaje automático a la base de muestras de un laboratorio de microbiología de alimentos con el objetivo de responder cuatro preguntas de la operación: cuántas muestras llegarán (regresión), cuáles están en riesgo de resultar no conformes (clasificación), qué tan probable es que un positivo sea falso (Bayes y regla de reensayo) y qué grupos de muestras y clientes existen (agrupamiento). Como la base real todavía no está disponible, se trabaja con una base **simulada** de la misma estructura, y la exportación real se conecta después a través de un mapeo de columnas, sin cambiar el código.
+Se aplica aprendizaje automático a la base de muestras de un laboratorio de microbiología de alimentos con el objetivo de responder cuatro preguntas de la operación: cuántas muestras llegarán (regresión), cuáles están en riesgo de resultar no conformes (clasificación), qué tan probable es que un positivo sea falso (Bayes y regla de reensayo) y qué grupos de muestras y clientes existen (agrupamiento). La base del proyecto es la exportación real del laboratorio (etapa 08). Como no trae los controles de calidad ni los datos de recepción, la complementamos con una base **simulada** de la misma estructura (etapas 01 a 07) para aplicar más técnicas del curso; la exportación real también puede conectarse a esas etapas con un mapeo de columnas, sin cambiar el código.
 
-> **Datos simulados y reales.** Las cifras de las etapas 01 a 07 provienen del generador de `proyecto/datos/simulacion.py` (semilla fija): Muestran que el procedimiento funciona de punta a punta pero no describen la operación real del laboratorio. La etapa 08 usa la exportación real anonimizada (confidencial, nunca se versiona ni se entrega; ver "Etapa 08 y entrega").
+> **Base real y complemento simulado.** La etapa 08 usa la exportación real anonimizada (confidencial, nunca se versiona ni se entrega; ver "Etapa 08 y entrega"). Las cifras de las etapas 01 a 07 salen de la base complementaria que genera `proyecto/datos/simulacion.py` (semilla fija).
 
 ## Estructura
 
@@ -151,7 +151,7 @@ La etapa 08 (`08_datos_reales.ipynb`) trabaja con la exportación real del labor
 
 ## Limitaciones conocidas
 
-- **Datos simulados:** las cifras validan el procedimiento, no la operación del laboratorio; el generador fija relaciones que los modelos luego encuentran, de forma que los resultados con datos reales pueden ser más modestos.
+- **Base complementaria:** las cifras de las etapas 01 a 07 salen de la base simulada; el generador fija relaciones que los modelos luego encuentran, y con la base real (etapa 08) los resultados son más modestos.
 - **Brechas entre validación y prueba:** la etapa 07 las mide y las reporta; no se corrige nada después de abrir la prueba.
 - **Ensayos con pocos casos:** *Salmonella* y esterilidad tienen pocos positivos, así que su VPP y su tasa de reensayos conformes son poco precisos.
 - **Agrupamiento:** las siluetas son bajas, así que los grupos son descriptivos; la silueta del cribado no es comparable con la de la etapa 06, porque cambian las filas (entrenamiento frente a todo el desarrollo) y el preprocesamiento (log1p antes de escalar), y la propia etapa 06 separa los dos efectos y dice si, con su preprocesamiento, el análisis complementario habría puntuado más alto (con los datos simulados sí, y la selección se mantiene porque la regla se fijó de antemano).

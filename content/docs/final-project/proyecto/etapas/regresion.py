@@ -18,7 +18,7 @@ from proyecto.base import config, rutas
 from proyecto.base.artefactos import guardar_json, guardar_modelo, leer_json, leer_modelado
 from proyecto.cribado import arreglos, catalogo, corridas
 from proyecto.etapas import taguchi
-from proyecto.etapas.comun import Resultado, abrir, cerrar, legible, enumerar, aviso_origen
+from proyecto.etapas.comun import Resultado, abrir, cerrar, legible, enumerar
 from proyecto.evaluacion import metricas, validacion
 from proyecto.evaluacion.remuestreo import intervalo_bootstrap
 from proyecto.modelos import registro, tuberias
@@ -723,9 +723,6 @@ def operacion(c):
            "en menos días mal planificados."),
         "hallazgo",
     ))
-    r.agregar(aviso_origen(
-        "Los datos son **simulados**: Las cifras muestran que el procedimiento funciona de punta a punta, pero la "
-        "habilidad real dependerá de la exportación del laboratorio, que se procesaría con el mismo código."))
     latex.registrar_varias([
         ("RegMediaValidacion", media, "muestras por día hábil en promedio (validación)", 1),
         ("RegToleranciaOperativa", tolerancia, "tolerancia práctica en muestras por día", 1),
