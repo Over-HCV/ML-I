@@ -4,11 +4,11 @@
 
 **Autores:** Tania Fernanda Mora Cubillos, Over Haider Castrillón Valencia y Daniel Arias Mutis
 
-**Exposición.** La charla recorre los notebooks de etapa `01_datos.ipynb` a `07_evaluacion_final.ipynb` en orden. Las etapas 04 a 06 traen paneles interactivos (umbral de alerta, KNN, poda del árbol, red neuronal, Bayes, K-means y Taguchi) que solo se mueven con el núcleo en marcha: Antes de exponer hay que ejecutar el notebook (sin núcleo cada panel muestra la figura de su estado inicial). `Presentacion.ipynb` queda como un resumen corto de once diapositivas.
+**Exposición.** La charla recorre los notebooks de etapa `01_datos.ipynb` a `08_datos_reales.ipynb` en orden. Las etapas 04 a 06 traen paneles interactivos (umbral de alerta, KNN, poda del árbol, red neuronal, Bayes, K-means y Taguchi) que solo se mueven con el núcleo en marcha: Antes de exponer hay que ejecutar el notebook (sin núcleo cada panel muestra la figura de su estado inicial). `Presentacion.ipynb` queda como un resumen corto de once diapositivas.
 
 Se aplica aprendizaje automático a la base de muestras de un laboratorio de microbiología de alimentos con el objetivo de responder cuatro preguntas de la operación: cuántas muestras llegarán (regresión), cuáles están en riesgo de resultar no conformes (clasificación), qué tan probable es que un positivo sea falso (Bayes y regla de reensayo) y qué grupos de muestras y clientes existen (agrupamiento). Como la base real todavía no está disponible, se trabaja con una base **simulada** de la misma estructura, y la exportación real se conecta después a través de un mapeo de columnas, sin cambiar el código.
 
-> **Datos simulados.** Todas las cifras de los notebooks provienen del generador de `proyecto/datos/simulacion.py` (semilla fija). Muestran que el procedimiento funciona de punta a punta, pero no describen todavía la operación real del laboratorio.
+> **Datos simulados y reales.** Las cifras de las etapas 01 a 07 provienen del generador de `proyecto/datos/simulacion.py` (semilla fija): Muestran que el procedimiento funciona de punta a punta pero no describen la operación real del laboratorio. La etapa 08 usa la exportación real anonimizada (confidencial, nunca se versiona ni se entrega; ver "Etapa 08 y entrega").
 
 ## Estructura
 
@@ -30,7 +30,7 @@ final-project/
 ├── notebooks/
 │   ├── src/                    guiones de etapa (formato percent) y build.py
 │   ├── 01_datos.ipynb … 07_evaluacion_final.ipynb
-│   ├── Proyecto_Final.ipynb    las siete etapas en un solo notebook (entregable funcional)
+│   ├── Proyecto_Final.ipynb    las ocho etapas en un solo notebook (entregable funcional)
 │   └── Presentacion.ipynb      resumen corto de once diapositivas (la exposición recorre los notebooks 01 a 07)
 ├── figuras/                    PNG de cada etapa (se versionan; el informe las toma de aquí)
 ├── informe/                    informe final en LaTeX (main.tex, secciones/, make pdf)
@@ -85,7 +85,7 @@ Desde esta carpeta, con [uv](https://docs.astral.sh/uv/) y el entorno del reposi
 | Comando | Qué hace |
 |---|---|
 | `uv sync` | Instala las dependencias (en la raíz del repositorio) |
-| `make notebooks` | Ejecuta las siete etapas y escribe `notebooks/*.ipynb` (unos tres minutos) |
+| `make notebooks` | Ejecuta las ocho etapas y escribe `notebooks/*.ipynb` (unos tres minutos) |
 | `make etapa N=05` | Vuelve a ejecutar solo una etapa y rehace el notebook completo |
 | `make presentacion` | Rehace solo `Presentacion.ipynb` a partir de los artefactos ya calculados (segundos) |
 | `cd informe && make pdf` | Compila el informe en LaTeX (requiere haber ejecutado los notebooks) |
@@ -139,9 +139,15 @@ Las celdas de auditoría de la simulación (verdad oculta) se saltan solas cuand
 
 ## Abrir en Google Colab
 
-Se sube a Colab `notebooks/Proyecto_Final.ipynb` (las siete etapas) o un notebook de etapa suelto, por ejemplo `notebooks/05_clasificacion_bayes.ipynb`, y se ejecuta todo. La primera sección, "Código del proyecto", es una sola celda que recrea el paquete desde un archivo .tar.xz embebido en base64 (y, en los notebooks de etapa, los guiones de las etapas previas), comprobando su SHA-256 y sin reemplazar archivos que ya existan, de forma que no hace falta clonar el repositorio; un notebook de etapa suelto reconstruye en silencio las etapas anteriores antes de empezar.
+Se sube a Colab `notebooks/Proyecto_Final.ipynb` (las ocho etapas) o un notebook de etapa suelto, por ejemplo `notebooks/05_clasificacion_bayes.ipynb`, y se ejecuta todo. La primera sección, "Código del proyecto", es una sola celda que recrea el paquete desde un archivo .tar.xz embebido en base64 (y, en los notebooks de etapa, los guiones de las etapas previas), comprobando su SHA-256 y sin reemplazar archivos que ya existan, de forma que no hace falta clonar el repositorio; un notebook de etapa suelto reconstruye en silencio las etapas anteriores antes de empezar.
 
 El notebook completo se probó de punta a punta, en una carpeta vacía y sin el paquete instalado, con una pila parecida a la de Colab (Python 3.12, pandas 2.2.2, NumPy 2.0.2, scikit-learn 1.6.1, imbalanced-learn 0.13.0, matplotlib 3.10.0, pyarrow 18.1.0, SciPy 1.14.1, statsmodels 0.14.4), así como con la pila local del repositorio (pandas 3, scikit-learn 1.9), y en ambas termina sin errores, con las mismas selecciones y el mismo umbral (las cifras de la etapa 05 difieren solo desde el cuarto o quinto decimal, por diferencias numéricas del optimizador entre versiones de scikit-learn).
+
+## Etapa 08 y entrega
+
+La etapa 08 (`08_datos_reales.ipynb`) trabaja con la exportación real del laboratorio, que se copia a mano en `datos/reales/muestras_*.parquet` (una fila por muestra, especificación y lectura; clientes, puntos y analistas con códigos aleatorios). Con ella revisamos si las llegadas son de Poisson (los lotes sí, las muestras no: Poisson compuesta), segmentamos clientes y clasificamos la no conformidad al ingreso con referencia, regla de la tasa histórica, regresión logística y árbol (tres configuraciones cada uno), umbral por costo, cálculo ilustrativo y una sola evaluación en 2026 tras congelar el modelo en `artefactos/08_congelado.json`. Solo las etapas 07 y 08 pueden leer la prueba y cada lectura queda en `artefactos/_etapas/lecturas_prueba.log`. Sin el archivo cada sección de la etapa 08 muestra una nota y el resto del proyecto corre igual.
+
+`make entrega` arma `entrega/TallerFinal_GrupoXX.zip` (`GRUPO=07 make entrega` cambia el número) con el informe, `Modelo_GrupoXX.ipynb` (copia de `Proyecto_Final.ipynb`), los notebooks de etapa, el código, `README.md`, `requirements.txt` y en `datos/` solo cinco filas anonimizadas y el diccionario de las 36 columnas (`proyecto/datos/muestra_publica.py`). El script falla si encuentra datos reales o algún código de cliente en el zip. Semilla 42, Python 3.12 y las versiones de `requirements.txt`.
 
 ## Limitaciones conocidas
 

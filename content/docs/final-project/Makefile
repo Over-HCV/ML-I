@@ -6,6 +6,7 @@
 #   make colab         prueba que los notebooks construidos funcionan solos en una carpeta vacía
 #   make verificar     ejecuta verificacion/verificar.py (si existe)
 #   make manim         renderiza los videos de Manim de la presentación (entorno aparte, MANIM_VENV=...)
+#   make entrega       arma entrega/TallerFinal_GrupoXX.zip (GRUPO=07 make entrega), sin la base real
 #   make limpiar       borra datos generados, artefactos y cachés
 
 RAIZ := $(shell git rev-parse --show-toplevel)
@@ -15,7 +16,7 @@ N    ?=
 MANIM_VENV   ?= $(HOME)/.cache/proyecto_manim_venv
 MEDIOS_MANIM ?= $(or $(TMPDIR),/tmp)/proyecto_manim
 
-.PHONY: notebooks etapa presentacion colab verificar limpiar manim
+.PHONY: notebooks etapa presentacion colab verificar limpiar manim entrega
 
 notebooks:
 	$(UV) python notebooks/src/build.py
@@ -39,6 +40,10 @@ verificar:
 	else \
 		echo "Todavía no existe verificacion/verificar.py."; \
 	fi
+
+# Zip para el aula virtual: informe, notebooks, código, cinco filas anonimizadas y el diccionario.
+entrega:
+	$(UV) python notebooks/src/empaquetar.py
 
 # No toca datos/reales ni datos/externos (archivos traídos a mano).
 limpiar:

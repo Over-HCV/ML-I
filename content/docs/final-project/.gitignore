@@ -24,3 +24,6 @@ informe/secciones/*.aux
 
 # Material confidencial de Daniel (exportación real y su notebook de referencia)
 /notebooks/src/idea/
+
+# Zip de entrega (se arma con make entrega)
+/entrega/
