@@ -1,10 +1,11 @@
 # Guion de la exposición: Notebooks 03 y 04
 
-Tiempo total: **5 minutos**. Cada tramo de los notebooks tiene un recuadro **Lo que digo** con las cifras y debajo
-la evidencia. Este guion es la versión hablada y un poco más larga. No hay que decirlo palabra por palabra: Son las
+Tiempo total: **5 minutos**. En los notebooks cada sección lleva un comentario oculto **Lo que digo** con las cifras
+(se ve al editar la celda con doble clic y no al renderizarla) y debajo la evidencia. Este guion es la versión
+hablada y un poco más larga. No hay que decirlo palabra por palabra: Son las
 ideas en el orden en que salen en pantalla.
 
-| Notebook | Tramo | Pregunta | Tiempo | Acumulado |
+| Notebook | Parte | Pregunta | Tiempo | Acumulado |
 |---|---|---|---|---|
 | 03 | A | Qué vale la pena modelar a fondo | 0:45 | 0:45 |
 | 03 | B | Cuántas muestras llegan mañana | 1:15 | 2:00 |
@@ -19,7 +20,7 @@ porque así podemos usar cosas que la exportación real no trae, como los contro
 
 ---
 
-## Notebook 03, tramo A: Qué vale la pena modelar (0:45)
+## Notebook 03, parte A: Qué vale la pena modelar (0:45)
 
 **A.1 (contador de 16).** "Con la base del laboratorio se podían plantear 16 preguntas distintas: Cuántas muestras
 llegan, cuáles salen mal, cuánto tarda el informe, qué clientes dejan de enviar. No nos daba el tiempo para
@@ -38,7 +39,7 @@ que es el 04, y los perfiles de muestra, que es el 05."
 fuera. Con una sola variable, cuánto pasa el recuento del límite, se lograba el 95 % de lo que lograba el modelo. Ahí
 sobra el modelo y basta una regla, que retomamos al final."
 
-## Notebook 03, tramo B: Cuántas muestras llegan mañana (1:15)
+## Notebook 03, parte B: Cuántas muestras llegan mañana (1:15)
 
 **B.1 (planteamiento).** "La primera pregunta elegida es cuántas muestras van a llegar mañana. La respondemos la
 víspera, solo con lo que ya se sabe: Los días anteriores, el calendario y lo agendado. Sirve para cuadrar turnos,
@@ -59,7 +60,7 @@ margen."
 
 **Enlace al 04:** "La segunda pregunta elegida no es cuántas llegan sino cuáles van a salir mal."
 
-## Notebook 04, tramo A: Qué muestras vigilar al recibirlas (1:45)
+## Notebook 04, parte A: Qué muestras vigilar al recibirlas (1:45)
 
 **A.1 (planteamiento y 8.9 %).** "Cerca del 9 % de las muestras salen no conformes. Queremos saberlo al recibirlas,
 antes de sembrarlas, para priorizarlas o avisarle al cliente. Antes de mirar fijamos cuánto cuesta cada error: Dejar
@@ -78,7 +79,7 @@ calibramos y bajó a 10 %. Sin ese paso ni el umbral ni lo de Bayes tendrían se
 teoría, lo que confirma la calibración. Con él salen 31 alertas por semana, acierta el 28 % de ellas y se detecta el
 40 % de las no conformes. El costo baja un 19 % frente a no alertar nunca."
 
-## Notebook 04, tramo B: Cuánto creerle a un positivo (1:15)
+## Notebook 04, parte B: Cuánto creerle a un positivo (1:15)
 
 **B.1 (video, 32 s).** "Esta es la pregunta con que empezó el laboratorio: Cuando un ensayo da no conforme, ¿qué tan
 probable es que sea falso? Cada ensayo tiene una sensibilidad y una especificidad que salen de sus controles. Aunque

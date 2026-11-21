@@ -1,16 +1,14 @@
 # %% [markdown]
 # # Etapa 04: Qué muestras vigilar y cuánto creerle a un positivo
 #
-# Este notebook está ordenado para la exposición. Tiene dos tramos que se apoyan uno en el otro: En el A estimamos
-# al recibir cada muestra qué tan probable es que salga no conforme y en el B usamos ese riesgo para saber cuánto
-# creerle a un resultado positivo. En cada tramo van primero las ideas que decimos (en los recuadros) y debajo la
-# evidencia técnica. El detalle completo de la etapa (la red neuronal por dentro, el diseño de Taguchi, los paneles y
-# la auditoría de la simulación) queda en el **anexo** al final y no se expone.
+# Esta etapa tiene dos partes que se apoyan una en la otra. En la parte A estimamos, al recibir cada muestra, qué tan
+# probable es que termine no conforme y fijamos un umbral de alerta por costo. En la parte B usamos ese riesgo junto
+# con la fiabilidad de cada ensayo para saber cuánto creerle a un resultado positivo. El detalle técnico completo queda
+# en el **anexo** al final.
 #
-# | Tramo | Pregunta | Tiempo |
-# |---|---|---|
-# | A | Qué muestras vigilar al recibirlas | 1:45 |
-# | B | Cuánto creerle a un positivo | 1:15 |
+# <!--
+# Tiempos de la exposición: Parte A 1:45 (acumulado 3:45), parte B 1:15 (acumulado 5:00).
+# -->
 
 # %%
 from proyecto.base.artefactos import iniciar_etapa
@@ -23,10 +21,11 @@ c = clasificacion.iniciar()
 mostrar(c.encabezado)
 
 # %% [markdown]
-# # Tramo A: Qué muestras vigilar al recibirlas
+# # Parte A: Qué muestras vigilar al recibirlas
 #
 # ## A.1 El problema y la decisión clave
 #
+# <!--
 # > **Lo que digo.** Cerca del **9 %** de las muestras salen no conformes. Queremos saber **al recibir** una muestra,
 # > antes de sembrarla, si tiene riesgo alto para priorizarla o avisarle al cliente.
 # >
@@ -36,6 +35,7 @@ mostrar(c.encabezado)
 # > cuestan lo mismo en promedio.
 # >
 # > **Muestro:** La ficha del planteamiento y las tarjetas de 8.5 % y 8.9 % de no conformes.
+# -->
 #
 # $$\text{Costo}({\color{#C46A2B}{t}}) = c_{FP}\,{\color{#6B6B6B}{FP(t)}} + c_{FN}\,{\color{#B8423F}{FN(t)}}
 # \qquad\qquad
@@ -48,6 +48,7 @@ planteamiento.mostrar(0, 1)
 # %% [markdown]
 # ## A.2 Qué hicimos: Los mismos tres niveles de la etapa 03
 #
+# <!--
 # > **Lo que digo.** Repetimos los tres niveles: Los modelos del curso tal como vienen, el diseño de Taguchi para las
 # > decisiones de la receta (aquí una de ellas es qué hacer con el desbalance) y el ajuste fino. Gana la **regresión
 # > logística**, con un **ROC-AUC de 0.724** en validación: Ordena mejor que el azar (0.5) pero no de forma perfecta (1).
@@ -58,6 +59,7 @@ planteamiento.mostrar(0, 1)
 # >
 # > **Muestro:** La tabla de la pasada didáctica (columna ROC-AUC), las curvas ROC (todas por encima de la diagonal)
 # > y la tarjeta de la red frente a la logística.
+# -->
 
 # %%
 poda = clasificacion.poda(c)
@@ -80,6 +82,7 @@ evaluacion.mostrar(0)
 # %% [markdown]
 # ## A.3 Un tropiezo útil: Calibrar
 #
+# <!--
 # > **Lo que digo.** Copiar las no conformes para equilibrar las clases (**sobremuestreo**) casi no cambia cómo ordena
 # > el modelo pero **infla las probabilidades**: El modelo decía **46 %** de riesgo promedio cuando la tasa real es
 # > **9 %**. Por eso lo **calibramos** y el promedio bajó a **10 %**. Sin ese paso el umbral de 0.167 y toda la parte
@@ -87,6 +90,7 @@ evaluacion.mostrar(0)
 # >
 # > **Muestro:** Las tarjetas sin calibrar frente a calibrado y la figura, donde la línea naranja (calibrada) se pega
 # > a la diagonal y la azul queda muy por debajo.
+# -->
 
 # %%
 calibracion = clasificacion.calibracion(c)
@@ -95,6 +99,7 @@ calibracion.mostrar(1, 0)
 # %% [markdown]
 # ## A.4 Resultado: El umbral
 #
+# <!--
 # > **Lo que digo.** Recorrimos los umbrales de 0.02 a 0.50 y el de **menor costo es 0.167**, el mismo que daba la
 # > teoría. Eso confirma que la calibración funcionó. Con él salen **31 alertas por semana**: El **28 %** de las
 # > alertas acierta y se detecta el **40 %** de las no conformes. El costo baja de **2925** (no alertar nunca) a
@@ -102,6 +107,7 @@ calibracion.mostrar(1, 0)
 # >
 # > **Muestro:** Las tres tarjetas (no alertar nunca, el modelo, alertar todas) y la figura del costo con su mínimo
 # > en la línea negra.
+# -->
 
 # %%
 umbral = clasificacion.umbral_por_costo(c)
@@ -109,10 +115,11 @@ congelado = clasificacion.congelar(c)
 umbral.mostrar(1, 0)
 
 # %% [markdown]
-# # Tramo B: Cuánto creerle a un positivo
+# # Parte B: Cuánto creerle a un positivo
 #
 # ## B.1 La idea
 #
+# <!--
 # > **Lo que digo.** Esta es la pregunta con que empezó el laboratorio: Cuando un ensayo da "no conforme", ¿qué tan
 # > probable es que sea falso? Cada ensayo tiene una **sensibilidad** (de las contaminadas, cuántas detecta) y una
 # > **especificidad** (de las limpias, cuántas deja pasar como limpias), que salen de sus controles de calidad. Aunque
@@ -121,6 +128,7 @@ umbral.mostrar(1, 0)
 # >
 # > **Muestro:** El video (32 s). La fórmula queda de apoyo: Arriba los verdaderos positivos y abajo se les suman los
 # > falsos.
+# -->
 #
 # $$\mathrm{VPP} = P(\text{contaminada} \mid +) = \frac{{\color{#2F8A4E}{S\,{\color{#3B64A8}{p}}}}}{{\color{#2F8A4E}{S\,{\color{#3B64A8}{p}}}}
 # + {\color{#B8423F}{(1-E)(1-{\color{#3B64A8}{p}})}}}
@@ -132,12 +140,14 @@ mostrar(g.video("bayes"))   # Manim: el árbol de 1000 muestras se vuelve la fó
 # %% [markdown]
 # ## B.2 Resultado 1: Cuánto creerle a cada ensayo
 #
+# <!--
 # > **Lo que digo.** En el laboratorio unos **22 de cada 100** no conformes serían falsos (VPP de **0.784**). El ensayo
 # > menos fiable es **esterilidad**, con **37 falsos de cada 100**, y el más fiable **Salmonella** (10 de cada 100).
 # > La diferencia no viene solo de la especificidad: Un ensayo donde la contaminación es rara da más falsos en
 # > proporción.
 # >
 # > **Muestro:** La columna P(falso positivo) de la tabla y la figura por ensayo.
+# -->
 
 # %%
 fiabilidad = clasificacion.sensibilidad_especificidad(c)
@@ -147,12 +157,14 @@ vpp_ensayo.mostrar(0, 1)
 # %% [markdown]
 # ## B.3 Resultado 2: El mismo positivo se lee distinto según la muestra
 #
-# > **Lo que digo.** Aquí se unen las dos partes. El clasificador del tramo A da el riesgo previo de cada muestra.
+# <!--
+# > **Lo que digo.** Aquí se unen las dos partes. El clasificador de la parte A da el riesgo previo de cada muestra.
 # > Tomamos **dos muestras con el mismo positivo en el mismo ensayo** (mesófilos aerobios): En la de riesgo bajo la
 # > probabilidad de que el positivo sea falso es **38 %** y en la de riesgo alto es **3 %**. Mismo resultado, distinta
 # > confianza.
 # >
 # > **Muestro:** Las dos tarjetas lado a lado (maquillaje en polvo frente a gel).
+# -->
 
 # %%
 vpp_muestra = clasificacion.vpp_por_muestra(c)
@@ -161,6 +173,7 @@ vpp_muestra.mostrar(2)
 # %% [markdown]
 # ## B.4 Cierre: El reensayo y la regla simple
 #
+# <!--
 # > **Lo que digo.** Si el reensayo vuelve a dar positivo el resultado queda prácticamente confirmado (**99 %**). Las
 # > cuentas cuadran con lo observado: Esperábamos **25 %** de reensayos conformes y salió **27 %**. Y la regla simple
 # > que dejamos pendiente en la etapa 03 queda así: **Reensayar antes de informar cuando el recuento pasa el límite
@@ -170,6 +183,7 @@ vpp_muestra.mostrar(2)
 # > **Frase de cierre:** El modelo no reemplaza al analista: Le dice qué mirar primero y cuánto confiar en lo que ve.
 # >
 # > **Muestro:** El hallazgo del reensayo y la tarjeta de la regla.
+# -->
 
 # %%
 reensayo = clasificacion.reensayo(c)
@@ -181,12 +195,12 @@ regla.mostrar(1)
 # %% [markdown]
 # ---
 #
-# # Anexo: Detalle técnico de la etapa (no se expone)
+# # Anexo: Detalle técnico de la etapa
 #
-# Aquí queda todo lo que la etapa calculó y no mostramos en los tramos. Nada se vuelve a calcular salvo los paneles,
-# que reentrenan en vivo con el núcleo en marcha.
+# Aquí queda el detalle completo de la etapa. Son los mismos resultados de arriba, sin volver a calcularlos, salvo
+# los paneles, que reentrenan en vivo con el núcleo en marcha.
 #
-# ## Tramo A
+# ## Parte A
 #
 # ### Métricas y referencia
 #
@@ -344,7 +358,7 @@ congelada = {f: legible(v) for f, v in c.configuracion_final.items()}   # nivele
 mostrar(ui.panel_taguchi(c.taguchi, congelada, rotulo="Clasificación", etapa="04"))
 
 # %% [markdown]
-# ## Tramo B
+# ## Parte B
 #
 # ### Sensibilidad y especificidad de cada ensayo
 #

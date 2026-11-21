@@ -1,14 +1,13 @@
 # %% [markdown]
 # # Etapa 03: Qué vale la pena modelar a fondo y cuántas muestras van a llegar
 #
-# Este notebook está ordenado para la exposición. Tiene dos tramos y en cada uno van primero las ideas que decimos
-# (en los recuadros) y debajo la evidencia técnica de cada afirmación. El detalle completo de la etapa (todas las
-# tablas, el diseño de Taguchi por dentro y los paneles) queda en el **anexo** al final y no se expone.
+# Esta etapa tiene dos partes. En la parte A decidimos con una regla fija, escrita antes de ver resultados, cuáles de
+# las preguntas posibles sobre la base vale la pena modelar a fondo. En la parte B modelamos a fondo la de regresión
+# elegida, que prevé la carga de trabajo del laboratorio. El detalle técnico completo queda en el **anexo** al final.
 #
-# | Tramo | Pregunta | Tiempo |
-# |---|---|---|
-# | A | Qué vale la pena modelar a fondo | 0:45 |
-# | B | Cuántas muestras llegan mañana | 1:15 |
+# <!--
+# Tiempos de la exposición: Parte A 0:45, parte B 1:15 (acumulado 2:00).
+# -->
 #
 # Esta etapa y la siguiente trabajan sobre la base simulada, que tiene la misma estructura que la base real del
 # notebook 02. Así podemos aplicar técnicas que la exportación real no permite, por ejemplo con los controles de
@@ -24,15 +23,17 @@ c = cribado.iniciar()
 mostrar(c.encabezado)
 
 # %% [markdown]
-# # Tramo A: Qué vale la pena modelar a fondo
+# # Parte A: Qué vale la pena modelar a fondo
 #
 # ## A.1 El problema
 #
+# <!--
 # > **Lo que digo.** Con la base del laboratorio se podían plantear **16 preguntas**: Cuántas muestras llegan,
 # > cuáles salen mal, cuánto tarda el informe, qué clientes dejan de enviar... No nos daba el tiempo para estudiarlas
 # > todas a fondo así que tuvimos que escoger.
 # >
 # > **Muestro:** El contador de candidatos (5 de regresión, 5 de clasificación, 3 de agrupamiento y 3 de Bayes).
+# -->
 
 # %%
 catalogo = cribado.catalogo_y_regla(c)
@@ -42,6 +43,7 @@ catalogo.mostrar(1)
 # %% [markdown]
 # ## A.2 Qué hicimos: Una regla escrita antes de mirar
 #
+# <!--
 # > **Lo que digo.** Antes de ver un solo resultado escribimos una regla. Cada pregunta pasa por una **prueba rápida**
 # > con modelos sin afinar y se compara contra una **referencia** que no usa modelo. Para seguir tiene que cumplir tres
 # > cosas:
@@ -54,6 +56,7 @@ catalogo.mostrar(1)
 # >
 # > **Si preguntan cómo se comparan preguntas tan distintas:** Con la **habilidad**, la fracción del error de la
 # > referencia que el modelo elimina (0 si empata con ella, 1 si no se equivoca nunca). En clasificación es 2 AUC − 1.
+# -->
 #
 # $$\text{habilidad}_{\text{regresión}} = 1 - \frac{{\color{#B8423F}{\mathrm{RMSE}_{\text{modelo}}}}}{{\color{#3B64A8}{\mathrm{RMSE}_{\text{referencia}}}}}
 # \qquad
@@ -70,11 +73,13 @@ catalogo.mostrar(2)   # la regla tal como quedó escrita en cribado/analisis.py
 # %% [markdown]
 # ## A.3 Resultado: De 16 preguntas a 3
 #
-# > **Lo que digo.** De 16 candidatos quedan **3**: La **carga diaria** (regresión, la vemos ahora en el tramo B), la
+# <!--
+# > **Lo que digo.** De 16 candidatos quedan **3**: La **carga diaria** (regresión, la vemos ahora en la parte B), la
 # > **muestra no conforme vista desde la recepción** (clasificación, etapa 04) y los **perfiles de muestra**
 # > (agrupamiento, etapa 05). Los 3 de Bayes pasan directo porque son cálculos y no modelos.
 # >
 # > **Muestro:** El embudo 16 → 13 → 10 → 3.
+# -->
 
 # %%
 seleccion = cribado.seleccion(c)
@@ -83,11 +88,13 @@ seleccion.mostrar(0)
 # %% [markdown]
 # ## A.4 Lo curioso: La mayor habilidad no siempre gana
 #
+# <!--
 # > **Lo que digo.** La pregunta que mejor predecía era "¿este no conforme es falso?" (habilidad **0.689**, un AUC
 # > de **0.845**) y **quedó fuera**. Una sola variable, **cuánto pasa el recuento del límite**, lograba el **95 %** de lo
 # > que lograba el modelo. Ahí sobra el modelo y basta una regla, que retomamos al final de la etapa 04.
 # >
 # > **Muestro:** Las tres barras naranjas pasan la línea roja del 90 % y por eso salen.
+# -->
 
 # %%
 regla.mostrar(0, 2)
@@ -98,10 +105,11 @@ contexto_cribado = c   # el anexo lo vuelve a usar
 cribado.terminar(c)    # cierra la parte A; la etapa sigue abierta para la parte B
 
 # %% [markdown]
-# # Tramo B: Cuántas muestras llegan mañana
+# # Parte B: Cuántas muestras llegan mañana
 #
 # ## B.1 El problema
 #
+# <!--
 # > **Lo que digo.** Queremos saber **la víspera** cuántas muestras van a llegar al día siguiente, para ajustar los
 # > turnos de recepción y siembra y preparar medios de cultivo e incubadoras. Solo usamos lo que se sabe la víspera:
 # > Los días anteriores, el calendario y lo que ya está agendado.
@@ -109,6 +117,7 @@ cribado.terminar(c)    # cierra la parte A; la etapa sigue abierta para la parte
 # > La vara para medirnos es lo que el laboratorio ya puede hacer sin modelo: **Promediar los últimos 5 días**.
 # >
 # > **Muestro:** La ficha del planteamiento y los días de entrenamiento (589) y de validación (125).
+# -->
 
 # %%
 from proyecto.etapas import regresion
@@ -121,6 +130,7 @@ planteamiento.mostrar()
 # %% [markdown]
 # ## B.2 Qué hicimos: Tres niveles
 #
+# <!--
 # > **Lo que digo.**
 # >
 # > 1. **Los modelos del curso tal como vienen:** Recta simple, regresión múltiple, KNN, árbol y red neuronal. Ya aquí
@@ -133,6 +143,7 @@ planteamiento.mostrar()
 # > 3. **El ajuste fino** de los dos mejores modelos y una sola evaluación en validación.
 # >
 # > **Muestro:** La tabla de la pasada didáctica (columna Habilidad) y después la figura del L16 contra las 128.
+# -->
 
 # %%
 recta = regresion.recta_simple(c)
@@ -151,6 +162,7 @@ confirmacion.mostrar(2, 3)
 # %% [markdown]
 # ## B.3 Resultado
 #
+# <!--
 # > **Lo que digo.** Gana la **regresión lineal**, el modelo más sencillo. Promediar los últimos 5 días se equivoca en
 # > unas **15 muestras por día** y el modelo baja ese error a **11**, en días que traen unas **54 muestras**. Los días
 # > mal planificados (error mayor que el 20 % de la carga) bajan del **56 %** al **42 %**. La mejora no es suerte: Su
@@ -159,6 +171,7 @@ confirmacion.mostrar(2, 3)
 # >
 # > **Muestro:** Las tarjetas de días fuera de tolerancia y la serie de validación, donde la línea azul (el modelo)
 # > sigue los picos mejor que la naranja (el promedio de 5 días).
+# -->
 
 # %%
 evaluacion = regresion.evaluacion_validacion(c)
@@ -171,12 +184,12 @@ diagnostico.mostrar(0)
 # %% [markdown]
 # ---
 #
-# # Anexo: Detalle técnico de la etapa (no se expone)
+# # Anexo: Detalle técnico de la etapa
 #
-# Aquí queda todo lo que la etapa calculó y no mostramos en los tramos: Las tablas completas, el diseño de Taguchi por
-# dentro y los paneles. Nada se vuelve a calcular, son los mismos resultados de arriba.
+# Aquí queda el detalle completo de la etapa: Las tablas completas, el diseño de Taguchi por dentro y los paneles.
+# Son los mismos resultados de arriba, sin volver a calcularlos.
 #
-# ## Tramo A
+# ## Parte A
 #
 # ### Catálogo, líneas base y auditoría de fugas
 #
@@ -220,7 +233,7 @@ mostrar(fichas(papeles["numericas"] + papeles["categoricas"],
                f"Predice en \"{papeles['momento']}\" con estas variables ({len(hallazgos)} hallazgos de fuga)"))
 
 # %% [markdown]
-# ## Tramo B
+# ## Parte B
 #
 # ### Referencias ingenuas y RMSE
 #
