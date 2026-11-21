@@ -53,8 +53,13 @@ class Resultado:
         self.salidas.append(fig)
         return fig
 
-    def mostrar(self):
-        mostrar(*self.salidas)
+    def mostrar(self, *indices):
+        """Muestra todas las piezas o solo las de `indices`, en ese orden."""
+        mostrar(*(self.salidas[i] for i in indices) if indices else self.salidas)
+
+    def mostrar_sin(self, *indices):
+        """Muestra las piezas que no están en `indices` (lo que quedó sin mostrar en la exposición)."""
+        mostrar(*(p for i, p in enumerate(self.salidas) if i not in indices))
 
     def __getitem__(self, clave):
         return self.valores[clave]

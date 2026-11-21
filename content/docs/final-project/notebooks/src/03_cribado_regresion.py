@@ -1,11 +1,18 @@
 # %% [markdown]
 # # Etapa 03: Qué vale la pena modelar a fondo y cuántas muestras van a llegar
 #
-# Este notebook tiene dos partes. Con la base del laboratorio se pueden plantear muchos análisis (prever volúmenes,
-# anticipar resultados, agrupar clientes) y no nos daba el tiempo para estudiarlos todos a fondo. Así que en la parte A
-# los pasamos a todos por la misma prueba rápida y decidimos con una regla, escrita antes de ver resultados, cuáles
-# pasan al modelado a fondo. En la parte B modelamos a fondo el análisis de regresión elegido, que prevé la carga de
-# trabajo del laboratorio. La clasificación y el agrupamiento elegidos siguen en las etapas 04 y 05.
+# Este notebook está ordenado para la exposición. Tiene dos tramos y en cada uno van primero las ideas que decimos
+# (en los recuadros) y debajo la evidencia técnica de cada afirmación. El detalle completo de la etapa (todas las
+# tablas, el diseño de Taguchi por dentro y los paneles) queda en el **anexo** al final y no se expone.
+#
+# | Tramo | Pregunta | Tiempo |
+# |---|---|---|
+# | A | Qué vale la pena modelar a fondo | 0:45 |
+# | B | Cuántas muestras llegan mañana | 1:15 |
+#
+# Esta etapa y la siguiente trabajan sobre la base simulada, que tiene la misma estructura que la base real del
+# notebook 02. Así podemos aplicar técnicas que la exportación real no permite, por ejemplo con los controles de
+# calidad que usa la etapa 04.
 
 # %%
 from proyecto.base.artefactos import iniciar_etapa
@@ -17,197 +24,224 @@ c = cribado.iniciar()
 mostrar(c.encabezado)
 
 # %% [markdown]
-# ## Parte A: Cribado de análisis
+# # Tramo A: Qué vale la pena modelar a fondo
 #
-# ## 1. El embudo de cribado
+# ## A.1 El problema
 #
-# La idea la tomamos del diseño de experimentos: Probar de forma barata y pareja muchas opciones y dejar el estudio
-# costoso solo para las que pasan el filtro. Los cuatro pasos los escribimos antes de ver resultados:
+# > **Lo que digo.** Con la base del laboratorio se podían plantear **16 preguntas**: Cuántas muestras llegan,
+# > cuáles salen mal, cuánto tarda el informe, qué clientes dejan de enviar... No nos daba el tiempo para estudiarlas
+# > todas a fondo así que tuvimos que escoger.
+# >
+# > **Muestro:** El contador de candidatos (5 de regresión, 5 de clasificación, 3 de agrupamiento y 3 de Bayes).
+
+# %%
+catalogo = cribado.catalogo_y_regla(c)
+tablas = cribado.tablas_modelado(c)   # una tabla por pregunta, con su auditoría de fugas (anexo)
+catalogo.mostrar(1)
+
+# %% [markdown]
+# ## A.2 Qué hicimos: Una regla escrita antes de mirar
 #
-# a. **Catálogo.** Cada candidato es una ficha con su unidad, su objetivo, el momento en que predice, su métrica,
-#    su línea base, la decisión del laboratorio que apoya y un valor de negocio de 1 a 3 que le pusimos nosotros.
-# b. **Prueba rápida.** Modelos sin afinar, entrenados solo con el entrenamiento y validados con los bloques de
-#    ventana creciente de la etapa 01.
-# c. **Regla de selección.** Unos umbrales fijos deciden quién es elegible y un puntaje decide quién gana en cada
-#    tipo.
-# d. **Modelado a fondo.** Solo los ganadores pasan a la parte B (regresión) y a las etapas 04 y 05.
-#
-# Para comparar candidatos tan distintos necesitábamos una sola escala, que llamamos **habilidad**: Qué parte del
-# camino entre la línea base y la perfección recorre el modelo. En regresión es la fracción del error de la
-# referencia que el modelo elimina (cero si empata con la referencia, uno si no se equivoca nunca) y en
-# clasificación es el coeficiente de Gini, que sale del área bajo la curva ROC (AUC, la probabilidad de que el
-# modelo le dé más riesgo a una no conforme que a una conforme tomadas al azar):
+# > **Lo que digo.** Antes de ver un solo resultado escribimos una regla. Cada pregunta pasa por una **prueba rápida**
+# > con modelos sin afinar y se compara contra una **referencia** que no usa modelo. Para seguir tiene que cumplir tres
+# > cosas:
+# >
+# > 1. Ganarle a la referencia en **los 4 periodos** de validación y no solo en promedio.
+# > 2. Que **no baste una sola variable**: Si un árbol con una variable logra el 90 % de lo que logra el modelo, sobra
+# >    el modelo.
+# > 3. Tener el **mayor puntaje** de su tipo, que combina qué tan bien predice con cuánto le sirve al laboratorio
+# >    (un valor de 1 a 3 que pusimos nosotros).
+# >
+# > **Si preguntan cómo se comparan preguntas tan distintas:** Con la **habilidad**, la fracción del error de la
+# > referencia que el modelo elimina (0 si empata con ella, 1 si no se equivoca nunca). En clasificación es 2 AUC − 1.
 #
 # $$\text{habilidad}_{\text{regresión}} = 1 - \frac{{\color{#B8423F}{\mathrm{RMSE}_{\text{modelo}}}}}{{\color{#3B64A8}{\mathrm{RMSE}_{\text{referencia}}}}}
-# \qquad\qquad
-# \text{habilidad}_{\text{clasificación}} = 2\,{\color{#2F8A4E}{\mathrm{AUC}}} - 1$$
-#
-# El RMSE es la raíz del error cuadrático medio, o sea el tamaño típico del error en las unidades del objetivo. En
-# las series de tiempo la referencia es un pronóstico ingenuo (el promedio de los últimos periodos) porque ganarle a
-# la media global sería demasiado fácil. El puntaje multiplica la habilidad por el valor de negocio
-# ${\color{#C46A2B}{v}}$, de modo que un análisis muy útil para el laboratorio puede ganar con algo menos de
-# habilidad:
-#
-# $$\text{puntaje} = \frac{\text{habilidad}\;{\color{#C46A2B}{v}}}{3}$$
-#
-# Las fichas de tipo Bayes no entrenan modelos sino que aplican el teorema de Bayes a los controles de calidad, así
-# que no se criban y pasan directo a la etapa 04.
+# \qquad
+# \text{habilidad}_{\text{clasificación}} = 2\,{\color{#2F8A4E}{\mathrm{AUC}}} - 1
+# \qquad
+# \text{puntaje} = \frac{\text{habilidad}\;{\color{#C46A2B}{v}}}{3}$$
 
 # %%
-cribado.catalogo_y_regla(c).mostrar()
+prueba = cribado.prueba_rapida(c)
+regla = cribado.regla_simple(c)
+agrupamiento = cribado.candidatos_agrupamiento(c)
+catalogo.mostrar(2)   # la regla tal como quedó escrita en cribado/analisis.py
 
 # %% [markdown]
-# ## 2. Tablas de modelado y auditoría de fugas
+# ## A.3 Resultado: De 16 preguntas a 3
 #
-# Cada ficha arma su tabla a partir de las tablas limpias, con una fila por unidad de análisis (un día, una
-# muestra, un cliente), la fecha, el objetivo y las variables. La auditoría revisa que cada variable se conozca
-# antes o en el momento de la predicción y que ningún identificador ni objetivo entre como variable. Después
-# partimos cada tabla por fecha y la guardamos en dos archivos (desarrollo y prueba) junto con un JSON que dice el
-# papel de cada columna. El bloque de prueba se guarda sin abrirlo y solo la etapa 06 puede leerlo.
+# > **Lo que digo.** De 16 candidatos quedan **3**: La **carga diaria** (regresión, la vemos ahora en el tramo B), la
+# > **muestra no conforme vista desde la recepción** (clasificación, etapa 04) y los **perfiles de muestra**
+# > (agrupamiento, etapa 05). Los 3 de Bayes pasan directo porque son cálculos y no modelos.
+# >
+# > **Muestro:** El embudo 16 → 13 → 10 → 3.
 
 # %%
-cribado.tablas_modelado(c).mostrar()
+seleccion = cribado.seleccion(c)
+seleccion.mostrar(0)
 
 # %% [markdown]
-# ## 3. La prueba rápida
+# ## A.4 Lo curioso: La mayor habilidad no siempre gana
 #
-# A cada candidato supervisado lo probamos con su línea base, un modelo lineal o logístico y un árbol poco profundo
-# sobre el grupo ampliado de variables. A cada candidato de agrupamiento, con el estadístico de Hopkins y la mejor
-# silueta de K-means (las dos se explican en la sección 5). Todo con las filas del entrenamiento.
+# > **Lo que digo.** La pregunta que mejor predecía era "¿este no conforme es falso?" (habilidad **0.689**, un AUC
+# > de **0.845**) y **quedó fuera**. Una sola variable, **cuánto pasa el recuento del límite**, lograba el **95 %** de lo
+# > que lograba el modelo. Ahí sobra el modelo y basta una regla, que retomamos al final de la etapa 04.
+# >
+# > **Muestro:** Las tres barras naranjas pasan la línea roja del 90 % y por eso salen.
 
 # %%
-cribado.prueba_rapida(c).mostrar()
+regla.mostrar(0, 2)
+
+# %%
+consecuencias = cribado.consecuencias(c)
+contexto_cribado = c   # el anexo lo vuelve a usar
+cribado.terminar(c)    # cierra la parte A; la etapa sigue abierta para la parte B
 
 # %% [markdown]
-# ## 4. ¿Basta una regla simple?
+# # Tramo B: Cuántas muestras llegan mañana
 #
-# Un modelo solo se justifica si combina información. Para comprobarlo entrenamos en cada bloque un árbol que ve una
-# sola variable (la que más aporta) y, si su habilidad llega al umbral frente al mejor modelo rápido, lo que
-# recomendaríamos es una regla operativa y no un modelo.
-
-# %%
-cribado.regla_simple(c).mostrar()
-
-# %% [markdown]
-# ## 5. Candidatos de agrupamiento
+# ## B.1 El problema
 #
-# Aquí no hay línea base que superar así que la prueba hace dos preguntas. La primera es si los datos tienden a
-# formar grupos, y la responde el estadístico de **Hopkins**: Compara qué tan cerca quedan los puntos reales de sus
-# vecinos frente a puntos puestos al azar y da cerca de 0.5 cuando no hay grupos y se acerca a uno cuando sí. La
-# segunda es qué tan separados quedan los grupos de K-means y la responde la **silueta**, que va de menos uno a uno
-# y es alta cuando cada punto está más cerca de los de su grupo que de los del grupo vecino.
-
-# %%
-cribado.candidatos_agrupamiento(c).mostrar()
-
-# %% [markdown]
-# ## 6. Selección
-#
-# El embudo resume cuántos candidatos quedan en cada paso. Las comparaciones muestran los mejores puntajes de cada
-# tipo, incluidos los no elegibles, para que se vea qué dejamos de lado y por qué.
-
-# %%
-cribado.seleccion(c).mostrar()
-
-# %% [markdown]
-# Para ver con qué llega el clasificador elegido a la etapa 04 le preguntamos a su tabla qué momento declara, qué
-# variables usa y si la auditoría de fugas encontró algo:
-
-# %%
-from proyecto.reporte.html import fichas
-from proyecto.variables.comunes import auditar_momentos
-
-tabla, papeles = c.tablas_modelado[c.seleccion["clasificacion"]]
-hallazgos = auditar_momentos(tabla, papeles)   # lista vacía: ninguna variable se conoce después del momento
-mostrar(fichas(papeles["numericas"] + papeles["categoricas"],
-               f"Predice en \"{papeles['momento']}\" con estas variables ({len(hallazgos)} hallazgos de fuga)"))
-
-# %% [markdown]
-# ## 7. Lo que sigue
-#
-# La selección no se toca después: La parte B y las etapas 04 y 05 leen lo que quedó en
-# `artefactos/03_cribado.json`. La única excepción, que dejamos declarada aquí, es un análisis de agrupamiento
-# complementario sobre los clientes.
-
-# %%
-cribado.consecuencias(c).mostrar()
-
-# %%
-cribado.terminar(c)   # cierra la parte A; la etapa sigue abierta para la parte B
-
-# %% [markdown]
-# ## Parte B: Prever la carga de trabajo del laboratorio
-#
-# El cribado eligió un análisis de regresión y aquí lo modelamos a fondo en tres niveles. Primero pasamos por los
-# modelos del curso con su configuración de partida, después cribamos los factores de la tubería con un arreglo
-# ortogonal de Taguchi y al final afinamos los hiperparámetros de lo que sobrevivió. El ganador lo evaluamos una
-# sola vez en validación antes de congelarlo.
+# > **Lo que digo.** Queremos saber **la víspera** cuántas muestras van a llegar al día siguiente, para ajustar los
+# > turnos de recepción y siembra y preparar medios de cultivo e incubadoras. Solo usamos lo que se sabe la víspera:
+# > Los días anteriores, el calendario y lo que ya está agendado.
+# >
+# > La vara para medirnos es lo que el laboratorio ya puede hacer sin modelo: **Promediar los últimos 5 días**.
+# >
+# > **Muestro:** La ficha del planteamiento y los días de entrenamiento (589) y de validación (125).
 
 # %%
 from proyecto.etapas import regresion
 
 c = regresion.iniciar()   # la misma etapa: sus cifras se suman a las de la parte A
+planteamiento = regresion.planteamiento(c)
+referencias = regresion.referencias(c)
+planteamiento.mostrar()
 
 # %% [markdown]
-# ## 8. El problema y las referencias ingenuas
+# ## B.2 Qué hicimos: Tres niveles
 #
-# Decir que el modelo se equivoca en tantas muestras por día no dice nada si no lo ponemos al lado de lo que el
-# laboratorio ya consigue sin modelo. Por eso empezamos por las referencias ingenuas (repetir lo de ayer, promediar
-# la última semana) y las evaluamos en los mismos tramos de validación de los bloques temporales que después usan
-# los modelos.
+# > **Lo que digo.**
+# >
+# > 1. **Los modelos del curso tal como vienen:** Recta simple, regresión múltiple, KNN, árbol y red neuronal. Ya aquí
+# >    gana la regresión lineal múltiple (elimina el **29 %** del error de la referencia) y la red neuronal no la
+# >    mejora.
+# > 2. **Las decisiones de la receta:** Probamos seis decisiones (el modelo, el escalado, qué variables entran, si se
+# >    usa logaritmo, si se seleccionan variables y cómo se codifican). Todas las combinaciones eran **128 corridas** y
+# >    un diseño de **Taguchi L16** las redujo a **16**. Para comprobar el atajo corrimos también las 128: El orden de
+# >    importancia de los factores salió casi igual (correlación **0.94**) con solo **16 de las 128 corridas**.
+# > 3. **El ajuste fino** de los dos mejores modelos y una sola evaluación en validación.
+# >
+# > **Muestro:** La tabla de la pasada didáctica (columna Habilidad) y después la figura del L16 contra las 128.
 
 # %%
-regresion.planteamiento(c).mostrar()
-
-# %% [markdown]
-# Para medir el error usamos el RMSE, la raíz del promedio de los errores al cuadrado, que se lee en muestras por
-# día y castiga más los errores grandes. La **habilidad** compara el RMSE del modelo con el de la mejor referencia:
-# Vale cero si el modelo empata con ella, es negativa si pierde y se acerca a uno cuando casi no se equivoca.
-#
-# $$\mathrm{RMSE} = \sqrt{\frac{1}{n}\sum_{t=1}^{n}\big(y_t - {\color{#3B64A8}{\hat y_t}}\big)^2}
-# \qquad\qquad
-# \text{habilidad} = 1 - \frac{{\color{#B8423F}{\mathrm{RMSE}_{\text{modelo}}}}}{\mathrm{RMSE}_{\text{referencia}}}$$
+recta = regresion.recta_simple(c)
+poda = regresion.poda(c)
+didactica = regresion.didactica(c)
+coeficientes = regresion.coeficientes(c)
+didactica.mostrar(0)
 
 # %%
-regresion.referencias(c).mostrar()
+diseno = regresion.diseno(c)
+corridas = regresion.corridas_l16(c)
+confirmacion = regresion.confirmacion(c)
+afinamiento = regresion.afinamiento(c)
+confirmacion.mostrar(2, 3)
 
 # %% [markdown]
-# ## 9. Pasada didáctica: Los modelos del curso
+# ## B.3 Resultado
 #
-# Cada modelo usa el grupo ampliado de variables y el preprocesamiento por defecto (imputación por la mediana y
-# estandarización), sin afinar nada.
-#
-# ### 9.1 Regresión lineal simple
-#
-# Empezamos por la variable con mayor correlación absoluta con el objetivo y la dejamos en sus unidades originales,
-# para que la pendiente se lea en muestras por día.
+# > **Lo que digo.** Gana la **regresión lineal**, el modelo más sencillo. Promediar los últimos 5 días se equivoca en
+# > unas **15 muestras por día** y el modelo baja ese error a **11**, en días que traen unas **54 muestras**. Los días
+# > mal planificados (error mayor que el 20 % de la carga) bajan del **56 %** al **42 %**. La mejora no es suerte: Su
+# > intervalo bootstrap (habilidad de 0.154 a 0.343) no toca el cero. Sirve para fijar la dotación base del día
+# > siguiente, pero con margen.
+# >
+# > **Muestro:** Las tarjetas de días fuera de tolerancia y la serie de validación, donde la línea azul (el modelo)
+# > sigue los picos mejor que la naranja (el promedio de 5 días).
 
 # %%
-regresion.recta_simple(c).mostrar()
+evaluacion = regresion.evaluacion_validacion(c)
+diagnostico = regresion.diagnostico(c)
+congelado = regresion.congelar(c)
+operacion = regresion.operacion(c)
+operacion.mostrar(0)
+diagnostico.mostrar(0)
 
 # %% [markdown]
-# ### 9.2 Árbol de regresión con poda por costo-complejidad
+# ---
 #
-# Un árbol que crece sin límite termina memorizando el entrenamiento. La poda por costo-complejidad le cobra un
-# precio `ccp_alpha` a cada hoja y corta las ramas que no reducen el error lo suficiente para pagarlo. Calculamos la
-# ruta de poda del árbol completo y nos quedamos con el `ccp_alpha` de menor RMSE medio en los bloques así que la
-# complejidad la decide la validación y no una profundidad que pongamos a mano.
+# # Anexo: Detalle técnico de la etapa (no se expone)
+#
+# Aquí queda todo lo que la etapa calculó y no mostramos en los tramos: Las tablas completas, el diseño de Taguchi por
+# dentro y los paneles. Nada se vuelve a calcular, son los mismos resultados de arriba.
+#
+# ## Tramo A
+#
+# ### Catálogo, líneas base y auditoría de fugas
+#
+# Cada candidato es una ficha con su unidad, su objetivo, el momento en que predice, su métrica, su línea base y la
+# decisión que apoya. La auditoría revisa que cada variable se conozca antes o en el momento de la predicción. El
+# bloque de prueba se guarda sin abrirlo y solo la etapa 06 lo lee.
 
 # %%
-regresion.poda(c).mostrar()
+catalogo.mostrar_sin(1, 2)
+tablas.mostrar()
 
 # %% [markdown]
-# ### 9.3 Regresión múltiple, KNN, árbol y perceptrón en los mismos bloques
+# ### Prueba rápida, regla simple y agrupamiento
 #
-# La regresión lineal múltiple predice la carga del día siguiente como una suma ponderada de lo que ya sabemos la
-# víspera (rezagos, medias móviles, calendario y agenda), con un peso ${\color{#3B64A8}{\beta_j}}$ por variable:
+# En agrupamiento no hay referencia que superar. El estadístico de **Hopkins** dice si los datos tienden a formar
+# grupos (0.5 sin grupos, cerca de 1 con grupos) y la **silueta** dice qué tan separados quedan los grupos de
+# K-means (de −1 a 1).
+
+# %%
+prueba.mostrar()
+regla.mostrar(1)
+agrupamiento.mostrar()
+
+# %% [markdown]
+# ### Selección completa y lo que sigue
+
+# %%
+seleccion.mostrar_sin(0)
+consecuencias.mostrar()
+
+# %% [markdown]
+# Las variables con que llega el clasificador elegido a la etapa 04:
+
+# %%
+from proyecto.reporte.html import fichas
+from proyecto.variables.comunes import auditar_momentos
+
+tabla, papeles = contexto_cribado.tablas_modelado[contexto_cribado.seleccion["clasificacion"]]
+hallazgos = auditar_momentos(tabla, papeles)   # lista vacía: ninguna variable se conoce después del momento
+mostrar(fichas(papeles["numericas"] + papeles["categoricas"],
+               f"Predice en \"{papeles['momento']}\" con estas variables ({len(hallazgos)} hallazgos de fuga)"))
+
+# %% [markdown]
+# ## Tramo B
+#
+# ### Referencias ingenuas y RMSE
+#
+# El RMSE es la raíz del promedio de los errores al cuadrado, se lee en muestras por día y castiga más los errores
+# grandes:
+#
+# $$\mathrm{RMSE} = \sqrt{\frac{1}{n}\sum_{t=1}^{n}\big(y_t - {\color{#3B64A8}{\hat y_t}}\big)^2}$$
+
+# %%
+referencias.mostrar()
+
+# %% [markdown]
+# ### Nivel 1: Los modelos del curso
+#
+# La recta simple usa la variable más correlacionada con el objetivo. El árbol se poda por costo-complejidad
+# (`ccp_alpha` cobra un precio por hoja). La regresión múltiple predice la carga como una suma ponderada:
 #
 # $$\hat y_{t+1} = {\color{#3B64A8}{\beta_0}} + \sum_{j=1}^{p} {\color{#3B64A8}{\beta_j}}\, x_{t,j}$$
 #
-# KNN promedia la carga de los días más parecidos, el árbol parte los días en grupos con reglas sucesivas y el
-# perceptrón multicapa es una red neuronal pequeña que combina las variables en capas antes de dar la predicción. Los
-# cuatro van dentro de una tubería de scikit-learn que imputa, escala y codifica con lo aprendido solo en el tramo
-# de ajuste de cada bloque. Así se arma la de la regresión múltiple:
+# Todos van dentro de una tubería que imputa, escala y codifica con lo aprendido solo en el tramo de ajuste de cada
+# bloque:
 
 # %%
 from proyecto.modelos import tuberias
@@ -216,28 +250,22 @@ tuberia = tuberias.construir_tuberia("regresion", "lineal", c.numericas, c.categ
 mostrar(tuberia)   # imputar y escalar las numéricas, codificar las categóricas y ajustar el modelo
 
 # %%
-regresion.didactica(c).mostrar()
+recta.mostrar()
+poda.mostrar()
+didactica.mostrar_sin(0)
+coeficientes.mostrar()
 
 # %% [markdown]
-# ### 9.4 Qué dicen los coeficientes de la regresión múltiple
+# ### Nivel 2: El arreglo L16 de Taguchi
 #
-# Como las variables están estandarizadas, cada coeficiente es el cambio esperado en la carga cuando la variable
-# sube una desviación estándar y las demás se quedan quietas.
-
-# %%
-regresion.coeficientes(c).mostrar()
-
-# %% [markdown]
-# ## 10. Nivel 2: Cribado de la tubería con un arreglo L16 de Taguchi
+# Un arreglo ortogonal estima el efecto de cada factor con 16 corridas porque cada nivel de un factor aparece el
+# mismo número de veces frente a cada nivel de los demás. El precio es que algunas interacciones quedan mezcladas con
+# los efectos principales. Cada corrida se resume con la razón señal/ruido "menor es mejor", que castiga a la vez un
+# error alto y uno que cambia entre bloques, y el óptimo sale del modelo aditivo:
 #
-# Además del modelo, la tubería decide el escalado, el grupo de variables, si el objetivo va en logaritmo, si se
-# seleccionan variables y cómo se codifican las discretas. Probar todas las combinaciones exige 4 × 2⁵ = 128
-# corridas. Un **arreglo ortogonal L16** estima el efecto de cada uno de los seis factores con solo 16, porque cada
-# nivel de un factor aparece el mismo número de veces frente a cada nivel de los demás. El precio es que algunas
-# interacciones (cuando el efecto de un factor depende del nivel de otro) quedan mezcladas con los efectos
-# principales, y la tabla de confusiones dice exactamente cuáles.
-#
-# El arreglo sale de `arreglos.arreglo_l16()` y antes de usarlo comprobamos que de verdad sea ortogonal:
+# $$\frac{S}{N} = -10\,\log_{10}\Big(\frac{1}{B}\sum_{b=1}^{B}{\color{#B8423F}{\mathrm{RMSE}_b^2}}\Big)
+# \qquad
+# \widehat{S/N} = {\color{#6B6B6B}{\overline{S/N}}} + \sum_{f}\Big({\color{#2F8A4E}{\overline{S/N}_{f,\,\text{nivel}}}} - {\color{#6B6B6B}{\overline{S/N}}}\Big)$$
 
 # %%
 from proyecto.cribado import arreglos
@@ -249,75 +277,32 @@ usadas = l16[list(regresion.COLUMNAS_L16.values())].T.set_axis(range(1, 17), axi
 titulo = f"Columnas del L16 que usamos, una por fila (ortogonal: {'Sí' if ortogonal else 'No'})"
 mostrar(tabla_html(usadas, titulo, decimales=0, con_indice=True))
 
+# %%
+diseno.mostrar()
+corridas.mostrar()
+confirmacion.mostrar_sin(2, 3)
+
 # %% [markdown]
-# A cada corrida le medimos el RMSE en cada bloque y lo resumimos con la razón señal/ruido de Taguchi en la versión
-# "menor es mejor". Como lleva un menos adelante, una S/N más alta es mejor. Además castiga a la vez un error alto y
-# un error que cambia mucho entre bloques:
+# ### Nivel 3: Afinamiento y evaluación única en validación
 #
-# $$\frac{S}{N} = -10\,\log_{10}\Big(\frac{1}{B}\sum_{b=1}^{B}{\color{#B8423F}{\mathrm{RMSE}_b^2}}\Big)$$
+# Gana el menor RMSE de validación y, si la diferencia no llega al uno por ciento, el modelo más sencillo. El
+# **bootstrap** repite el cálculo mil veces sobre días sacados al azar con reemplazo y se queda con el 95 % central.
 
 # %%
-regresion.diseno(c).mostrar()
+afinamiento.mostrar()
+evaluacion.mostrar()
+diagnostico.mostrar_sin(0)
 
 # %% [markdown]
-# Con las 16 corridas calculamos los efectos principales (la S/N media de las corridas que usan cada nivel), la
-# tabla de respuesta (el delta, o sea la diferencia entre el mejor y el peor nivel de cada factor) y el óptimo que
-# predice el modelo aditivo. Ese modelo supone que los factores no interactúan y suma lo que aporta cada nivel sobre
-# la media de las 16 corridas:
+# ### Modelo congelado y operación
 #
-# $$\widehat{S/N} = {\color{#6B6B6B}{\overline{S/N}}} + \sum_{f}\Big({\color{#2F8A4E}{\overline{S/N}_{f,\,\text{nivel}}}} - {\color{#6B6B6B}{\overline{S/N}}}\Big)$$
+# El modelo se reajusta con entrenamiento y validación y queda en disco para la etapa 06, que lo evalúa una sola vez
+# en la prueba. Así se carga y se le piden predicciones (estos días ya los vio el reajuste así que la tabla no mide
+# nada):
 
 # %%
-regresion.corridas_l16(c).mostrar()
-
-# %% [markdown]
-# ### Corrida de confirmación y factorial completo
-#
-# El óptimo predicho es una combinación que el L16 no tiene por qué haber probado así que la corremos aparte y
-# comparamos la S/N observada con la predicha, con una tolerancia de dos veces el error residual del modelo aditivo.
-# Después, si el tiempo estimado (el del L16 multiplicado por 128 / 16) no pasa de un minuto, corremos también el
-# factorial completo para comprobar el atajo de Taguchi.
-
-# %%
-regresion.confirmacion(c).mostrar()
-
-# %% [markdown]
-# ## 11. Nivel 3: Afinamiento de hiperparámetros
-#
-# Al afinamiento pasa la configuración de mayor S/N observada (la confirmación o la mejor del L16) y, para no
-# apostarle a una sola familia, la segunda mejor familia de modelos con los demás factores iguales. Las rejillas las
-# recorremos con `GridSearchCV` sobre los mismos bloques temporales.
-
-# %%
-regresion.afinamiento(c).mostrar()
-
-# %% [markdown]
-# ### Evaluación única en validación
-#
-# La regla la fijamos antes de mirar: Gana el menor RMSE de validación y, si la diferencia no llega al uno por
-# ciento, el modelo más sencillo (lineal, árbol, KNN, perceptrón). Para saber qué tanto se puede mover la habilidad
-# con otros días usamos un **bootstrap**, que repite el cálculo mil veces sobre días sacados al azar con reemplazo y
-# se queda con el rango donde cae el 95 % central de los resultados.
-
-# %%
-regresion.evaluacion_validacion(c).mostrar()
-
-# %%
-regresion.diagnostico(c).mostrar()
-
-# %% [markdown]
-# ## 12. Congelamiento del modelo
-#
-# Los hiperparámetros y la configuración quedan fijos y el modelo se reajusta con entrenamiento y validación, porque
-# los días recientes describen mejor el nivel actual de la serie. La etapa 06 lo evalúa una sola vez en la prueba.
-
-# %%
-regresion.congelar(c).mostrar()
-
-# %% [markdown]
-# El modelo congelado queda en disco y desde ahí lo usa la etapa 06. Así se carga y se le piden predicciones. Eso
-# sí, estos días de validación ya los vio el reajuste así que la tabla solo muestra la llamada y no mide nada: El
-# error de verdad se mide en la prueba.
+congelado.mostrar()
+operacion.mostrar(1)
 
 # %%
 import joblib
@@ -329,9 +314,8 @@ tabla = dias[[c.fecha, c.objetivo]].assign(predicción=modelo.predict(dias[c.num
 mostrar(tabla_html(tabla, "Modelo congelado: Muestras por día en los últimos días de validación", decimales=1))
 
 # %% [markdown]
-# Antes de cerrar volvimos al L16 para ver qué habría pasado con otra combinación de factores. El panel lo responde
-# sin volver a correr nada, con lo que guardamos de las 16 corridas. Si la combinación
-# que se elige está en el L16 se puede comparar lo que predice el modelo aditivo con lo que de verdad se midió.
+# El panel responde qué habría pasado con otra combinación de factores del L16, con lo que guardamos de las 16
+# corridas y sin volver a correr nada:
 
 # %%
 from proyecto.etapas.comun import legible
@@ -339,15 +323,6 @@ from proyecto.reporte import interactivo as ui
 
 congelada = {f: legible(v) for f, v in c.configuracion_final.items()}   # niveles de la configuración congelada
 mostrar(ui.panel_taguchi(c.taguchi, congelada))
-
-# %% [markdown]
-# ## 13. Qué significa en la operación
-#
-# Al final traducimos el error a muestras por día y a cuántos días la predicción se aleja más de una tolerancia
-# práctica, que fijamos en el 20 % de la carga diaria media de validación.
-
-# %%
-regresion.operacion(c).mostrar()
 
 # %%
 regresion.terminar(c)

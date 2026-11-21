@@ -282,10 +282,30 @@ def guiones_narrados():
     return sorted(FUENTES.glob("0*.py")) + sorted(FUENTES.glob("presentacion.py"))
 
 
+CIFRA = r"(?<![\w.])\d+\.\d+(?![\w.])"
+
+
+def texto_de_salidas(guion):
+    """Texto visible de las salidas del notebook construido desde `guion` (HTML sin etiquetas)."""
+    ruta = FUENTES.parent / f"{guion.stem}.ipynb"
+    if not ruta.exists():
+        return ""
+    partes = []
+    for celda in json.loads(ruta.read_text(encoding="utf-8"))["cells"]:
+        for salida in celda.get("outputs", []):
+            datos = salida.get("data", {})
+            partes.append("".join(datos.get("text/html", datos.get("text/plain", ""))))
+    return re.sub(r"<[^>]+>", " ", " ".join(partes))
+
+
 def sin_cifras_en_texto():
+    """Ninguna cifra con punto decimal escrita a mano en el texto de las etapas, salvo las permitidas y las de los
+    recuadros de exposición (líneas que empiezan con «>»), que sí pueden repetir un resultado siempre que aparezca
+    tal cual en las salidas del notebook construido. Así un recuadro no puede quedar con una cifra vieja."""
     halladas = []
     for guion in guiones_narrados():
         permitidos = PERMITIDOS_TEXTO.get(guion.name, set())
+        salidas = None
         en_texto = False
         for numero, linea in enumerate(guion.read_text(encoding="utf-8").splitlines(), start=1):
             if linea.startswith("# %%"):
@@ -296,8 +316,15 @@ def sin_cifras_en_texto():
             contenido = linea[1:].strip()
             if contenido.startswith("#"):
                 continue  # títulos numerados («## 3.1 ...»)
-            for cifra in re.findall(r"(?<![\w.])\d+\.\d+(?![\w.])", contenido):
-                if cifra not in permitidos:
+            for cifra in re.findall(CIFRA, contenido):
+                if cifra in permitidos:
+                    continue
+                if contenido.startswith(">"):
+                    salidas = texto_de_salidas(guion) if salidas is None else salidas
+                    if re.search(rf"(?<![\w.]){re.escape(cifra)}(?![\w.])", salidas):
+                        continue
+                    halladas.append(f"{guion.name}:{numero} «{cifra}» (recuadro sin esa cifra en las salidas)")
+                else:
                     halladas.append(f"{guion.name}:{numero} «{cifra}»")
     assert not halladas, "cifras escritas a mano: " + "; ".join(halladas)
 
